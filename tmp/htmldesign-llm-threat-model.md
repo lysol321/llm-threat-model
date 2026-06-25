@@ -97,6 +97,22 @@ Benefit: Screen readers now understand page structure; keyboard-only users can n
 - Risk Matrix: Add ARIA labels for complex table
 - Overall: Accessibility audit (color contrast, focus indicators)
 
+### Pass 5: Full Verification (2026-06-25)
+Served via `npx serve` on port 4747. Tested all 7 tabs interactively.
+
+**Results:**
+- ✓ Overview — stat cards, insight cards, how-to steps
+- ✓ 14 Threats — expand/collapse works, filter (Critical=3 shown), search box present
+- ✓ Attack Chains — 4 chains render with entry/amplify/exec/impact steps
+- ✓ Risk Matrix — scoring table + elevation conditions table
+- ✓ Defenses — defense registry + production cost annotations
+- ✓ Decision Tree — Q1 YES triggers sub-questions; sub-Q YES accumulates PI-DEF-2 in right panel
+- ✓ OWASP Mapping — Top 10 table + regulatory reference
+
+**No changes made.** All interactions confirmed working as designed.
+
+---
+
 ## Summary: Architecture Design Complete
 
 **Final Assessment:** HTML architecture is solid and defensible.
