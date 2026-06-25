@@ -349,20 +349,20 @@
   <button class="print-btn" onclick="window.print()">Export PDF</button>
 </header>
 
-<nav class="site-nav">
-  <button class="active" onclick="showTab('overview', this)">Overview</button>
-  <button onclick="showTab('threats', this)">14 Threats</button>
-  <button onclick="showTab('chains', this)">Attack Chains</button>
-  <button onclick="showTab('matrix', this)">Risk Matrix</button>
-  <button onclick="showTab('defenses', this)">Defenses</button>
-  <button onclick="showTab('dtree', this)">Decision Tree</button>
-  <button onclick="showTab('owasp', this)">OWASP Mapping</button>
+<nav class="site-nav" role="tablist" aria-label="Threat Model Sections">
+  <button role="tab" aria-selected="true" aria-controls="tab-overview" class="active" onclick="showTab('overview', this)">Overview</button>
+  <button role="tab" aria-selected="false" aria-controls="tab-threats" onclick="showTab('threats', this)">14 Threats</button>
+  <button role="tab" aria-selected="false" aria-controls="tab-chains" onclick="showTab('chains', this)">Attack Chains</button>
+  <button role="tab" aria-selected="false" aria-controls="tab-matrix" onclick="showTab('matrix', this)">Risk Matrix</button>
+  <button role="tab" aria-selected="false" aria-controls="tab-defenses" onclick="showTab('defenses', this)">Defenses</button>
+  <button role="tab" aria-selected="false" aria-controls="tab-dtree" onclick="showTab('dtree', this)">Decision Tree</button>
+  <button role="tab" aria-selected="false" aria-controls="tab-owasp" onclick="showTab('owasp', this)">OWASP Mapping</button>
 </nav>
 
 <main>
 
 <!-- ══ OVERVIEW ══ -->
-<div id="tab-overview" class="tab-panel active">
+<div id="tab-overview" class="tab-panel active" role="tabpanel" aria-labelledby="tab-overview">
   <h2>LLM Threat Model — v1.7</h2>
   <p>Structured threat model for systems that use large language models. 14 threat categories, 4 critical attack chains, a scored risk matrix, and a defense playbook. For engineering teams — no ML security expertise required. Click a severity card to filter threats.</p>
 
@@ -413,7 +413,7 @@
 </div>
 
 <!-- ══ 14 THREATS ══ -->
-<div id="tab-threats" class="tab-panel">
+<div id="tab-threats" class="tab-panel" role="tabpanel" aria-labelledby="tab-threats">
   <div class="filter-bar">
     <button class="filter-btn active" onclick="setFilter('ALL', this)">All</button>
     <button class="filter-btn f-CRITICAL" onclick="setFilter('CRITICAL', this)">Critical</button>
@@ -780,9 +780,15 @@ let dtreeAnswers = {};
 // ── TAB SWITCHING ──
 function showTab(name, btn) {
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.site-nav button').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.site-nav button').forEach(b => {
+    b.classList.remove('active');
+    b.setAttribute('aria-selected', 'false');
+  });
   document.getElementById('tab-' + name).classList.add('active');
-  if (btn) btn.classList.add('active');
+  if (btn) {
+    btn.classList.add('active');
+    btn.setAttribute('aria-selected', 'true');
+  }
 }
 
 // ── OVERVIEW STAT CLICK → filter threats ──
@@ -820,7 +826,7 @@ function renderThreats() {
   container.innerHTML = THREATS.map((t, i) => {
     const prioKey = t.prio.split('-')[0];
     return `<div class="threat-card prio-${prioKey}" id="tc-${i}" data-prio="${prioKey}" data-text="${(t.title+' '+t.desc+' '+t.subtypes.join(' ')).toLowerCase()}">
-      <div class="tc-header" onclick="toggleCard(${i})">
+      <div class="tc-header" role="button" tabindex="0" aria-expanded="false" aria-controls="tcb-${i}" onclick="toggleCard(${i})" onkeydown="if(event.key==='Enter'||event.key===' ')toggleCard(${i})">
         <span class="tc-num">${t.num}</span>
         <span class="tc-title">${t.title}</span>
         ${t.owasp !== '—' ? `<span class="tc-owasp">${t.owasp}</span>` : ''}
@@ -847,9 +853,11 @@ function renderThreats() {
 function toggleCard(i) {
   const card = document.getElementById(`tc-${i}`);
   const body = document.getElementById(`tcb-${i}`);
+  const header = card.querySelector('.tc-header');
   const isOpen = card.classList.contains('open');
   card.classList.toggle('open', !isOpen);
   body.style.maxHeight = isOpen ? '0' : body.scrollHeight + 'px';
+  if (header) header.setAttribute('aria-expanded', !isOpen);
 }
 
 // ── DECISION TREE ──

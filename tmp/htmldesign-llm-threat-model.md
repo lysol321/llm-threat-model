@@ -50,4 +50,26 @@ Tested all major features:
 
 **Defensible Design Decision:** Single 1000-line file is reasonable for a static threat model that changes rarely. Trade-off: simplicity + easy distribution vs. harder maintenance. External data files would improve this.
 
-**Next Step:** Focus on accessibility (ARIA labels, keyboard nav) and data extraction. Test keyboard-only usage.
+### Pass 3: Data Extraction & Architecture Refactor
+Completed:
+- ✓ Created data/threats.json (14 threat entries, 12.5KB)
+- ✓ Created data/dtree.json (4 questions + subs, 2KB)
+- ✓ Updated HTML to load JSON with async/await
+- ✓ Added fallback embedded data for file:// protocol compatibility
+- ✓ HTML reduced from 1000 lines to ~800 lines
+- ✓ All functionality tested and working
+
+Benefits:
+- Data separated from presentation (easier maintenance)
+- Threat data can be updated without touching HTML
+- JSON files can be auto-generated from source systems
+- Works locally (fallback) and on web servers (JSON load)
+- Maintainability improved: data is clear, auditable, versionable
+
+**Architecture Decision:** Hybrid JSON+fallback is defensible because:
+1. Primary path (JSON) works on web servers, better for prod
+2. Fallback ensures local testing works without server
+3. Both paths load same data, no duplication of logic
+4. Clear intent: try external, fall back to embedded
+
+**Next Improvement:** Add ARIA labels & keyboard navigation for accessibility.
