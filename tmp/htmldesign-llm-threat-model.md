@@ -154,6 +154,15 @@ already had fixed.
 **Fix:** role="button", tabindex="0", descriptive aria-label, Enter/Space keydown handler
 on each card. Verified: all 4 reachable; Enter on Critical → Threats tab + Critical filter.
 
+### Pass 9: Decision Tree focus retention (2026-06-25)
+**Bug:** `dtreeAnswer` re-renders the whole tree via `innerHTML`, destroying the focused
+button → focus dropped to `<body>`. Verified: keyboard activation of Q1 YES left
+`activeElement === body`. A keyboard user had to Tab back through the tree after every answer.
+
+**Fix:** after `renderDtree()`, restore focus to the same node's button
+(`#dq-<id>` or `#dsub-<id>`, `.dq-btn.<val>`). Verified at top-level (Q1) and sub-question
+(q1a) depth — focus stays on the answered button.
+
 ---
 
 ## Summary: Architecture Design Complete

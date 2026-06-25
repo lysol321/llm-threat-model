@@ -920,6 +920,10 @@ function renderDtree() {
 function dtreeAnswer(id, val) {
   dtreeAnswers[id] = val;
   renderDtree();
+  // renderDtree rebuilds innerHTML, dropping focus to body — restore it to
+  // the same button so keyboard users keep their place.
+  const btn = document.querySelector(`[id="dq-${id}"] .dq-btn.${val}, [id="dsub-${id}"] .dq-btn.${val}`);
+  if (btn) btn.focus();
 }
 
 function resetDtree() {
