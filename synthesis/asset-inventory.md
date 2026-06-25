@@ -70,6 +70,24 @@ Assets are organized into five classes:
 | **Retrieved context (RAG results)** | Documents and data retrieved in response to queries | Poisoning; information disclosure | Chain A (1b), Cat 4 |
 | **Derived embeddings** | Embeddings computed from user/organizational content | Training data extraction; membership inference | Cat 7 |
 
+### 1.5 Task / Validator / Data (TVD) Harness Assets
+
+These are the assets Internal Safety Collapse (Category 14) actually attacks. They
+exist only in deployments that **execute** a task/validator/data harness — eval,
+fine-tuning, data-generation, code-repair, or autonomous-tool workflows. Plain
+inference consumers with no harness do not hold these assets (Cat 14 = N/A). See
+`threat-taxonomy.md` Category 14 applicability boundary.
+
+| Asset | Description | Why It's a Target | Threat Category | Owner |
+|-------|-------------|-------------------|----------------|-------|
+| **Task definitions** | The professional activity the model is asked to complete (eval, test, repair, dataset fill) | Attacker-shaped task framing drives autonomous harmful completion | Cat 14 | [DEV] / [PROV] |
+| **Validator harness code** | Code/schema/test/eval harness that checks output completion but enforces no semantic safety bounds | Format-only validators force the model to "complete" into harmful content | Cat 14 | [DEV] |
+| **Schemas / tests / eval scripts** | Machine-checkable acceptance criteria the model must satisfy | Acceptance gate with no safety semantics is the ISC trigger | Cat 14 | [DEV] |
+| **Incomplete / placeholder data** | Intentionally partial data the model must fill to satisfy the validator | Gap-filling is where harmful generation emerges | Cat 14 | [DEV] / [OPS] |
+| **Generated harmful intermediate artifacts** | Content the model produces to pass the validator before downstream use | Stored/actioned/evaluated without semantic safety review | Cat 14, Cat 11 | [OPS] |
+| **Model-completion-generated fine-tuning / eval datasets** | Datasets produced by feeding model output back into training/eval | Poisoned or harmful completions propagate into downstream models | Cat 14, Cat 4 | [OPS] / [PROV] |
+| **Model-host / agent-platform safety-eval harness** | Provider-side or platform safety/eval pipeline that submits TVD-shaped tasks | Provider-side ISC scanning gap (ISC-DEF-3) | Cat 14 | [PROV] |
+
 ---
 
 ## 2. Model Assets
@@ -263,6 +281,20 @@ Confirm which asset classes are present in your deployment:
 | API usage data / quotas | [ ] YES  [ ] NO |  |  |
 | Model outputs | [ ] YES  [ ] NO |  |  |
 
+### Task / Validator / Data (TVD) Harness Assets (Cat 14 — ISC)
+
+Complete this block only if your deployment executes a task/validator/data harness
+(eval, fine-tuning, data-generation, code-repair, autonomous-tool workflow). If no
+harness is executed, mark Cat 14 N/A and skip.
+
+| Asset | Present? | Attacker-shapeable? | Owner |
+|-------|----------|---------------------|-------|
+| Task definitions | [ ] YES  [ ] NO | [ ] YES  [ ] NO |  |
+| Validator / schema / test / eval harness | [ ] YES  [ ] NO | [ ] YES  [ ] NO |  |
+| Incomplete / placeholder data | [ ] YES  [ ] NO | [ ] YES  [ ] NO |  |
+| Model-completion-generated datasets | [ ] YES  [ ] NO | [ ] YES  [ ] NO |  |
+| Model-host / platform safety-eval harness | [ ] YES  [ ] NO | [ ] YES  [ ] NO |  |
+
 ### Model Assets
 
 | Asset | Present? | Owner |
@@ -315,4 +347,4 @@ Confirm which asset classes are present in your deployment:
 
 **Last updated:** 2026-06-19 (v1.0 — explicit asset inventory added)
 **Next review:** 2026-09-17 or when system architecture changes
-**Part of:** LLM Threat Modeling Framework v1.4
+**Part of:** LLM Threat Modeling Framework v1.8 release (see `release-manifest.md`)

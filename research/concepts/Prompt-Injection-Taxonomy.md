@@ -86,7 +86,7 @@ Jason Haddix and Arcanum Information Security created a structured PI classifica
 
 ## IMPORTANT: ISC Is NOT Prompt Injection
 
-**Internal Safety Collapse (ISC)** is a structurally distinct attack mode. Do NOT conflate ISC with standard PI. The threat taxonomy treats ISC as **Category 3 — Internal Safety Collapse / Validator Harness Attack** (see `threat-taxonomy.md`).
+**Internal Safety Collapse (ISC)** is a structurally distinct attack mode. Do NOT conflate ISC with standard PI. The threat taxonomy treats ISC as **Category 14 — Internal Safety Collapse / Validator Harness Attack** (see `threat-taxonomy.md`).
 
 | | Standard PI | ISC |
 |---|---|---|

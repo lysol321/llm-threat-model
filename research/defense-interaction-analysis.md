@@ -4,9 +4,19 @@
 
 ## Scope
 This document analyzes interaction edge cases between three defense mechanisms in the LLM Threat Framework:
-- **PI-DEF-2**: Output filtering/sanitization (blocks direct execution of injected content)
-- **AGENCY-DEF-1**: Privilege separation (untrusted LLM vs. privileged LLM)
-- **AGENCY-DEF-2**: Tool use policy / sandboxing (restricts which tools the agent can call)
+- **PI-DEF-2**: RAG context labeling + load-time sanitization (here exercised in its output-/context-filtering role against injected content)
+- **AGENCY-DEF-1**: Minimal tool permission allowlist + privilege separation (untrusted LLM vs. privileged LLM)
+- **AGENCY-DEF-2**: Mandatory HITL for high-risk actions (the tool-use/sandboxing policy boundary)
+
+> **Control-ID reconciliation (Round 12 labels → canonical):** This Round-12 analysis
+> used loose working glosses for the control IDs. The canonical definitions in
+> `synthesis/defense-playbook.md` / `quick-reference.md` are: **PI-DEF-2** = RAG context
+> labeling + load-time sanitization; **AGENCY-DEF-1** = minimal tool permission allowlist;
+> **AGENCY-DEF-2** = mandatory HITL for high-risk actions (tool-call budgeting is
+> **AGENCY-DEF-3**; inference sandboxing is **SC-DEF-2**; output validation is **PI-DEF-4**).
+> The four interaction conflicts below are sound and are reflected canonically in
+> defense-playbook.md "Defense Interaction Analysis" (Defense Layer 6); only the inline
+> ID glosses differed.
 
 ## Key Interaction Conflicts
 

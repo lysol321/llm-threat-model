@@ -30,7 +30,7 @@ Attack trees model **complete kill chains** — not individual threats in isolat
 
 **ID:** CHAIN-A
 **Severity:** CRITICAL
-**MITRE ATLAS:** ATLAS G001 (Indirect Prompt Injection), ATLAS T1076 (Excessive Agency via Tool Use)
+**MITRE ATLAS:** AML.T0051.001 (LLM Prompt Injection: Indirect), AML.T0053 (LLM Plugin Compromise — tool use), AML.T0024 (Exfiltration via ML Inference API)
 **OWASP:** LLM01 (Prompt Injection) + LLM06 (Excessive Agency)
 
 **Mission Goal:** Exfiltrate sensitive data from organization via LLM system with tool access.
@@ -78,10 +78,10 @@ exfil]        |                      |
 
 | Path | Technique | Evidence | Likelihood |
 |------|----------|---------|------------|
-| 1b.1: Attacker writes malicious document to RAG-connected data source | ATLAS G001, OWASP LLM01 Indirect | EchoLeak confirmed; Truesec disclosure | CRITICAL |
+| 1b.1: Attacker writes malicious document to RAG-connected data source | AML.T0051.001 (LLM Prompt Injection: Indirect), OWASP LLM01 Indirect | EchoLeak confirmed; Truesec disclosure | CRITICAL |
 | 1b.2: Search results poisoned via SEO manipulation | Indirect PI via search retrieval | Well-documented SEO attacks | HIGH |
 | 1b.3: Malicious content in API response (third-party data source) | Indirect PI via upstream API | Documented in Copilot CRM leak | MEDIUM |
-| 1b.4: Structured data injection (JSON/YAML with embedded instructions) | Non-text injection (Category 10) | ASR/ATLAS technique | MEDIUM |
+| 1b.4: Structured data injection (JSON/YAML with embedded instructions) | Non-text injection (Category 10) | ASR / AML.T0051 variant | MEDIUM |
 
 **Evidence for 1b.1 (CRITICAL):** EchoLeak/CVE-2025-32711 is a documented zero-click enterprise AI exploit. Attackers sent crafted email; when Copilot processed it, injected instructions exfiltrated data without user interaction. This is the canonical demonstration that LLM processing of attacker-controlled content creates a remote attack surface. **[HIGH confidence — multiple vendor disclosures]**
 
@@ -89,7 +89,7 @@ exfil]        |                      |
 
 | Condition | Evidence | If absent |
 |-----------|----------|-----------|
-| 2a: Model has tool/use permissions enabling exfiltration | ATLAS T1076 | Chain terminates at noise generation |
+| 2a: Model has tool/use permissions enabling exfiltration | AML.T0053 (LLM Plugin Compromise) | Chain terminates at noise generation |
 | 2b: No per-call human authorization required | Observed in real incidents | Attack economics degrade to DoS/phishing |
 
 #### Node 3: Tool Call Triggers Exfiltration [OR — any tool enables exfiltration]
@@ -131,7 +131,7 @@ Terminal node. Attribution difficulty: HIGH (action logged as legitimate user be
 
 **ID:** CHAIN-B
 **Severity:** CRITICAL
-**MITRE ATLAS:** ATLAS M003 (Compromised Model Distribution), ATLAS M004 (Malicious Training Data)
+**MITRE ATLAS:** AML.T0010.003 (ML Supply Chain Compromise: Model), AML.T0020 (Poison Training Data), AML.T0018 (Backdoor ML Model)
 **OWASP:** LLM03 (Supply Chain), LLM04 (Data and Model Poisoning)
 
 **Mission Goal:** Deploy compromised model that silently exfiltrates API keys, conversation data, or model outputs to attacker-controlled infrastructure.
@@ -206,7 +206,7 @@ Terminal node. Attribution: VERY DIFFICULT (model "behaves correctly"). Detectio
 
 **ID:** CHAIN-C
 **Severity:** HIGH (CRITICAL in multi-agent production deployments)
-**MITRE ATLAS:** ATLAS G001 (Indirect PI), ATLAS T1076 (Tool Use)
+**MITRE ATLAS:** AML.T0051.001 (LLM Prompt Injection: Indirect, propagated across agents), AML.T0053 (LLM Plugin Compromise — tool use)
 **OWASP:** LLM01 + LLM06
 
 **Mission Goal:** Compromise multiple agents in a multi-agent chain via context propagation, escalating from information manipulation to unauthorized action at the final agent.
@@ -273,7 +273,7 @@ Terminal node. Attribution: VERY DIFFICULT (model "behaves correctly"). Detectio
 This is distinct from "direct input contains PI" because:
   - Tool outputs are not user input and may bypass input filtering
   - The tool itself (not the attacker) delivers the injection
-  - OWASP LLM06 / ATLAS T1076 (tool hijacking) applies
+  - OWASP LLM06 / AML.T0053 (LLM Plugin Compromise — tool hijacking) applies
 ```
 
 #### System Prompt Contamination (NEW)
@@ -595,16 +595,23 @@ Not modeled in v1.0. v1.1 adds:
 
 ## Framework Cross-Reference
 
+> **MITRE ATLAS IDs corrected (Jun 2026):** Earlier releases of this table used
+> `G001`, `T1076`, `M003`, `M004` — MITRE ATT&CK-style identifiers that are **not**
+> valid ATLAS references (ATLAS uses `AML.T####` techniques, `AML.M####` mitigations,
+> `AML.CS####` case studies). The IDs below are corrected against `https://atlas.mitre.org/`.
+> Sub-technique numbering can shift between ATLAS releases; re-verify before external
+> citation. Full per-threat mapping: wiki `threat-model/mitre-atlas-mapping`.
+
 | Attack Chain | Primary Threat Categories | Detection Difficulty | MITRE ATLAS | OWASP |
 |---|---|---|---|---|
-| Chain A | LLM01 + LLM06 | MEDIUM (looks like legitimate use) | G001, T1076 | LLM01, LLM06 |
-| Chain B | LLM03 + LLM04 | VERY HIGH (silent at inference) | M003, M004 | LLM03, LLM04 |
-| Chain C | LLM01 + LLM06 | MEDIUM-HIGH (context propagation) | G001, T1076 | LLM01, LLM06 |
-| DoS / Unbounded Consumption | LLM10 | LOW | — | LLM10 |
-| Prompt Extraction | LLM07 | LOW | G001 | LLM07 |
-| Model Extraction | LLM07 | MEDIUM | — | LLM07 |
+| Chain A | LLM01 + LLM06 | MEDIUM (looks like legitimate use) | AML.T0051.001, AML.T0053, AML.T0024 | LLM01, LLM06 |
+| Chain B | LLM03 + LLM04 | VERY HIGH (silent at inference) | AML.T0010.003, AML.T0020, AML.T0018 | LLM03, LLM04 |
+| Chain C | LLM01 + LLM06 | MEDIUM-HIGH (context propagation) | AML.T0051.001, AML.T0053 | LLM01, LLM06 |
+| DoS / Unbounded Consumption | LLM10 | LOW | AML.T0029 (Denial of ML Service) | LLM10 |
+| Prompt Extraction | LLM07 | LOW | AML.T0056 (+ AML.T0057 LLM Data Leakage) | LLM07 |
+| Model Extraction | (not in OWASP Top 10) | MEDIUM | AML.T0024.002 (Extract ML Model) | — |
 
 ---
 
-**Last updated:** 2026-06-24 (v1.2 — CSA MCP/A2A protocol propagation channels added to Chain C; LangGraph Send API and Command primitive sub-paths added)
+**Last updated:** 2026-06-24 (v1.3 — red-team sync: Chain C language calibrated, OWASP 2025 DoS mapping corrected; builds on v1.2 CSA MCP/A2A propagation channels and LangGraph Send API / Command primitive sub-paths)
 **Next review:** 2026-09-17

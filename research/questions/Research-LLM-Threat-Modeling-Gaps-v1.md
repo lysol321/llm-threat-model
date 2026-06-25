@@ -28,6 +28,13 @@ sources:
 
 ## Overview
 
+> **Note (superseded items):** This is a 2026-06-17 (framework v1.1) research artifact.
+> Two claims below are superseded by later work: the "enforcement expected Q4 2026"
+> dates (Q5 of `LLM-Threat-Modeling-Open-Questions-2026.md` and `assumptions.md` F1
+> retract any fixed enforcement date — AI Office is in a preparation phase with no
+> published enforcement as of mid-2026), and the GDPR fine figure (corrected to 4%/€20M
+> inline below). Retained for research-trail continuity.
+
 Three operational validation gaps from framework v1.1 research: AIBOM trust anchor audit, Garak Chain C probe design, foreign model regulatory mapping. Taxonomy saturated — no new threat categories needed. These are the remaining operational gaps before pilot deployment.
 
 ## Key Findings
@@ -58,7 +65,7 @@ All three non-Western providers (DeepSeek, Qwen, MiniMax) operate in EU market *
 - **Qwen GDPR exposure at 3/5** — Alibaba Cloud routing confirmed, transfer mechanism absent
 - **MiniMax at 2/5** — limited evidence but same structural exposure
 
-**Critical implication:** EU organizations using DeepSeek/Qwen/MiniMax API face GDPR fines up to 5% global revenue for transfer violations — this is a live compliance risk, not theoretical.
+**Critical implication:** EU organizations using DeepSeek/Qwen/MiniMax API face GDPR fines up to **4% of global annual turnover or €20M** (GDPR Art. 83(5)) for transfer violations — this is a live compliance risk, not theoretical. (Correction: an earlier draft said "5%"; GDPR's top tier is 4%/€20M. The EU AI Act's higher 6–7% tiers are a separate instrument — see `synthesis/risk-matrix.md`.)
 
 ## Key Entities
 

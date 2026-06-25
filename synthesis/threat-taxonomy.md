@@ -23,13 +23,13 @@ Prompt injection is the manipulation of LLM behavior through crafted inputs that
 
 **Sub-types:**
 
-|| Sub-type | Description | Vector |
-||---|---|---|
-|| Direct PI | User-supplied input explicitly instructs model to ignore system prompt | Chat input, API `messages` field |
-|| Indirect PI | Adversarial content embedded in external data the model retrieves (RAG, search results, documents) | RAG pipeline, document ingestion |
-|| Multi-turn PI | Injection spread across conversation turns, accumulating context | Multi-turn chat, agentic loops |
-|| Cross-context PI | Injection propagates between agents in multi-agent systems | Agent-to-agent messaging |
-|| Purchased PI Template | Pre-optimized PI/jailbreak template from underground market | Defeats pattern-based input filtering |
+| Sub-type | Description | Vector |
+|---|---|---|
+| Direct PI | User-supplied input explicitly instructs model to ignore system prompt | Chat input, API `messages` field |
+| Indirect PI | Adversarial content embedded in external data the model retrieves (RAG, search results, documents) | RAG pipeline, document ingestion |
+| Multi-turn PI | Injection spread across conversation turns, accumulating context | Multi-turn chat, agentic loops |
+| Cross-context PI | Injection propagates between agents in multi-agent systems | Agent-to-agent messaging |
+| Purchased PI Template | Pre-optimized PI/jailbreak template from underground market | Defeats pattern-based input filtering |
 
 **Key insight (from Arcanum PI Taxonomy):** Attack surface extends to **any content the model parses** — text, documents, images, API responses, structured data, and retrieved contexts. Restricting analysis to "text input fields" dramatically underestimates the attack surface.
 
@@ -267,13 +267,13 @@ Failure modes where human reviewers do not catch adversarial manipulation.
 
 **Critical blind spot (v1.1 addition):** Standard HITL confirmation shows the proposed action but not the context provenance that caused it. Reviewers evaluate whether an action looks reasonable in isolation, not whether it was prompted by adversarial content. A sophisticated PI attack can craft instructions producing benign-seeming actions with malicious intent.
 
-|| Sub-type | Description |
-||---|---|
-|| Reviewer fatigue | High volume of outputs overwhelms human review capacity |
-|| Sophisticated PI evading detection | Injection crafted to appear legitimate to human reviewers |
-|| Authority bias in review | Humans defer to confident LLM outputs even when incorrect |
-|| Cross-lingual blind spots | PI in non-English languages evades reviewer comprehension |
-|| HITL provenance blind spot (NEW) | Reviewer sees action, not the injected instruction causing it — cannot evaluate whether context was adversarial |
+| Sub-type | Description |
+|---|---|
+| Reviewer fatigue | High volume of outputs overwhelms human review capacity |
+| Sophisticated PI evading detection | Injection crafted to appear legitimate to human reviewers |
+| Authority bias in review | Humans defer to confident LLM outputs even when incorrect |
+| Cross-lingual blind spots | PI in non-English languages evades reviewer comprehension |
+| HITL provenance blind spot (NEW) | Reviewer sees action, not the injected instruction causing it — cannot evaluate whether context was adversarial |
 
 **Corrected HITL UX (v1.1):** HITL confirmation must include sufficient context provenance: what triggered the action (user input, retrieved document, tool result), source of influencing content, and brief LLM rationale. Without context provenance, HITL review is ineffective against sophisticated PI.
 
@@ -372,7 +372,7 @@ When the model fills the data gaps to complete the task, it autonomously generat
 |---|---|---|---|
 | Prompt Injection | Chain A | PI Defense Playbook | EU AI Act Art. 13 |
 | Excessive Agency | Chain A, Chain C | Agency Control Playbook | FTC AI Guidance |
-| Internal Safety Collapse | — | Validator harness validation | EU AI Act Art. 10, Art. 14 |
+| Internal Safety Collapse | — | Validator harness validation | EU AI Act Art. 9, Art. 15, Art. 17 |
 | Supply Chain | Chain B | Supply Chain Playbook | GDPR Art. 25, 32 |
 | Model Poisoning | Chain B | AIBOM + Sandboxing | EU AI Act Art. 9 |
 | System Prompt Leakage | — | Prompt Protection | Trade secret law |

@@ -3,7 +3,7 @@
 ## Source Details
 - **Type:** Threat intelligence framework
 - **URL:** https://atlas.mitre.org/
-- **Coverage:** 16 tactics, 84+ techniques targeting AI/ML systems
+- **Coverage:** 14 tactics (Reconnaissance through Impact), 80+ techniques (`AML.T####`) targeting AI/ML systems (counts per atlas.mitre.org; evolve per release — verify against the live matrix; see wiki `threat-model/mitre-atlas-mapping`)
 - **Confidence:** High
 
 ## Key Claims

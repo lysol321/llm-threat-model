@@ -1,6 +1,6 @@
 # LLM Threat Modeling — Quick Reference
 
-**Version:** 1.6
+**Version:** 1.7
 **For:** Engineering teams (no ML security expertise required)
 **Time to complete assessment:** Under 4 hours
 **Date:** 2026-06-24

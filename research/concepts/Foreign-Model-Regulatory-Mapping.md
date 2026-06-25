@@ -90,7 +90,7 @@ Non-EU GPAI providers must **designate an EU-based authorized representative** �
 
 1. **All three providers operate in EU market without documented Article 9 compliance.** This is a live regulatory exposure, not theoretical.
 
-2. **GDPR transfer liability falls on EU deployers**, not the foreign provider. Any EU organization sending data to DeepSeek/Qwen/MiniMax APIs bears the Article 46 transfer risk (potential fines up to 5% global revenue).
+2. **GDPR transfer liability falls on EU deployers**, not the foreign provider. Any EU organization sending data to DeepSeek/Qwen/MiniMax APIs bears the Article 46 transfer risk (potential fines up to **4% of global annual turnover or €20M**, GDPR Art. 83(5) — corrected from an earlier "5%" figure; the 6–7% tiers belong to the EU AI Act, a separate instrument).
 
 3. **Article 55(2) authorized representative requirement** means non-compliant providers can still serve EU customers through intermediaries — enforcement depends on national authority action.
 

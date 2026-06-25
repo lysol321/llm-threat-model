@@ -1,6 +1,6 @@
 # LLM Risk Matrix
 
-**Version:** 1.3 (red-team sync — ISC threaded into risk tiers; OWASP 2025 DoS mapping corrected; tier contradictions fixed)
+**Version:** 1.7 (correction pass — base/elevated scores split into machine-checkable columns; EU AI Act mapping corrected; ISC evidence and applicability aligned. Supersedes v1.3 red-team sync.)
 **Date:** 2026-06-24
 **Status:** Living document — re-evaluate quarterly
 
@@ -168,32 +168,40 @@ These annotations reflect real-world engineering tradeoffs — not abstract reco
 
 ## Risk Matrix Summary Visual
 
+Cell labels are illustrative placements of representative threats at their
+**base** Likelihood × Impact cell; the authoritative scores (including
+elevation) are the Base/Elevated columns in the tables above.
+
 ```
 Impact →
 Likelihood
     │  1        2        3        4        5
 ────┼─────────────────────────────────────────
-  5 │         10       15       20       25
-    │      (Direct   (Chain A)         (BEYOND
-    │        PI)                        SCALE)
+  5 │  5       10       15       20       25
+    │                 (Direct           (BEYOND
+    │                  PI /              SCALE)
+    │                  Purchased PI)
 ────┼─────────────────────────────────────────
-  4 │          8       12       16       20
-    │    (Audio)  (Excess  (Quota   (Chain A
-    │             Agency,  Exhaust)  partial)
-    │             DoS)
+  4 │  4        8       12       16       20
+    │             (Excess  (Quota   (Chain A)
+    │              Agency,  Exhaust
+    │              DoS std) metered)
 ────┼─────────────────────────────────────────
-  3 │          6        9       12       15
-    │    (Model    (Sys    (Direct   (Chain C
-    │     Align    Prompt   PI)      in prod)
-    │     Regress) Extract)
+  3 │  3        6        9       12       15
+    │             (Sys     (Defense (Chain C
+    │              Prompt,  Control  in prod)
+    │              Output,  Confusion)
+    │              HITL)
 ────┼─────────────────────────────────────────
-  2 │          4        6        8       10
-    │    (Jailbreak  (Model   (Image/  (LoRA
-    │     mktpl)     Extrac) Struct)   swap)
+  2 │  2        4        6        8       10
+    │             (Model   (Image/  (LoRA swap,
+    │              Extrac)  Struct,  Training
+    │                       X-tenant) poison,
+    │                                Embed inv)
 ────┼─────────────────────────────────────────
-  1 │          2        3        4        5
-    │    (Rare     (Covert   (Audio)   (Very
-    │     events)  Chan)                   Rare)
+  1 │  1        2        3        4        5
+    │                 (Audio   (Covert
+    │                  inject)  Chan)
 ────┴─────────────────────────────────────────
 
 Key zones:

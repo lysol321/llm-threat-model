@@ -44,7 +44,7 @@ Round 12 research addresses two v1.3 enhancement candidates identified in the Ro
 
 ### Finding 2: Defense-in-Depth Interaction Conflicts
 
-**Scope**: Interaction edge cases between PI-DEF-2 (output filtering), AGENCY-DEF-1 (privilege separation), and AGENCY-DEF-2 (tool use policy/sandboxing).
+**Scope**: Interaction edge cases between PI-DEF-2 (RAG context labeling + load-time sanitization), AGENCY-DEF-1 (minimal tool permission allowlist + privilege separation), and AGENCY-DEF-2 (mandatory HITL for high-risk actions). (Canonical control IDs per `synthesis/defense-playbook.md`; earlier glosses said "output filtering"/"tool use policy/sandboxing".)
 
 **Identified conflicts**:
 

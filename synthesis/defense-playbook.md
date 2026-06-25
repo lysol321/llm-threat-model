@@ -1,6 +1,6 @@
 # LLM Defense Playbook
 
-**Version:** 1.6 (red-team sync — ISC defenses threaded into summary; table formatting normalized)
+**Version:** 1.7 (correction pass — malformed tables normalized; detection/operational-gap worksheet alignment completed. Supersedes v1.6 red-team sync.)
 **Date:** 2026-06-24
 **Status:** Living document — update when new defenses prove effective in adversarial testing
 
@@ -474,9 +474,10 @@ Defense mechanism:
    - Block deployment if mismatch detected
 ```
 
-### SC-DEF-4: Weight-Level Trojan and Backdoor Defense Gap — OPERATIONAL GAP [OPS]
+### SC-DEF-4 (alias SC-GAP-1): Weight-Level Trojan and Backdoor Defense Gap — OPERATIONAL GAP [OPS]
 **Effectiveness:** NO OPERATIONAL DEFENSE EXISTS for detecting behavioral backdoors in model weights
 **This is a documented gap, not a missing feature**
+**Naming:** Tracked as `SC-GAP-1` in `assessment-template.md` (it is an acknowledged gap, not a YES/NO defense); `SC-DEF-4` is retained here for backward reference.
 
 > **Critical limitation (v1.2 — from Round 6 adversarial review):** AIBOM with Sigstore Model Signing verifies WHO published a model (identity) and that the artifact hasn't changed since signing (integrity). It does NOT verify WHAT the model does — specifically, whether it contains a backdoor, trojan, or data exfiltration payload in its inference logic.
 
@@ -781,11 +782,6 @@ Layered defenses ("defense-in-depth") are a core principle of this framework. Ho
 - Query pattern monitoring should be implemented for deep research agents with web search access
 - Organizations using deep research agents on private corpora should assume query history may be externally observable and should implement query pattern sanitization at the infrastructure level
 - garak ProPILE probes (v0.15.1) provide PII leakage detection — use for pre-deployment validation of privacy behavior
-
----
-
-**Last updated:** 2026-06-24 (v1.7 — correction pass: malformed tables normalized; detection/operational-gap worksheet alignment completed)
-**Next review:** 2026-09-24
 
 ---
 

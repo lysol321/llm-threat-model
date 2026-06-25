@@ -289,4 +289,4 @@ Before starting an assessment, confirm each assumption applies to your deploymen
 
 **Last updated:** 2026-06-19 (v1.0 — explicit assumptions section added)
 **Next review:** 2026-09-17 or when deploying new model class
-**Part of:** LLM Threat Modeling Framework v1.4
+**Part of:** LLM Threat Modeling Framework v1.8 release (see `release-manifest.md`)

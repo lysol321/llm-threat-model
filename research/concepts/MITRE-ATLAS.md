@@ -5,7 +5,7 @@ MITRE ATLAS (Adversarial Threat Landscape for AI Systems) is MITRE's framework d
 
 **URL:** https://atlas.mitre.org/
 **Last Updated:** Continuously updated; 2025 version active
-**Coverage:** 16 tactics, 84+ techniques (as of 2025)
+**Coverage:** 14 tactics (Reconnaissance through Impact), 80+ techniques (`AML.T####`) — counts per atlas.mitre.org and evolve per release (Spring 2025 added ~19 GenAI techniques); verify against the live matrix. See wiki `threat-model/mitre-atlas-mapping`.
 
 ## ATLAS vs ATT&CK
 - ATLAS is to AI what ATT&CK is to traditional enterprise IT

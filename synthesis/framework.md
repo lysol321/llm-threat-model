@@ -1,8 +1,8 @@
 # LLM Threat Modeling Framework
 
-**Version:** 1.6 (red-team sync — taxonomy/risk/worksheet alignment restored after ISC addition)
+**Version:** 1.8 (comparative framework positioning added)
 **Date:** 2026-06-24
-**Status:** Living document — pilot-ready after v1.6 sync verification
+**Status:** Living document — pilot-ready after v1.8 comparable-framework positioning
 **Framework target:** Pilot-ready: 3-person engineering team, no ML security expertise, completes assessment in under 4 hours
 
 
@@ -175,6 +175,35 @@ A list of "LLM threats" without attack chain relationships tells engineers what 
 
 ---
 
+## Comparable Frameworks and Positioning
+
+This threat model is designed to **complement, not replace**, the established AI security and governance frameworks below. It uses them as source-backed reference lenses, then adds the project-specific connective tissue: assets, assumptions, attack surfaces, attack chains, risk scoring, controls, evidence provenance, and scenario validation.
+
+| Comparable framework | Primary role | How this framework uses it | Boundary / gap this framework fills |
+|---|---|---|---|
+| **OWASP Top 10 for LLM Applications 2025** | LLM / GenAI application vulnerability taxonomy: prompt injection, sensitive information disclosure, supply chain, poisoning, output handling, excessive agency, system prompt leakage, vector and embedding weaknesses, misinformation, and unbounded consumption. | Provides the baseline vulnerability categories and OWASP ID mapping used throughout the taxonomy and quick reference. | OWASP is a category list and mitigation guide, not a complete deployment-specific assessment workflow; this framework connects those categories to assets, surfaces, kill chains, risk scores, and controls. |
+| **OWASP GenAI Security Project** | Umbrella community program for GenAI, LLM, agentic AI, and AI-driven application security guidance. | Provides the broader GenAI security context and emerging guidance families, including LLM, agentic, data, and MCP/tool security resources. | The umbrella is intentionally broad; this framework narrows it into a 4-hour engineering assessment path. |
+| **MITRE ATLAS** | Adversary tactics, techniques, and procedures for AI-enabled systems, grounded in observed attacks and realistic red-team demonstrations. | Provides adversary-behavior language for prompt injection, AI supply chain compromise, model access, data/model poisoning, exfiltration, and impact paths. | ATLAS explains attacker behavior; this framework translates relevant TTPs into deployment worksheets, residual-risk decisions, and concrete defense ownership. |
+| **NIST AI RMF + Generative AI Profile** | Governance, risk-management, TEVV, incident response, provenance, monitoring, and organizational risk controls. | Provides governance and compliance framing for assessment discipline, evidence handling, lifecycle risk management, and operational controls. | NIST is not a technical LLM attack taxonomy; this framework overlays OWASP/MITRE-style threat detail on top of the governance process. |
+| **MAESTRO / agentic AI threat modeling** | Layered threat modeling for multi-agent and autonomous AI ecosystems. | Informs the treatment of inter-agent communication, orchestration boundaries, memory/context poisoning, tool use, and agent ecosystem risk. | MAESTRO is strongest for agentic systems; this framework also covers non-agentic LLM application risks, model/provider surfaces, and regulatory mapping. |
+| **Microsoft Agentic AI Failure Mode Taxonomy** | Failure-mode taxonomy for agent safety and security, including memory poisoning and multi-agent communication failures. | Informs the agent-specific failure analysis behind memory/context, confidentiality, integrity, availability, and multi-agent propagation concerns. | The Microsoft taxonomy identifies failure modes; this framework maps comparable failures into attack chains, controls, and worksheet decisions. |
+| **OWASP Agentic AI / MCP guidance** | Emerging guidance for autonomous agents, tools, MCP servers, third-party tool integration, and related runtime trust boundaries. | Informs tool poisoning, third-party MCP server risk, tool interference, prompt injection through tool descriptions, least privilege, and human-in-the-loop requirements. | MCP guidance is intentionally narrow to tool ecosystems; this framework treats MCP as one attack surface inside the broader deployment model. |
+| **Classic STRIDE / PASTA / LINDDUN** | General-purpose threat-modeling methods for system, attack-path, and privacy analysis. | Useful as optional facilitation lenses for trust boundaries, data flows, spoofing, tampering, disclosure, denial of service, and privacy harms. | These methods are not LLM-native; this framework supplies the LLM-specific categories, assumptions, attack chains, and controls they lack. |
+
+**Positioning statement:** OWASP provides the vulnerability categories; MITRE ATLAS provides adversary behavior; NIST provides governance structure; MAESTRO, Microsoft, and OWASP Agentic/MCP guidance cover agentic/tool failure modes. This framework combines those lenses into an evidence-backed assessment workflow with concrete scenarios, risk scoring, and mitigation mapping.
+
+**Evidence-provenance rule for comparable frameworks:** Use official framework pages and primary standards documents as authority for category existence, scope, and definitions. Vendor blogs, implementation guides, and community commentary may explain mappings, but they must not carry risk ratings unless corroborated by primary or source-backed evidence.
+
+Primary framework references:
+- OWASP Top 10 for LLM Applications / OWASP GenAI Security Project: `https://owasp.org/www-project-top-10-for-large-language-model-applications`, `https://genai.owasp.org/llm-top-10`
+- MITRE ATLAS: `https://atlas.mitre.org/`
+- NIST AI RMF Generative AI Profile: `https://www.nist.gov/publications/artificial-intelligence-risk-management-framework-generative-artificial-intelligence`
+- Microsoft Agentic AI Failure Mode Taxonomy announcement: `https://www.microsoft.com/en-us/security/blog/2025/04/24/new-whitepaper-outlines-the-taxonomy-of-failure-modes-in-ai-agents`
+- OWASP Agentic AI / third-party MCP guidance: `https://genai.owasp.org/initiatives/agentic-security-initiative`, `https://genai.owasp.org/resource/cheatsheet-a-practical-guide-for-securely-using-third-party-mcp-servers-1-0`
+- Cloud Security Alliance MAESTRO overview: `https://cloudsecurityalliance.org/blog/2025/02/06/agentic-ai-threat-modeling-framework-maestro`
+
+---
+
 ## Explicit Foundation (v1.4 Addition)
 
 This framework makes three elements **explicit** that were previously implicit:
@@ -248,6 +277,9 @@ For organizations with limited resources, defense investment should follow this 
 8. **Inter-agent context isolation** — breaks multi-agent kill chains
 9. **Anomaly detection** — catches attacks that slip past preventive controls
 
+**Conditional Tier 1 — Internal Safety Collapse (deployment-gated):**
+If external parties can submit or shape any task/validator/data harness the LLM or agent executes (eval, fine-tuning, data-generation, code-repair, or autonomous-tool workflows), **ISC-DEF-1 (validator harness validation) is Tier 1 before pilot** — it ranks alongside minimal permission scoping for these deployments. ISC-DEF-2 (agentic loop visibility and rate limiting) is Tier 2 monitoring. ISC-DEF-3 (deployment-level ISC scanning) is provider-side / model-owner work; deployers on a third-party API mark it N/A. Plain inference consumers with no attacker-shaped harness execution skip ISC controls (N/A). See `threat-taxonomy.md` Category 14 applicability boundary.
+
 ---
 
 ## Regulatory Landscape
@@ -275,6 +307,7 @@ The EU AI Act is the most comprehensive and has the highest compliance stakes. O
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 1.8 | 2026-06-24 | Added comparable-framework positioning for OWASP LLM/GenAI, MITRE ATLAS, NIST AI RMF GenAI Profile, MAESTRO, Microsoft agentic failure taxonomy, OWASP Agentic/MCP guidance, and classic threat-modeling methods. |
 | 1.7 | 2026-06-24 | Correction pass: residual-risk math fixed; EU AI Act mappings normalized; risk matrix base/elevated scores split; detection/operational-gap controls added to worksheet; defense tables normalized; release manifest added. |
 | 1.6 | 2026-06-24 | Red-team sync: canonical taxonomy numbering restored, ISC threaded into operational workflow, OWASP 2025 IDs corrected, risk-tier contradictions fixed, quick reference and worksheet synced. |
 | 1.4 | 2026-06-19 | Round refinements: Assumptions section, Asset Inventory section, and Attack Surface Catalog section made explicit so the framework defines what it assumes, protects, and exposes. |
@@ -309,4 +342,4 @@ The EU AI Act is the most comprehensive and has the highest compliance stakes. O
 
 **Framework prepared by:** Synthesizer (LLM Threat Modeling project)
 **Date:** 2026-06-24
-**Status:** Version 1.7 — correction pass complete; pilot candidate pending team-specific assessment and sign-off
+**Status:** Version 1.8 — comparable-framework positioning added; pilot candidate pending team-specific assessment and sign-off

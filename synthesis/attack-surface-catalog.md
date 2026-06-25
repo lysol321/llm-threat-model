@@ -160,7 +160,7 @@ Surfaces are organized into five categories:
 | **Inference framework** | transformers, vLLM, llama.cpp, etc. | Framework vulnerabilities; custom hook injection | Cat 3 | HIGH |
 | **Container base image** | Docker/singularity base images for inference | Base image compromise; pre-installed backdoors | Cat 3 | HIGH (self-hosted) |
 
-### 3.5 Skill and Agent Marketplace Surfaces
+### 3.4 Skill and Agent Marketplace Surfaces
 
 > **NEW v1.5 — Jun 2026 research (arXiv "Detecting Malicious Agent Skills in the Wild"):** Skill marketplaces for agentic AI are emerging as a supply chain attack surface analogous to npm/package registries.
 
@@ -170,7 +170,7 @@ Surfaces are organized into five categories:
 | **Skill installation mechanism** | Mechanism by which agents discover, download, and activate skills | Supply chain foothold; skill rug-pull post-install; persistent compromise | Cat 3 | HIGH |
 | **Skill permission model** | Authorization model for skill capabilities (file access, network, etc.) | Skills with excessive permissions; capability creep | Cat 2, Cat 3 | MEDIUM |
 
-### 3.4 CI/CD and Deployment Surfaces
+### 3.5 CI/CD and Deployment Surfaces
 
 | Surface | Description | Threat Vector | Threat Category | Risk Rating |
 |---------|-------------|---------------|----------------|-------------|
@@ -254,6 +254,7 @@ The following matrix maps representative surfaces to their threat categories and
 |---------|-----------------|---------------|
 | Text input field (direct) | Cat 1, Cat 10 | Chain A (direct PI) |
 | Text input field (multi-turn) | Cat 1 (multi-turn) | Chain A |
+| Task/validator/data harness (attacker-shaped) | Cat 14 (ISC) | — (harness-mediated, not a kill chain) |
 | File upload (document) | Cat 10, Cat 1 | Chain A (indirect PI) |
 | Image input (VLM) | Cat 10 | Chain A (indirect PI) |
 | RAG document ingestion | Cat 4, Cat 1 | Chain A (indirect PI) |
@@ -289,7 +290,7 @@ The following matrix maps representative surfaces to their threat categories and
 
 | Risk Tier | Surfaces | Priority |
 |-----------|---------|----------|
-| **CRITICAL** | Direct text input, email content (EchoLeak), RAG document ingestion, MCP server response (auth gap — most remote servers lack authentication), HuggingFace model repo (custom code), AIBOM signing keys, tool execution sandbox, file write, network egress, shell execution, database connection, email send | Immediate action |
+| **CRITICAL** | Direct text input, email content (EchoLeak), RAG document ingestion, MCP server response (auth gap — most remote servers lack authentication), attacker-shaped TVD harness (ISC, Cat 14, when harness is executed), HuggingFace model repo (custom code), AIBOM signing keys, tool execution sandbox, file write, network egress, shell execution, database connection, email send | Immediate action |
 | **HIGH** | Multi-turn context, slow-burn PI trajectory accumulation, file upload, search results, shared memory/state, LangGraph Send/Command, adapter registry, fine-tuning pipeline, RLHF pipeline, PyPI deps, inference API, tool return values, file read, system prompt, custom inference hooks, context window, skill marketplace | This quarter |
 | **MEDIUM** | Structured data input, base64/Unicode, code generation, A2A protocol, streaming endpoint, database query results, webhook response, tokenizer, container image, deployment pipeline, batch API, shared GPU, audit logs, skill permission model | Next planning cycle |
 | **LOW** | API parameters (non-text), metrics endpoint, debug interfaces | Monitor |
@@ -313,6 +314,8 @@ Confirm which surfaces are present in your deployment:
 | Search query processing | [ ] YES  [ ] NO |  |
 | RAG document ingestion | [ ] YES  [ ] NO |  |
 | Tool outputs as context | [ ] YES  [ ] NO |  |
+| Task/validator/data harness executed (Cat 14 — ISC) | [ ] YES  [ ] NO |  |
+| — of which attacker-controllable/shapeable | [ ] YES  [ ] NO |  |
 
 ### Communication Surfaces
 
@@ -365,4 +368,4 @@ Confirm which surfaces are present in your deployment:
 
 **Last updated:** 2026-06-24 (v1.3 — ISC Category 14 numbering synced; checklist verified)
 **Next review:** 2026-09-24 or when adding new integrations
-**Part of:** LLM Threat Modeling Framework v1.6
+**Part of:** LLM Threat Modeling Framework v1.8 release (see `release-manifest.md`)

@@ -104,7 +104,7 @@ This is the pattern confirmed in the Chain C LangGraph walkthrough:
 
 ## Defense Implications
 
-|| Node | Defensive Control | Protocol-Specific |
+| Node | Defensive Control | Protocol-Specific |
 |------|-------------------|-----------------|
 | Agent A compromised | Input validation, goal-lock, sandboxed tool execution | |
 | MCP Server compromised | MCP Server allowlist, server authentication, returned-content filtering | **MCP-specific:** Use signed responses, verify MCP server identity |

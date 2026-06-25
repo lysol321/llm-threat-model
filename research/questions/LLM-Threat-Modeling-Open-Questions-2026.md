@@ -103,7 +103,7 @@ The framework rates Capability Withholding (Cat. 13 Addendum) at Wild_vs_Theory 
 
 ### Summary of Current Research
 
-The framework documents 4 cascading conflicts between PI-DEF-2 (output filtering), AGENCY-DEF-1 (privilege separation), and AGENCY-DEF-2 (tool use policy/sandboxing). This is a genuine and understudied area.
+The framework documents 4 cascading conflicts between PI-DEF-2 (RAG context labeling + load-time sanitization, in its context-filtering role), AGENCY-DEF-1 (minimal tool permission allowlist + privilege separation), and AGENCY-DEF-2 (mandatory HITL for high-risk actions). This is a genuine and understudied area. (Canonical control definitions per `synthesis/defense-playbook.md`; earlier drafts used looser glosses.)
 
 **Published Research on Stacked Defense Effectiveness:**
 
@@ -148,7 +148,17 @@ The framework rates Chain C (multi-agent context propagation) at Wild_vs_Theory 
 
 **LangGraph CVE Landscape (2025-2026):**
 
-| CVE | Severity | Type | Context Propagation Related? |
+> ⚠️ **Correction (provenance, superseded by synthesis v1.5):** The specific CVE IDs
+> in the table below (`CVE-2026-27794`, `CVE-2025-67644`, `CVE-2026-48775`,
+> `CVE-2026-28277`) **could not be confirmed against NVD / GitHub Advisory Database**
+> and may be LangGraph-wide or fabricated. `synthesis/threat-taxonomy.md` (Category 9)
+> retracted them; treat them as **unverified pending direct NVD query**, not as
+> established fact. The table is retained only to record what the original
+> 2026-06-19 research pass surfaced. The substantive Q4 conclusion does **not**
+> depend on these IDs — it rests on source-confirmed LangGraph `ToolNode.invoke()`
+> unsanitized passthrough.
+
+| CVE (UNVERIFIED) | Severity | Type | Context Propagation Related? |
 |---|---|---|---|
 | CVE-2026-27794 | Moderate (6.6) | Unsafe deserialization (pickle RCE) | NO — cache layer |
 | CVE-2025-67644 | High (7.3) | SQL injection (SQLite filter keys) | NO — checkpoint metadata |

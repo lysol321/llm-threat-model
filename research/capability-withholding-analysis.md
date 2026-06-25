@@ -10,7 +10,7 @@ Capability withholding is a class of attack distinct from commission attacks (pr
 
 | Attack Type | Mechanism | Taxonomy Category |
 |---|---|---|
-| Commission attack | Model is made to DO harm | Existing: Category 1 (Prompt Injection), Category 6 (Supply Chain) |
+| Commission attack | Model is made to DO harm | Existing: Category 1 (Prompt Injection), Category 3 (Supply Chain) |
 | Capability withholding | Model is made to BE less capable | Absent from current taxonomy |
 
 ## Evidence Found
@@ -80,7 +80,7 @@ Multiple papers document that RLHF-trained LLMs are susceptible to reward hackin
 - AIBOM provenance for RLHF reward models (prevent reward signal tampering)
 
 ## Taxonomic Placement Recommendation
-Capability withholding is distinct from Category 1 (Prompt Injection — commission) and Category 6 (Supply Chain Attacks — commission via poisoning). It should be noted as a separate sub-type or Category 13 with Wild_vs_Theory 1/5 pending evidence.
+Capability withholding is distinct from Category 1 (Prompt Injection — commission) and Category 3 (Supply Chain Attacks — commission via poisoning). It should be noted as a separate sub-type or Category 13 Addendum with Wild_vs_Theory 1/5 pending evidence.
 
 ## Open Questions
 1. No documented in-wild intentional capability withholding attack on LLM systems confirmed

@@ -1,9 +1,16 @@
 # LLM Threat Assessment — Engineering Worksheet
 
-**Version:** 1.7 (correction pass — residual-risk math, EU AI Act mapping, detection controls, ISC harness boundary aligned)
+**Version:** 1.8 (worksheet-friction pass — routing table, N/A handling, hosted API checklist, scoring legend)
 **Date:** 2026-06-24
 **Purpose:** Enable a 3-person engineering team (no ML security expertise required) to complete a valid threat model for their LLM deployment in under 4 hours.
-**How to use:** Work through Sections 1–5 in order. Use the Scoring Rubric Appendix (Appendices A–F) at the end when you need decision guidance for specific ratings.
+**How to use:** Work through Sections 1–5 in order. Use the Scoring Rubric Appendix (Appendices A–F) at the end when you need decision guidance for specific ratings. First pick a concrete deployment profile (for example: customer-support RAG assistant with CRM tools; internal code agent with repo write tools; self-hosted open-weight model with LoRA adapter; multi-agent research workflow). Score that deployment, not the abstract product roadmap.
+
+**Scale legend — keep these separate:**
+- **Applicability:** Whether the threat exists for this deployment. Apply this first. A threat with strong literature support can still be N/A for your system.
+- **Surface rating:** NONE / LOW / MEDIUM / HIGH / CRITICAL for the exposed attack surface in Section 4.
+- **Base or elevated risk score:** 1–25 Likelihood × Impact score from `risk-matrix.md`, used for Section 5 residual-risk math.
+- **Residual risk score:** 1–25 score after preventive controls. Detection-only controls do not lower this score.
+- **Wild_vs_Theory:** 1–5 evidence-confidence calibration, not severity. Use it only after the threat is applicable.
 
 ---
 
@@ -86,7 +93,8 @@ _____________________________________________
 
 | Threat | Applies? | Notes |
 |--------|----------|-------|
-| Model from HuggingFace or model hub | [ ] YES  [ ] NO | If NO, skip to 2.5 |
+| Hosted API provider used | [ ] YES  [ ] NO | If YES, complete hosted provider checklist in Section 3.3 / Appendix A |
+| Model from HuggingFace or model hub | [ ] YES  [ ] NO | If NO and no hosted provider/third-party model dependency, skip to 2.5 |
 | Publisher is "verified" on hub | [ ] YES  [ ] NO | |
 | AIBOM maintained for this model | [ ] YES  [ ] NO | |
 | Custom inference code present | [ ] YES  [ ] NO | If YES, has code been reviewed? [ ] YES  [ ] NO |
@@ -123,16 +131,31 @@ _____________________________________________
 
 ## Section 3: Defense Control Evaluation
 
-**Purpose:** Evaluate each implemented defense as YES / PARTIAL / NO. Use the PARTIAL Definitions (Appendix C) to disambiguate.
+**Purpose:** Evaluate each implemented defense as YES / PARTIAL / NO / N/A. Use the PARTIAL Definitions (Appendix C) to disambiguate. N/A is allowed only when the surface is genuinely absent; record the reason in Notes.
+
+### Section 2 → Section 3 Routing Table
+
+Use this table after completing Section 2 so teams do not skip required controls.
+
+| If Section 2 says... | Then complete these Section 3 controls | Notes |
+|---|---|---|
+| Any prompt injection surface = YES | PI-DEF-1, PI-DEF-3, PI-DEF-4 | Direct PI always requires basic prompt and output controls. |
+| RAG / retrieval = YES | PI-DEF-2 | Must check load-time sanitization and infrastructure-enforced RAG/tool privilege separation. |
+| Tools or actions = YES | AGENCY-DEF-1, AGENCY-DEF-2, AGENCY-DEF-3 | Tool access is the force multiplier for prompt injection. |
+| Hosted API provider = YES | SC-DEF-1, SC-DEF-3, SC-GAP-1 | Use the hosted-provider checklist in Section 2.4 and Appendix A. |
+| HuggingFace / model hub / self-hosted weights = YES | SC-DEF-1, SC-DEF-2, SC-DEF-3, SC-GAP-1 | Custom inference code and adapters require explicit review/sandbox decisions. |
+| Multi-agent / MCP / A2A / LangGraph = YES | MA-DEF-1, MA-DEF-2, DET-DEF-1 | Record whether context isolation is infrastructure-enforced or just prompted. |
+| Attacker-shaped task/validator/data harness = YES | ISC-DEF-1, ISC-DEF-2, ISC-DEF-3 | ISC is harness-bound, not role-bound. Plain inference without harness is N/A/LOW. |
+| Any state-changing action or customer-visible output = YES | AGENCY-DEF-2, PI-DEF-4, DET-DEF-1 | HITL must show context provenance, not just proposed action. |
 
 ### 3.1 Prompt Injection Defenses
 
-| Control ID | Control Name | Rating | Notes |
+| Control ID | Control Name | Rating | Evidence / owner / notes |
 |------------|-------------|--------|-------|
-| PI-DEF-1 | Instruction hierarchy hardening | [ ] YES  [ ] PARTIAL  [ ] NO | |
-| PI-DEF-2 | RAG context labeling + load-time sanitization | [ ] YES  [ ] PARTIAL  [ ] NO | |
-| PI-DEF-3 | Input filtering (pattern + ML) | [ ] YES  [ ] PARTIAL  [ ] NO | |
-| PI-DEF-4 | Output validation | [ ] YES  [ ] PARTIAL  [ ] NO | |
+| PI-DEF-1 | Instruction hierarchy hardening | [ ] YES  [ ] PARTIAL  [ ] NO  [ ] N/A | |
+| PI-DEF-2 | RAG context labeling + load-time sanitization | [ ] YES  [ ] PARTIAL  [ ] NO  [ ] N/A | N/A only if no retrieval/external context enters the model. |
+| PI-DEF-3 | Input filtering (pattern + ML) | [ ] YES  [ ] PARTIAL  [ ] NO  [ ] N/A | |
+| PI-DEF-4 | Output validation | [ ] YES  [ ] PARTIAL  [ ] NO  [ ] N/A | |
 
 **PARTIAL definitions:**
 - PI-DEF-1 PARTIAL if privilege labels present OR hierarchy rejection present, but not both; OR prompt is extractable
@@ -141,36 +164,40 @@ _____________________________________________
 
 ### 3.2 Excessive Agency Defenses
 
-| Control ID | Control Name | Rating | Notes |
+| Control ID | Control Name | Rating | Evidence / owner / notes |
 |------------|-------------|--------|-------|
-| AGENCY-DEF-1 | Minimal tool permission allowlist | [ ] YES  [ ] PARTIAL  [ ] NO | |
-| AGENCY-DEF-2 | Mandatory HITL for high-risk actions | [ ] YES  [ ] PARTIAL  [ ] NO | |
-| AGENCY-DEF-3 | Tool call budgeting | [ ] YES  [ ] PARTIAL  [ ] NO | |
+| AGENCY-DEF-1 | Minimal tool permission allowlist | [ ] YES  [ ] PARTIAL  [ ] NO  [ ] N/A | N/A only if no tools/actions exist. Shared service-account execution without per-user authorization is no higher than PARTIAL. |
+| AGENCY-DEF-2 | Mandatory HITL for high-risk actions | [ ] YES  [ ] PARTIAL  [ ] NO  [ ] N/A | N/A only if no high-risk or state-changing actions exist. |
+| AGENCY-DEF-3 | Tool call budgeting | [ ] YES  [ ] PARTIAL  [ ] NO  [ ] N/A | N/A only if no tools/actions exist. |
 
 **PARTIAL definitions:**
 - AGENCY-DEF-1 PARTIAL if allowlist exists but includes more tools than strictly necessary; OR permissions scoped but not user-separated
 - AGENCY-DEF-2 PARTIAL if HITL exists but confirmation dialog shows only proposed action — no provenance; OR HITL covers some but not all HIGH-risk actions
 
+**HITL provenance checklist:** A YES for AGENCY-DEF-2 requires the confirmation UI/log to show: triggering user request, retrieved document/tool output that influenced the action, source or owner of influencing content, model rationale, affected object/data, destination/action result, and a default-deny timeout or equivalent abandoned-review behavior.
+
 ### 3.3 Supply Chain Defenses
 
-| Control ID | Control Name | Rating | Notes |
+| Control ID | Control Name | Rating | Evidence / owner / notes |
 |------------|-------------|--------|-------|
-| SC-DEF-1 | AIBOM maintenance | [ ] YES  [ ] PARTIAL  [ ] NO | |
-| SC-DEF-2 | Inference sandboxing | [ ] YES  [ ] PARTIAL  [ ] NO | |
-| SC-DEF-3 | Model registry controls | [ ] YES  [ ] PARTIAL  [ ] NO | |
-| SC-DEF-4 | Weight-level trojan / behavioral backdoor gap acknowledged | [ ] ACKNOWLEDGED  [ ] NOT ACKNOWLEDGED | Does not reduce preventive residual risk by itself |
+| SC-DEF-1 | AIBOM / provider inventory maintenance | [ ] YES  [ ] PARTIAL  [ ] NO  [ ] N/A | N/A only if no third-party model/provider/dependency is used. |
+| SC-DEF-2 | Inference sandboxing | [ ] YES  [ ] PARTIAL  [ ] NO  [ ] N/A | N/A for hosted API with no custom inference code; explain where sandbox responsibility sits. |
+| SC-DEF-3 | Model registry controls | [ ] YES  [ ] PARTIAL  [ ] NO  [ ] N/A | |
+| SC-GAP-1 (formerly SC-DEF-4) | Weight-level trojan / behavioral backdoor gap acknowledged | [ ] ACKNOWLEDGED  [ ] NOT ACKNOWLEDGED  [ ] N/A | Documentation gap only; does not reduce preventive residual risk by itself. |
 
 **PARTIAL definitions:**
-- SC-DEF-1 PARTIAL if AIBOM exists but key_verified_via is "none" or unspecified; OR no freshness tracking; OR identity_verified without external trust anchor
+- SC-DEF-1 PARTIAL if AIBOM exists but key_verified_via is "none" or unspecified; OR no freshness tracking; OR identity_verified without external trust anchor; OR hosted API provider/model/prompt/tool manifest is tracked without data-retention, model-change, or supplier-assurance review.
 - SC-DEF-2 PARTIAL if sandboxed but egress not fully blocked; OR seccomp not applied to custom code
-- SC-DEF-4 is ACKNOWLEDGED when the assessment explicitly states that artifact signing and provenance cannot prove behavioral safety of model weights/adapters; mitigations are sandboxing, network isolation, output monitoring, behavioral red-team probes, and supplier assurance.
+- SC-GAP-1 (formerly SC-DEF-4 in prior releases) is ACKNOWLEDGED when the assessment explicitly states that artifact signing and provenance cannot prove behavioral safety of model weights/adapters; mitigations are sandboxing, network isolation, output monitoring, behavioral red-team probes, and supplier assurance.
+
+**Hosted API provider checklist:** For hosted models, record provider name, pinned model ID/version, data-retention/training-use setting, regional/data-residency requirement, model-change review path, incident notification path, fallback-model approval path, prompt/tool manifest version, and supplier-assurance owner.
 
 ### 3.4 Multi-Agent Defenses
 
-| Control ID | Control Name | Rating | Notes |
+| Control ID | Control Name | Rating | Evidence / owner / notes |
 |------------|-------------|--------|-------|
-| MA-DEF-1 | Context isolation between agents | [ ] YES  [ ] PARTIAL  [ ] NO | |
-| MA-DEF-2 | Inter-agent output filtering | [ ] YES  [ ] PARTIAL  [ ] NO | |
+| MA-DEF-1 | Context isolation between agents | [ ] YES  [ ] PARTIAL  [ ] NO  [ ] N/A | N/A only for single-agent systems with no MCP/A2A-style agent routing. |
+| MA-DEF-2 | Inter-agent output filtering | [ ] YES  [ ] PARTIAL  [ ] NO  [ ] N/A | N/A only for single-agent systems with no inter-agent messages. |
 
 **PARTIAL definitions:**
 - MA-DEF-1 PARTIAL if some isolation present but agents share implicit context; OR sanitization not applied to all inter-agent messages; OR no privilege ceiling
@@ -179,10 +206,10 @@ _____________________________________________
 
 ### 3.5 Internal Safety Collapse Defenses
 
-| Control ID | Control Name | Rating | Notes |
+| Control ID | Control Name | Rating | Evidence / owner / notes |
 |------------|-------------|--------|-------|
-| ISC-DEF-1 | Validator harness validation | [ ] YES  [ ] PARTIAL  [ ] NO | |
-| ISC-DEF-2 | Agentic loop visibility and rate limiting | [ ] YES  [ ] PARTIAL  [ ] NO | |
+| ISC-DEF-1 | Validator harness validation | [ ] YES  [ ] PARTIAL  [ ] NO  [ ] N/A | N/A only if no attacker-shaped harness material can enter the system. |
+| ISC-DEF-2 | Agentic loop visibility and rate limiting | [ ] YES  [ ] PARTIAL  [ ] NO  [ ] N/A | N/A only if no task → model completion → validator loop exists. |
 | ISC-DEF-3 | Deployment-level ISC scanning | [ ] YES  [ ] PARTIAL  [ ] NO  [ ] N/A | Provider-side unless you control the model/API |
 
 **PARTIAL definitions:**
@@ -194,10 +221,10 @@ _____________________________________________
 
 Detection controls support response and accountability. They do **not** reduce preventive residual risk unless the scoring notes explicitly separate prevention from detection.
 
-| Control ID | Control Name | Rating | Notes |
+| Control ID | Control Name | Rating | Evidence / owner / notes |
 |------------|-------------|--------|-------|
-| DET-DEF-1 | Audit logging for AI actions | [ ] YES  [ ] PARTIAL  [ ] NO | |
-| DET-DEF-2 | Anomaly detection | [ ] YES  [ ] PARTIAL  [ ] NO | |
+| DET-DEF-1 | Audit logging for AI actions | [ ] YES  [ ] PARTIAL  [ ] NO  [ ] N/A | |
+| DET-DEF-2 | Anomaly detection | [ ] YES  [ ] PARTIAL  [ ] NO  [ ] N/A | |
 
 **PARTIAL definitions:**
 - DET-DEF-1 PARTIAL if logs record tool calls but omit prompt/context provenance, actor identity, model version, or downstream action result.
@@ -211,6 +238,10 @@ Detection controls support response and accountability. They do **not** reduce p
 
 ### 4.1 Prompt Injection Surface Rating
 Use Appendix A, Risk Rating 1.1 to determine: [ ] NONE  [ ] LOW  [ ] MEDIUM  [ ] HIGH
+
+Record both values when tools are present:
+- PI surface severity: _________________________________
+- Chain A impact after agency/tool exposure: _________________________________
 
 ### 4.2 Excessive Agency Surface Rating
 Use Appendix A, Risk Rating 1.2 to determine: [ ] NONE  [ ] LOW  [ ] MEDIUM  [ ] HIGH  [ ] CRITICAL
@@ -255,10 +286,10 @@ Use the Section 5 Decision Framework (Appendix E) to calculate residual risk sco
 
 For any CRITICAL or HIGH residual risks that cannot be immediately remediated:
 
-| Threat | Business Justification | Compensating Controls | Acceptance Signatories | Target Date |
-|--------|----------------------|----------------------|----------------------|-------------|
-| | | | | |
-| | | | | |
+| Threat | Acceptance Scope | Business Justification | Compensating Controls | Acceptance Signatories | Target Date |
+|--------|------------------|----------------------|----------------------|----------------------|-------------|
+| | [ ] Pilot-only  [ ] Internal-only  [ ] Limited production  [ ] Broad production  [ ] Prohibited until remediated | | | | |
+| | [ ] Pilot-only  [ ] Internal-only  [ ] Limited production  [ ] Broad production  [ ] Prohibited until remediated | | | | |
 
 **Required signatories:**
 - CRITICAL: System Owner + Security Lead + Executive Sponsor
@@ -328,7 +359,7 @@ START: Does the system accept user text input?
             (Ask: "Is there infrastructure enforcement blocking RAG → tool calls,
              or just a prompt instruction?")
             │
-            ├─ Infrastructure enforced (pipeline blocks) → PI Surface = LOW-MEDIUM (2/5)
+            ├─ Infrastructure enforced (pipeline blocks) → PI Surface = LOW (2/5)
             │
             ├─ Prompt instruction only ("LLM is told not to") → PI Surface = MEDIUM (3/5)
             │        Note: This is an ALIGNMENT control — less reliable
@@ -389,7 +420,7 @@ START: Does the system have tool/use permissions?
                 ├─ NO (just shows proposed action) → Agency Surface = MEDIUM (3/5)
                 │        HITL without provenance is ineffective against sophisticated PI.
                 │
-                └─ YES (provenance shown) → Agency Surface = LOW-MEDIUM (2/5)
+                └─ YES (provenance shown) → Agency Surface = LOW (2/5)
 
     Note: AGENCY-DEF-1 (allowlist) is the MOST CRITICAL control.
     If no allowlist exists, other controls provide limited protection.
@@ -455,7 +486,7 @@ START: Can an external party provide or shape any task harness component?
 
     Can the external party supply TWO OR MORE of: task definition, validator/schema, incomplete data?
     │
-    ├─ NO → ISC Surface = LOW-MEDIUM (2/5)
+    ├─ NO → ISC Surface = LOW (2/5)
     │        Single-component influence limits exploitability, but monitor for composition.
     │
     └─ YES → Continue.
@@ -469,10 +500,10 @@ START: Can an external party provide or shape any task harness component?
 
             Can the workflow run autonomously through task → model completion → validator acceptance?
             │
-            ├─ YES → ISC Surface = MEDIUM-HIGH (3/5)
+            ├─ YES → ISC Surface = MEDIUM (3/5)
             │        Semantic validation reduces risk, but autonomous loops amplify misses.
             │
-            └─ NO → ISC Surface = LOW-MEDIUM (2/5)
+            └─ NO → ISC Surface = LOW (2/5)
                      Human review and semantic validator bounds materially reduce risk.
 
     Escalate to CRITICAL (5/5) if:
@@ -487,7 +518,12 @@ START: Can an external party provide or shape any task harness component?
 
 ### Risk Rating 1.5 — Supply Chain Verification
 
-**Use when:** Assessing supply chain risk for HuggingFace or model hub deployments (Section 1.5 of the assessment template).
+**Use when:** Assessing supply chain risk for hosted API, HuggingFace/model-hub, self-hosted, fine-tuned, or adapter-based deployments (Section 2.4 and Section 4.4 of the assessment template).
+
+First choose the deployment path:
+
+- **Hosted API provider only:** complete the hosted-provider checklist. If provider, pinned model ID, data-retention/training-use settings, model-change review, incident path, fallback-model approval, prompt/tool manifest version, and supplier-assurance owner are documented, rate supply-chain verification LOW (2/5) operational/vendor risk. If any are missing, rate MEDIUM (3/5) until documented. If model/provider can change without review, rate HIGH (4/5).
+- **Model hub / self-hosted weights / adapters:** use the decision tree below.
 
 ```
 START: Is the model from a verified publisher on the model hub?
@@ -501,7 +537,7 @@ START: Is the model from a verified publisher on the model hub?
     Does AIBOM specify key_verified_via with a substantive trust anchor?
     (Not just identity_verified: true — must specify HOW verified)
     │
-    ├─ NO (no key_verified_via or "none") → Supply Chain Risk = HIGH (3/5)
+    ├─ NO (no key_verified_via or "none") → Supply Chain Risk = MEDIUM (3/5)
     │        Identity badge ≠ weight provenance. No actual verification path.
     │
     └─ YES → Continue.
@@ -516,7 +552,7 @@ START: Is the model from a verified publisher on the model hub?
         │
         ├─ "sigstore_attestation" → Continue to next check.
         │
-        └─ "pgp" → Supply Chain Risk = MEDIUM-HIGH (4/5)
+        └─ "pgp" → Supply Chain Risk = HIGH (4/5)
                  Note: No documented HF workflow. Deprecated in practice.
 
         For sigstore: Has the publisher actually signed the model weights?
@@ -525,7 +561,7 @@ START: Is the model from a verified publisher on the model hub?
         ├─ NO (no signature found) → Supply Chain Risk = HIGH (4/5)
         │        "Most viable path" still leads to dead end. Publisher has not adopted.
         │
-        └─ YES → Supply Chain Risk = LOW-MEDIUM (2/5)
+        └─ YES → Supply Chain Risk = LOW (2/5)
                  Sigstore v1.0 + publisher adoption + Rekor log = strongest available path.
 
     Is custom inference code present? (check model repository for custom classes)
@@ -643,7 +679,7 @@ For each defense in Sections 3.1–3.4, the following definitions apply:
 | Rating | Definition |
 |--------|------------|
 | **YES** | Explicit tool allowlist (only tools needed for use case are registered) AND user-scoped permissions AND no cross-user tool delegation |
-| **PARTIAL** | Allowlist exists but includes more tools than strictly necessary; OR permissions scoped but not user-separated; OR some tools have excessive permissions |
+| **PARTIAL** | Allowlist exists but includes more tools than strictly necessary; OR permissions scoped but not user-separated; OR tools execute through a shared service account without per-user authorization; OR some tools have excessive permissions |
 | **NO** | No tool allowlist; "allow all tools" or blocklist only |
 
 ### AGENCY-DEF-2 (Mandatory HITL for High-Risk Actions)
@@ -658,8 +694,8 @@ For each defense in Sections 3.1–3.4, the following definitions apply:
 
 | Rating | Definition |
 |--------|------------|
-| **YES** | AIBOM maintained with: model name, publisher with key_verified_via specified, checksum, custom code review status, freshness tracking with last_full_verification within 90 days, drift detection enabled |
-| **PARTIAL** | AIBOM exists but: key_verified_via is "none" or unspecified; OR no freshness tracking; OR no drift detection; OR identity_verified: true without external trust anchor |
+| **YES** | AIBOM/provider inventory maintained with: model/provider name, publisher or supplier identity, key_verified_via or hosted-provider assurance path, checksum where weights are controlled, custom code review status, prompt/tool manifest version, data-retention/training-use setting, freshness tracking with last_full_verification within 90 days, and drift/change review enabled |
+| **PARTIAL** | AIBOM exists but: key_verified_via is "none" or unspecified; OR no freshness tracking; OR no drift detection; OR identity_verified: true without external trust anchor; OR hosted API provider/model/prompt/tool manifest lacks data-retention, model-change, or supplier-assurance review |
 | **NO** | No AIBOM; model deployed without supply chain documentation |
 
 ### MA-DEF-1 (Context Isolation)
@@ -668,7 +704,8 @@ For each defense in Sections 3.1–3.4, the following definitions apply:
 |--------|------------|
 | **YES** | Explicit context boundaries between agents; inter-agent communication requires pass-through with sanitization; origin metadata tagged; privilege ceiling enforced |
 | **PARTIAL** | Some isolation present but agents share implicit context; OR sanitization present but not applied to all inter-agent messages; OR no privilege ceiling |
-| **NO / N/A** | No context isolation; agents share full conversation history |
+| **NO** | Multi-agent system exists and agents share full conversation history without enforced context isolation |
+| **N/A** | Single-agent system with no inter-agent communication path; record reason in Section 3.4 notes |
 
 ---
 
@@ -747,12 +784,35 @@ Where:
                   2.0 (AGENCY-DEF-1 NO AND tool permissions exist)
 ```
 
+**AGENCY_FACTOR scope:** Apply AGENCY_FACTOR > 1.0 only to threats with a tool/action path (Chain A, Chain C, Excessive Agency, agentic ISC). For threats with no agency/tool path (e.g., embedding inversion, system prompt extraction, quota exhaustion, output validation), use AGENCY_FACTOR = 1.0 regardless of AGENCY-DEF-1 rating.
+
+**Common BASE_RISK lookup:** Use `risk-matrix.md` for the full table; this worksheet includes common cases to avoid scoring detours.
+
+| Threat / condition | BASE_RISK to use |
+|---|---:|
+| Chain A: indirect PI + agency/data exfiltration path | 20 |
+| Supply Chain: malicious custom inference code | 15 |
+| Supply Chain: no sandbox/egress detection before exfiltration | 20 |
+| Multi-Agent Context Propagation | 15 |
+| Multi-Agent Context Propagation with action path | 19 |
+| Internal Safety Collapse / attacker-shaped harness executed downstream | 20 |
+| Direct Prompt Injection | 15 |
+| Purchased PI Template Attack | 15 |
+| RAG Context Poisoning standalone | 12 |
+| RAG Context Poisoning in data-heavy action/decision deployment | 15 |
+| Excessive Agency standalone | 12 |
+| Excessive Agency with state-changing tools or weak HITL | 14 |
+| Metered Enterprise API Quota Exhaustion | 16 |
+| Output Validation Failure | 9 |
+| HITL Failure | 9 |
+| Defense Control Type Confusion | 12 |
+
 **Example:**
 - Chain A: Elevated base = 20, PI-DEF-2 = PARTIAL (0.7), AGENCY-DEF-1 = PARTIAL (1.5)
 - Residual = min(25, 20 × 0.7 × 1.5) = 21 → CRITICAL
 - Recommendation: NOT ACCEPTABLE. Both primary controls must be improved.
 
-**Control-gap floor:** If a CRITICAL/HIGH threat has all primary preventive controls rated NO, residual risk cannot be reduced below HIGH even if detection controls are present. Detection (`DET-DEF-*`) supports monitoring and response, not prevention.
+**Control-gap floor:** If a CRITICAL/HIGH threat has all primary preventive controls rated NO, residual risk cannot be reduced below HIGH even if detection controls are present. Detection (`DET-DEF-*`) supports monitoring and response, not prevention. Record detection under compensating controls and response readiness; do **not** lower `MITIGATION_FACTOR` because logging or anomaly detection exists.
 
 ### Step 4: Risk Acceptance Decision
 
@@ -822,6 +882,6 @@ Chain C is the canonical example: no published CVE exists for LangGraph-specific
 
 ---
 
-**Last updated:** 2026-06-24 (v1.7 — correction pass: residual-risk formula fixed; detection and operational gap controls added; ISC harness boundary aligned)
+**Last updated:** 2026-06-24 (v1.8 — worksheet-friction pass: routing table, N/A handling, hosted API checklist, scoring legend, base-score lookup)
 **Next review:** 2026-09-24
-**Part of:** LLM Threat Modeling Framework v1.7
+**Part of:** LLM Threat Modeling Framework v1.8

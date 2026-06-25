@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LLM Threat Model v1.7</title>
+<style>
+  :root {
+    --critical: #ef4444;
+    --high: #f97316;
+    --medium: #eab308;
+    --low: #22c55e;
+    --bg: #0a0f1e;
+    --surface: #111827;
+    --surface2: #1f2937;
+    --surface3: #27374d;
+    --border: #1e3a5f;
+    --border2: #2d4a6e;
+    --text: #f0f6ff;
+    --text2: #8ba3c0;
+    --text3: #4a6b8a;
+    --accent: #38bdf8;
+    --accent2: #818cf8;
+    --green: #22c55e;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.6; }
+
+  /* ── STICKY HEADER ── */
+  .site-header {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(10,15,30,0.95);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 24px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .site-header h1 { font-size: 16px; font-weight: 700; letter-spacing: -0.01em; }
+  .site-header .badge { background: var(--critical); color: white; font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 4px; letter-spacing: 0.06em; }
+  .site-header .meta { color: var(--text3); font-size: 12px; margin-left: auto; }
+  .site-header .print-btn {
+    background: var(--surface2); border: 1px solid var(--border2); color: var(--text2);
+    font-size: 11px; font-weight: 600; padding: 5px 12px; border-radius: 5px; cursor: pointer;
+    transition: all 0.15s;
+  }
+  .site-header .print-btn:hover { background: var(--surface3); color: var(--text); }
+
+  /* ── STICKY NAV ── */
+  .site-nav {
+    position: sticky; top: 49px; z-index: 99;
+    background: rgba(10,15,30,0.95);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    display: flex; gap: 0; overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .site-nav::-webkit-scrollbar { display: none; }
+  .site-nav button {
+    background: none; border: none; border-bottom: 2px solid transparent;
+    color: var(--text2); padding: 11px 16px; cursor: pointer;
+    font-size: 13px; font-weight: 500; white-space: nowrap;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .site-nav button:hover { color: var(--text); }
+  .site-nav button.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* ── LAYOUT ── */
+  main { max-width: 1120px; margin: 0 auto; padding: 28px 24px; }
+  .tab-panel { display: none; animation: fadeIn 0.15s ease; }
+  .tab-panel.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+  h2 { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 14px; letter-spacing: -0.01em; }
+  h3 { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 8px; }
+  p { color: var(--text2); margin-bottom: 12px; font-size: 13px; }
+
+  /* ── PRIORITY BADGE ── */
+  .prio { display: inline-block; font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 4px; letter-spacing: 0.06em; white-space: nowrap; }
+  .prio-CRITICAL { background: rgba(239,68,68,0.2); color: #fca5a5; border: 1px solid rgba(239,68,68,0.35); }
+  .prio-HIGH     { background: rgba(249,115,22,0.2); color: #fdba74; border: 1px solid rgba(249,115,22,0.35); }
+  .prio-MEDIUM   { background: rgba(234,179,8,0.15);  color: #fde047; border: 1px solid rgba(234,179,8,0.3); }
+  .prio-LOW      { background: rgba(34,197,94,0.15);  color: #86efac; border: 1px solid rgba(34,197,94,0.3); }
+
+  /* ── STAT CARDS (overview) ── */
+  .stat-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 24px; }
+  @media (max-width:600px) { .stat-row { grid-template-columns: repeat(2,1fr); } }
+  .stat {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    padding: 18px 16px; text-align: center; cursor: pointer;
+    transition: border-color 0.15s, transform 0.1s;
+  }
+  .stat:hover { transform: translateY(-1px); }
+  .stat.critical { border-color: rgba(239,68,68,0.3); }
+  .stat.critical:hover { border-color: var(--critical); }
+  .stat.high    { border-color: rgba(249,115,22,0.3); }
+  .stat.high:hover { border-color: var(--high); }
+  .stat.medium  { border-color: rgba(234,179,8,0.25); }
+  .stat.medium:hover { border-color: var(--medium); }
+  .stat.low     { border-color: rgba(34,197,94,0.25); }
+  .stat.low:hover { border-color: var(--low); }
+  .stat .num { font-size: 32px; font-weight: 800; margin-bottom: 4px; line-height: 1; }
+  .stat .label { font-size: 11px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.06em; }
+  .stat.critical .num { color: var(--critical); }
+  .stat.high .num    { color: var(--high); }
+  .stat.medium .num  { color: var(--medium); }
+  .stat.low .num     { color: var(--low); }
+
+  /* ── INSIGHT CARDS ── */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width:680px) { .grid-2 { grid-template-columns: 1fr; } }
+  .insight-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px;
+  }
+  .insight-card .ic-title { font-weight: 600; font-size: 13px; color: var(--text); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+  .insight-card .ic-icon { font-size: 16px; }
+  .insight-card p { margin: 0; font-size: 13px; }
+
+  /* ── HOW TO USE ── */
+  .how-to { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+  .steps { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; }
+  @media (max-width:780px) { .steps { grid-template-columns: 1fr 1fr; } }
+  .step { display: flex; gap: 10px; }
+  .step .step-num { font-size: 18px; font-weight: 800; color: var(--accent); opacity: 0.5; min-width: 28px; line-height: 1.2; }
+  .step .step-text { font-size: 12px; color: var(--text2); }
+  .step .step-text strong { color: var(--text); }
+
+  /* ── THREAT CARDS ── */
+  .filter-bar { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+  .filter-btn {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 6px;
+    color: var(--text2); font-size: 12px; font-weight: 600; padding: 5px 12px; cursor: pointer;
+    transition: all 0.12s;
+  }
+  .filter-btn:hover { color: var(--text); border-color: var(--border2); }
+  .filter-btn.active { color: var(--text); border-color: var(--accent); background: rgba(56,189,248,0.08); }
+  .filter-btn.f-CRITICAL.active { border-color: var(--critical); background: rgba(239,68,68,0.1); color: #fca5a5; }
+  .filter-btn.f-HIGH.active    { border-color: var(--high);     background: rgba(249,115,22,0.1); color: #fdba74; }
+  .filter-btn.f-MEDIUM.active  { border-color: var(--medium);   background: rgba(234,179,8,0.08); color: #fde047; }
+  .filter-btn.f-LOW.active     { border-color: var(--low);      background: rgba(34,197,94,0.08);  color: #86efac; }
+  .search-input {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 6px;
+    color: var(--text); font-size: 12px; padding: 5px 12px; outline: none;
+    transition: border-color 0.15s; min-width: 180px;
+  }
+  .search-input:focus { border-color: var(--accent); }
+  .search-input::placeholder { color: var(--text3); }
+
+  .threat-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    margin-bottom: 8px; overflow: hidden;
+    border-left: 3px solid transparent;
+    transition: border-color 0.15s;
+  }
+  .threat-card.prio-CRITICAL { border-left-color: var(--critical); }
+  .threat-card.prio-HIGH     { border-left-color: var(--high); }
+  .threat-card.prio-MEDIUM   { border-left-color: var(--medium); }
+  .threat-card.prio-LOW      { border-left-color: var(--low); }
+  .threat-card.hidden { display: none; }
+
+  .tc-header {
+    display: flex; align-items: center; gap: 10px; padding: 13px 16px;
+    cursor: pointer; user-select: none;
+  }
+  .tc-header:hover { background: rgba(255,255,255,0.02); }
+  .tc-num { font-size: 11px; font-weight: 700; color: var(--text3); min-width: 22px; }
+  .tc-title { font-weight: 600; flex: 1; font-size: 13px; }
+  .tc-owasp { font-size: 10px; color: var(--text3); background: var(--surface2); padding: 2px 6px; border-radius: 4px; font-weight: 600; }
+  .tc-chevron { color: var(--text3); font-size: 10px; transition: transform 0.2s; margin-left: 4px; }
+  .threat-card.open .tc-chevron { transform: rotate(90deg); }
+
+  .tc-body {
+    max-height: 0; overflow: hidden;
+    transition: max-height 0.25s cubic-bezier(0.4,0,0.2,1);
+  }
+  .threat-card.open .tc-body { max-height: 600px; }
+  .tc-body-inner { padding: 0 16px 16px; border-top: 1px solid var(--border); padding-top: 14px; }
+  .tc-body-inner p { font-size: 13px; margin-bottom: 10px; }
+
+  .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+  @media (max-width:500px) { .detail-grid { grid-template-columns: 1fr; } }
+  .detail-item label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; display: block; margin-bottom: 3px; }
+  .detail-item span { font-size: 12px; color: var(--text2); }
+
+  .subtypes-list { list-style: none; padding: 0; }
+  .subtypes-list li { font-size: 12px; color: var(--text2); padding: 3px 0 3px 16px; position: relative; line-height: 1.5; }
+  .subtypes-list li::before { content: '·'; position: absolute; left: 4px; color: var(--text3); }
+
+  .tc-note { margin-top: 10px; background: var(--surface2); border-radius: 6px; padding: 9px 12px; font-size: 12px; color: var(--text2); border-left: 2px solid var(--accent); }
+
+  /* ── ATTACK CHAINS ── */
+  .chain {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    padding: 20px; margin-bottom: 14px;
+  }
+  .chain-header { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+  .chain-header h3 { margin: 0; font-size: 14px; flex: 1; min-width: 200px; }
+  .chain-wvt { font-size: 11px; color: var(--text2); background: var(--surface2); padding: 3px 8px; border-radius: 4px; white-space: nowrap; }
+  .chain-desc { font-size: 12px; color: var(--text2); margin-bottom: 16px; padding: 10px 12px; background: var(--surface2); border-radius: 6px; }
+
+  .chain-flow { display: flex; flex-direction: column; }
+  .chain-step { display: flex; align-items: flex-start; gap: 12px; }
+  .step-col { display: flex; flex-direction: column; align-items: center; min-width: 24px; padding-top: 4px; }
+  .step-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+  .step-line { width: 2px; flex: 1; min-height: 16px; margin: 2px 0; }
+  .chain-step:last-child .step-line { display: none; }
+  .step-box { background: var(--surface2); border-radius: 7px; padding: 9px 13px; margin-bottom: 6px; flex: 1; }
+  .step-box .step-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 3px; }
+  .step-box .step-text { font-size: 13px; color: var(--text2); }
+
+  .chain-defenses { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border); font-size: 12px; color: var(--text2); }
+  .chain-defenses strong { color: var(--text); display: block; margin-bottom: 4px; }
+  .def-tag { display: inline-block; background: rgba(56,189,248,0.1); border: 1px solid rgba(56,189,248,0.25); color: var(--accent); font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px; margin: 2px 3px 2px 0; }
+
+  /* ── RISK MATRIX ── */
+  .matrix-wrap { overflow-x: auto; border-radius: 10px; border: 1px solid var(--border); }
+  .matrix { border-collapse: collapse; width: 100%; min-width: 560px; }
+  .matrix th, .matrix td { border: 1px solid var(--border); padding: 0; text-align: center; }
+  .matrix thead th { background: var(--surface2); color: var(--text2); font-size: 11px; font-weight: 600; padding: 8px 10px; }
+  .matrix th.axis-cell { background: var(--surface); color: var(--text2); font-size: 11px; font-weight: 600; padding: 8px 10px; text-align: left; min-width: 140px; line-height: 1.4; }
+  .matrix td.axis-cell { background: var(--surface); color: var(--text2); font-size: 11px; padding: 10px; text-align: left; line-height: 1.4; }
+  .mcell { padding: 10px 8px; cursor: default; height: 70px; vertical-align: top; position: relative; }
+  .mcell .mscore { font-size: 13px; font-weight: 800; display: block; margin-bottom: 3px; }
+  .mcell .mthreats { font-size: 10px; line-height: 1.4; }
+  .cell-critical { background: rgba(239,68,68,0.18); }
+  .cell-critical .mscore { color: #fca5a5; }
+  .cell-high    { background: rgba(249,115,22,0.15); }
+  .cell-high .mscore    { color: #fdba74; }
+  .cell-medium  { background: rgba(234,179,8,0.1); }
+  .cell-medium .mscore  { color: #fde047; }
+  .cell-low     { background: rgba(34,197,94,0.07); }
+  .cell-low .mscore     { color: #86efac; }
+  .mthreats { color: var(--text2); }
+
+  .elevation-table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+  .elevation-table th { text-align: left; padding: 7px 12px; border-bottom: 2px solid var(--border); color: var(--text3); font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .elevation-table td { padding: 9px 12px; border-bottom: 1px solid var(--border); font-size: 13px; color: var(--text2); vertical-align: top; }
+  .elevation-table tr:last-child td { border-bottom: none; }
+  .elevation-table td:first-child { color: var(--text); font-weight: 500; }
+
+  /* ── DEFENSES ── */
+  .def-table { width: 100%; border-collapse: collapse; }
+  .def-table th { text-align: left; padding: 8px 12px; border-bottom: 2px solid var(--border); color: var(--text3); font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .def-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: 13px; color: var(--text2); vertical-align: top; }
+  .def-table tr:last-child td { border-bottom: none; }
+  .def-table td:first-child { color: var(--accent); font-weight: 700; white-space: nowrap; font-size: 12px; }
+  .ctrl-badge { display: inline-block; font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 4px; }
+  .ctrl-infra { background: rgba(56,189,248,0.12); color: var(--accent); border: 1px solid rgba(56,189,248,0.25); }
+  .ctrl-align { background: rgba(249,115,22,0.12); color: #fdba74; border: 1px solid rgba(249,115,22,0.25); }
+  .ctrl-proc  { background: rgba(129,140,248,0.12); color: var(--accent2); border: 1px solid rgba(129,140,248,0.25); }
+  .eff-badge { display: inline-block; font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 4px; }
+  .eff-CRITICAL { background: rgba(239,68,68,0.2); color: #fca5a5; }
+  .eff-HIGH     { background: rgba(249,115,22,0.2); color: #fdba74; }
+  .eff-MEDIUM   { background: rgba(234,179,8,0.15); color: #fde047; }
+
+  .ctrl-key { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+  .ctrl-key-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text2); }
+
+  /* ── DECISION TREE ── */
+  .dtree-wrap { display: grid; grid-template-columns: 1fr 320px; gap: 20px; }
+  @media (max-width: 780px) { .dtree-wrap { grid-template-columns: 1fr; } }
+
+  .dtree-questions { display: flex; flex-direction: column; gap: 10px; }
+  .dq {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    overflow: hidden; transition: border-color 0.15s;
+  }
+  .dq.answered-yes { border-color: var(--accent); }
+  .dq.answered-no  { border-color: var(--border); opacity: 0.6; }
+  .dq-top { padding: 14px 16px; }
+  .dq-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text3); margin-bottom: 6px; }
+  .dq-question { font-size: 13px; color: var(--text); font-weight: 500; margin-bottom: 10px; line-height: 1.5; }
+  .dq-btns { display: flex; gap: 8px; }
+  .dq-btn {
+    background: var(--surface2); border: 1px solid var(--border2); color: var(--text2);
+    font-size: 12px; font-weight: 700; padding: 5px 16px; border-radius: 5px; cursor: pointer;
+    transition: all 0.12s; letter-spacing: 0.04em;
+  }
+  .dq-btn.yes.sel { background: rgba(56,189,248,0.15); border-color: var(--accent); color: var(--accent); }
+  .dq-btn.no.sel  { background: var(--surface3); border-color: var(--border2); color: var(--text); }
+  .dq-btn:hover   { border-color: var(--accent); color: var(--text); }
+
+  .dq-result { padding: 10px 16px; background: rgba(56,189,248,0.06); border-top: 1px solid rgba(56,189,248,0.15); display: none; }
+  .dq.answered-yes .dq-result { display: block; }
+  .dq-result .req { font-size: 12px; color: var(--accent); font-weight: 600; display: flex; align-items: flex-start; gap: 6px; margin-bottom: 4px; }
+  .dq-result .req:last-child { margin-bottom: 0; }
+  .dq-result .req::before { content: '→'; color: var(--accent); flex-shrink: 0; }
+
+  /* Sub-questions */
+  .dq-subs { padding: 0 16px 14px; display: none; }
+  .dq.answered-yes .dq-subs { display: block; }
+  .dsub { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-top: 8px; }
+  .dsub-q { font-size: 12px; color: var(--text2); margin-bottom: 8px; font-style: italic; }
+  .dsub-btns { display: flex; gap: 6px; margin-bottom: 0; }
+  .dsub-result { margin-top: 8px; font-size: 12px; color: var(--accent); font-weight: 600; display: none; padding-top: 6px; border-top: 1px solid var(--border); }
+  .dsub-result.show { display: block; }
+  .dsub-result::before { content: '→ '; }
+
+  /* Summary panel */
+  .dtree-summary {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    padding: 16px; height: fit-content; position: sticky; top: 100px;
+  }
+  .dtree-summary h3 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text3); margin-bottom: 12px; font-weight: 700; }
+  .summary-empty { font-size: 12px; color: var(--text3); font-style: italic; }
+  .summary-item {
+    background: rgba(56,189,248,0.08); border: 1px solid rgba(56,189,248,0.2); border-radius: 6px;
+    padding: 8px 10px; margin-bottom: 6px; font-size: 12px;
+  }
+  .summary-item .si-id { font-weight: 700; color: var(--accent); display: block; margin-bottom: 2px; }
+  .summary-item .si-desc { color: var(--text2); line-height: 1.4; }
+  .dtree-reset {
+    display: block; width: 100%; margin-top: 12px;
+    background: var(--surface2); border: 1px solid var(--border); color: var(--text2);
+    font-size: 11px; font-weight: 600; padding: 7px; border-radius: 6px; cursor: pointer;
+    transition: all 0.12s; text-align: center;
+  }
+  .dtree-reset:hover { color: var(--text); border-color: var(--border2); }
+
+  /* ── OWASP ── */
+  .owasp-table { width: 100%; border-collapse: collapse; }
+  .owasp-table th { text-align: left; padding: 8px 12px; border-bottom: 2px solid var(--border); color: var(--text3); font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .owasp-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: 13px; color: var(--text2); vertical-align: top; }
+  .owasp-table tr:last-child td { border-bottom: none; }
+  .owasp-id { font-weight: 800; color: var(--accent2); font-size: 12px; }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* ── PRINT ── */
+  @media print {
+    .site-header .print-btn, .site-nav { display: none; }
+    .tab-panel { display: block !important; page-break-inside: avoid; }
+    .tab-panel + .tab-panel { page-break-before: always; }
+    body { background: white; color: black; font-size: 11px; }
+    .site-header { position: static; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <h1>LLM Threat Model</h1>
+  <span class="badge">v1.7</span>
+  <span class="meta">Updated 2026-06-24 &nbsp;·&nbsp; Next review 2026-09-24</span>
+  <button class="print-btn" onclick="window.print()">Export PDF</button>
+</header>
+
+<nav class="site-nav">
+  <button class="active" onclick="showTab('overview', this)">Overview</button>
+  <button onclick="showTab('threats', this)">14 Threats</button>
+  <button onclick="showTab('chains', this)">Attack Chains</button>
+  <button onclick="showTab('matrix', this)">Risk Matrix</button>
+  <button onclick="showTab('defenses', this)">Defenses</button>
+  <button onclick="showTab('dtree', this)">Decision Tree</button>
+  <button onclick="showTab('owasp', this)">OWASP Mapping</button>
+</nav>
+
+<main>
+
+<!-- ══ OVERVIEW ══ -->
+<div id="tab-overview" class="tab-panel active">
+  <h2>LLM Threat Model — v1.7</h2>
+  <p>Structured threat model for systems that use large language models. 14 threat categories, 4 critical attack chains, a scored risk matrix, and a defense playbook. For engineering teams — no ML security expertise required. Click a severity card to filter threats.</p>
+
+  <div class="stat-row">
+    <div class="stat critical" onclick="filterAndGo('CRITICAL')">
+      <div class="num">4</div><div class="label">Critical</div>
+    </div>
+    <div class="stat high" onclick="filterAndGo('HIGH')">
+      <div class="num">9</div><div class="label">High</div>
+    </div>
+    <div class="stat medium" onclick="filterAndGo('MEDIUM')">
+      <div class="num">8</div><div class="label">Medium</div>
+    </div>
+    <div class="stat low" onclick="filterAndGo('LOW')">
+      <div class="num">4</div><div class="label">Low</div>
+    </div>
+  </div>
+
+  <h2>3 Key Insights</h2>
+  <div class="grid-2" style="margin-bottom:20px;">
+    <div class="insight-card">
+      <div class="ic-title"><span class="ic-icon">⚡</span>Prompt injection is the root threat</div>
+      <p>PI is not just a text-input problem — any content the model parses is a potential attack surface: RAG documents, API responses, images, tool outputs. Without agency restrictions, PI becomes the equivalent of remote code execution.</p>
+    </div>
+    <div class="insight-card">
+      <div class="ic-title"><span class="ic-icon">⚠️</span>Alignment ≠ infrastructure control</div>
+      <p>Most common LLM security mistake: treating "I told the model not to do X" as a hard guarantee. Alignment controls depend on model behavior. Infrastructure controls (privilege separation, allowlists) do not. Only the latter holds under adversarial conditions.</p>
+    </div>
+    <div class="insight-card">
+      <div class="ic-title"><span class="ic-icon">🔇</span>Supply chain is silent</div>
+      <p>Malicious models on HuggingFace exfiltrate at load time — no behavioral signal during normal operation. Not visible in logs. Detection requires network egress monitoring and inference sandboxing.</p>
+    </div>
+    <div class="insight-card">
+      <div class="ic-title"><span class="ic-icon">📡</span>Multi-agent = exponential blast radius</div>
+      <p>PI in one agent propagates downstream to every agent that consumes its output. Each hop can escalate privilege. Multi-agent deployments require architectural isolation — not just per-agent controls.</p>
+    </div>
+  </div>
+
+  <h2>How to Use</h2>
+  <div class="how-to">
+    <div class="steps">
+      <div class="step"><div class="step-num">1</div><div class="step-text">Start at <strong>Decision Tree</strong> — answer 4 yes/no questions to identify mandatory defenses for your deployment.</div></div>
+      <div class="step"><div class="step-num">2</div><div class="step-text">Review <strong>14 Threats</strong> — expand each threat for sub-types, wild/theory score, and attack surface.</div></div>
+      <div class="step"><div class="step-num">3</div><div class="step-text">Check <strong>Risk Matrix</strong> — likelihood × impact scores; identify your tier (Critical / High / Medium / Low).</div></div>
+      <div class="step"><div class="step-num">4</div><div class="step-text">Use <strong>Defenses</strong> — note control type. Infrastructure controls are stronger than alignment controls under attack.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 14 THREATS ══ -->
+<div id="tab-threats" class="tab-panel">
+  <div class="filter-bar">
+    <button class="filter-btn active" onclick="setFilter('ALL', this)">All</button>
+    <button class="filter-btn f-CRITICAL" onclick="setFilter('CRITICAL', this)">Critical</button>
+    <button class="filter-btn f-HIGH"     onclick="setFilter('HIGH', this)">High</button>
+    <button class="filter-btn f-MEDIUM"   onclick="setFilter('MEDIUM', this)">Medium</button>
+    <button class="filter-btn f-LOW"      onclick="setFilter('LOW', this)">Low</button>
+    <input class="search-input" type="text" placeholder="Search threats…" oninput="searchThreats(this.value)" id="threat-search">
+  </div>
+  <div id="threats-list"></div>
+</div>
+
+<!-- ══ ATTACK CHAINS ══ -->
+<div id="tab-chains" class="tab-panel">
+  <p>Four highest-risk end-to-end exploitation paths. Each confirmed in production or primary research.</p>
+
+  <!-- Chain A -->
+  <div class="chain">
+    <div class="chain-header">
+      <span class="prio prio-CRITICAL">CRITICAL</span>
+      <h3>Chain A — Indirect PI → Excessive Agency → Data Exfiltration</h3>
+      <span class="chain-wvt">Wild/Theory: 4/5</span>
+    </div>
+    <div class="chain-desc">EchoLeak / CVE-2025-32711 confirmed in production. Requires no zero-days — exploits the instruction-following behavior that makes LLMs useful.</div>
+    <div class="chain-flow">
+      <div class="chain-step">
+        <div class="step-col"><div class="step-dot" style="background:#38bdf8"></div><div class="step-line" style="background:linear-gradient(#38bdf8,#f97316)"></div></div>
+        <div class="step-box"><div class="step-label" style="color:#38bdf8">Entry</div><div class="step-text">Indirect PI embedded in RAG document, search result, or ingested file</div></div>
+      </div>
+      <div class="chain-step">
+        <div class="step-col"><div class="step-dot" style="background:#f97316"></div><div class="step-line" style="background:linear-gradient(#f97316,#ef4444)"></div></div>
+        <div class="step-box"><div class="step-label" style="color:#f97316">Amplifier</div><div class="step-text">Excessive agency: tool permissions granted without per-call authorization or HITL</div></div>
+      </div>
+      <div class="chain-step">
+        <div class="step-col"><div class="step-dot" style="background:#ef4444"></div><div class="step-line" style="background:var(--critical)"></div></div>
+        <div class="step-box"><div class="step-label" style="color:#ef4444">Execution</div><div class="step-text">Tool call exfiltrates data via email, webhook, or file write — logged as legitimate user action</div></div>
+      </div>
+      <div class="chain-step">
+        <div class="step-col"><div class="step-dot" style="background:#ef4444"></div></div>
+        <div class="step-box" style="border:1px solid rgba(239,68,68,0.3)"><div class="step-label" style="color:#ef4444">Impact</div><div class="step-text">Attacker receives any data the LLM had access to; no anomaly signal in standard logs</div></div>
+      </div>
+    </div>
+    <div class="chain-defenses"><strong>Mandatory defenses</strong><span class="def-tag">PI-DEF-2</span><span class="def-tag">AGENCY-DEF-1</span><span class="def-tag">AGENCY-DEF-2</span></div>
+  </div>
+
+  <!-- Chain B -->
+  <div class="chain">
+    <div class="chain-header">
+      <span class="prio prio-CRITICAL">CRITICAL</span>
+      <h3>Chain B — Supply Chain → Model Replacement → Silent Exfiltration</h3>
+      <span class="chain-wvt">Wild/Theory: 4/5</span>
+    </div>
+    <div class="chain-desc">JFrog / ReversingLabs confirmed malicious models on HuggingFace. Attack is entirely silent — no behavioral deviation during normal model operation.</div>
+    <div class="chain-flow">
+      <div class="chain-step">
+        <div class="step-col"><div class="step-dot" style="background:#38bdf8"></div><div class="step-line" style="background:linear-gradient(#38bdf8,#f97316)"></div></div>
+        <div class="step-box"><div class="step-label" style="color:#38bdf8">Entry</div><div class="step-text">Malicious model or LoRA adapter published on HuggingFace or similar registry</div></div>
+      </div>
+      <div class="chain-step">
+        <div class="step-col"><div class="step-dot" style="background:#f97316"></div><div class="step-line" style="background:linear-gradient(#f97316,#ef4444)"></div></div>
+        <div class="step-box"><div class="step-label" style="color:#f97316">Deployment</div><div class="step-text">Organization deploys without code review of custom inference class</div></div>
+      </div>
+      <div class="chain-step">
+        <div class="step-col"><div class="step-dot" style="background:#ef4444"></div><div class="step-line" style="background:var(--critical)"></div></div>
+        <div class="step-box"><div class="step-label" style="color:#ef4444">Execution</div><div class="step-text">Malicious code in custom inference class exfiltrates API keys + conversation data at load time</div></div>
+      </div>
+      <div class="chain-step">
+        <div class="step-col"><div class="step-dot" style="background:#ef4444"></div></div>
+        <div class="step-box" style="border:1px solid rgba(239,68,68,0.3)"><div class="step-label" style="color:#ef4444">Impact</div><div class="step-text">Silent — no behavioral deviation; detection requires network egress monitoring only</div></div>
+      </div>
+    </div>
+    <div class="chain-defenses"><strong>Mandatory defenses</strong><span class="def-tag">SC-DEF-1</span><span class="def-tag">SC-DEF-2</span></div>
+  </div>
+
+  <!-- Chain C -->
+  <div class="chain">
+    <div class="chain-header">
+      <span class="prio prio-CRITICAL">CRITICAL</span>
+      <h3>Chain C — Multi-Agent Context Propagation</h3>
+      <span class="chain-wvt">Wild/Theory: 3/5</span>
+    </div>
+    <div class="chain-desc">Source-confirmed data-flow risk in common multi-agent patterns. Exploitation requires multi-agent deployment with output→context trust.</div>
+    <div class="chain-flow">
+      <div class="chain-step">
+        <div class="step-col"><div class="step-dot" style="background:#38bdf8"></div><div class="step-line" style="background:linear-gradient(#38bdf8,#f97316)"></div></div>
+        <div class="step-box"><div class="step-label" style="color:#38bdf8">Entry</div><div class="step-text">Agent 1 compromised via prompt injection (direct or indirect)</div></div>
+      </div>
+      <div class="chain-step">
+        <div class="step-col"><div class="step-dot" style="background:#f97316"></div><div class="step-line" style="background:linear-gradient(#f97316,#ef4444)"></div></div>
+        <div class="step-box"><div class="step-label" style="color:#f97316">Propagation</div><div class="step-text">Agent 1 output → injected instruction → Agent 2 context window</div></div>
+      </div>
+      <div class="chain-step">
+        <div class="step-col"><div class="step-dot" style="background:#ef4444"></div><div class="step-line" style="background:var(--critical)"></div></div>
+        <div class="step-box"><div class="step-label" style="color:#ef4444">Escalation</div><div class="step-text">Privilege escalates across the N-agent chain as each agent inherits previous context</div></div>
+      </div>
+      <div class="chain-step">
+        <div class="step-col"><div class="step-dot" style="background:#ef4444"></div></div>
+        <div class="step-box" style="border:1px solid rgba(239,68,68,0.3)"><div class="step-label" style="color:#ef4444">Impact</div><div class="step-text">Final agent executes unauthorized action with compound blast radius</div></div>
+      </div>
+    </div>
+    <div class="chain-defenses"><strong>Mandatory defenses</strong><span class="def-tag">MA-DEF-1</span><span style="font-size:12px;color:var(--text2);margin-left:4px;">+ inter-agent provenance tagging + per-agent minimal tool permissions</span></div>
+  </div>
+
+  <!-- ISC -->
+  <div class="chain">
+    <div class="chain-header">
+      <span class="prio prio-CRITICAL">CRITICAL</span>
+      <h3>Category 14 — Internal Safety Collapse / Validator Harness Attack</h3>
+      <span class="chain-wvt">Research: 5/5</span>
+    </div>
+    <div class="chain-desc">arXiv:2603.23509 — ISC-Bench: 53 scenarios, 8 disciplines, 95.3% worst-case failure rate. Standard PI detectors miss this entirely — no injection present; harmful content is the task-correct output.</div>
+    <div class="chain-flow">
+      <div class="chain-step">
+        <div class="step-col"><div class="step-dot" style="background:#38bdf8"></div><div class="step-line" style="background:linear-gradient(#38bdf8,#f97316)"></div></div>
+        <div class="step-box"><div class="step-label" style="color:#38bdf8">Setup</div><div class="step-text">Attacker controls or shapes: task definition + format validator + incomplete/ambiguous data</div></div>
+      </div>
+      <div class="chain-step">
+        <div class="step-col"><div class="step-dot" style="background:#f97316"></div><div class="step-line" style="background:linear-gradient(#f97316,#ef4444)"></div></div>
+        <div class="step-box"><div class="step-label" style="color:#f97316">Constraint</div><div class="step-text">Validator accepts only outputs that require generating harmful content to satisfy the format</div></div>
+      </div>
+      <div class="chain-step">
+        <div class="step-col"><div class="step-dot" style="background:#ef4444"></div><div class="step-line" style="background:var(--critical)"></div></div>
+        <div class="step-box"><div class="step-label" style="color:#ef4444">Completion</div><div class="step-text">Model fills data gaps to satisfy validator — harmful content is the task-correct output</div></div>
+      </div>
+      <div class="chain-step">
+        <div class="step-col"><div class="step-dot" style="background:#ef4444"></div></div>
+        <div class="step-box" style="border:1px solid rgba(239,68,68,0.3)"><div class="step-label" style="color:#ef4444">Impact</div><div class="step-text">Bypasses instruction-following safety classifiers; requires semantic harness validation to detect</div></div>
+      </div>
+    </div>
+    <div class="chain-defenses">
+      <strong>Applicability</strong>
+      <span style="font-size:12px;color:var(--text2);display:block;margin-bottom:6px;">Any system where attacker can shape task + validator + data: coding assistants, eval harnesses, data-labeling, fine-tuning, autonomous agents.</span>
+      <span class="def-tag">ISC-DEF-1</span><span style="font-size:12px;color:var(--text2);margin-left:4px;">— validate the harness itself, not just model output</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══ RISK MATRIX ══ -->
+<div id="tab-matrix" class="tab-panel">
+  <p>Risk = Likelihood × Impact (1–5). Scores: <span style="color:var(--critical)">19–25 CRITICAL</span> · <span style="color:var(--high)">13–18 HIGH</span> · <span style="color:var(--medium)">7–12 MEDIUM</span> · <span style="color:var(--low)">1–6 LOW</span></p>
+
+  <div class="matrix-wrap" style="margin-bottom:28px;">
+    <table class="matrix">
+      <thead>
+        <tr>
+          <th class="axis-cell">Likelihood ↓ / Impact →</th>
+          <th>1 — Negligible<br><span style="font-weight:400;font-size:10px;color:var(--text3)">No measurable harm</span></th>
+          <th>2 — Minor<br><span style="font-weight:400;font-size:10px;color:var(--text3)">Single user</span></th>
+          <th>3 — Moderate<br><span style="font-weight:400;font-size:10px;color:var(--text3)">Multiple users</span></th>
+          <th>4 — Major<br><span style="font-weight:400;font-size:10px;color:var(--text3)">Breach / regulatory</span></th>
+          <th>5 — Critical<br><span style="font-weight:400;font-size:10px;color:var(--text3)">Org-wide / criminal</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="axis-cell">5 — Almost Certain<br><span style="font-size:10px;color:var(--text3)">Trivial / regular</span></td>
+          <td class="cell-low"><div class="mcell"><span class="mscore">5</span></div></td>
+          <td class="cell-low"><div class="mcell"><span class="mscore">10</span></div></td>
+          <td class="cell-high"><div class="mcell"><span class="mscore">15</span><span class="mthreats">Direct PI<br>Purchased PI</span></div></td>
+          <td class="cell-critical"><div class="mcell"><span class="mscore">20</span></div></td>
+          <td class="cell-critical"><div class="mcell"><span class="mscore">25</span></div></td>
+        </tr>
+        <tr>
+          <td class="axis-cell">4 — Likely<br><span style="font-size:10px;color:var(--text3)">Observed in production</span></td>
+          <td class="cell-low"><div class="mcell"><span class="mscore">4</span></div></td>
+          <td class="cell-low"><div class="mcell"><span class="mscore">8</span></div></td>
+          <td class="cell-medium"><div class="mcell"><span class="mscore">12</span><span class="mthreats">Excess Agency<br>DoS std API</span></div></td>
+          <td class="cell-high"><div class="mcell"><span class="mscore">16</span><span class="mthreats">DoS metered API</span></div></td>
+          <td class="cell-critical"><div class="mcell"><span class="mscore">20</span><span class="mthreats">Chain A<br>ISC / Cat 14</span></div></td>
+        </tr>
+        <tr>
+          <td class="axis-cell">3 — Possible<br><span style="font-size:10px;color:var(--text3)">Documented in wild</span></td>
+          <td class="cell-low"><div class="mcell"><span class="mscore">3</span></div></td>
+          <td class="cell-low"><div class="mcell"><span class="mscore">6</span></div></td>
+          <td class="cell-medium"><div class="mcell"><span class="mscore">9</span><span class="mthreats">Sys prompt<br>Output valid.<br>HITL failures</span></div></td>
+          <td class="cell-medium"><div class="mcell"><span class="mscore">12</span><span class="mthreats">Ctrl confusion<br>RAG poison base</span></div></td>
+          <td class="cell-high"><div class="mcell"><span class="mscore">15</span><span class="mthreats">Chain B base<br>Chain C base</span></div></td>
+        </tr>
+        <tr>
+          <td class="axis-cell">2 — Unlikely<br><span style="font-size:10px;color:var(--text3)">Favorable conditions needed</span></td>
+          <td class="cell-low"><div class="mcell"><span class="mscore">2</span></div></td>
+          <td class="cell-low"><div class="mcell"><span class="mscore">4</span><span class="mthreats">Jailbreak-as-a-Service</span></div></td>
+          <td class="cell-low"><div class="mcell"><span class="mscore">6</span><span class="mthreats">Model extraction<br>Align regression</span></div></td>
+          <td class="cell-medium"><div class="mcell"><span class="mscore">8</span><span class="mthreats">Image/struct inject<br>Cross-tenant leak</span></div></td>
+          <td class="cell-medium"><div class="mcell"><span class="mscore">10</span><span class="mthreats">LoRA swap base<br>Train poison base<br>Embed inversion</span></div></td>
+        </tr>
+        <tr>
+          <td class="axis-cell">1 — Rare<br><span style="font-size:10px;color:var(--text3)">Very specific conditions</span></td>
+          <td class="cell-low"><div class="mcell"><span class="mscore">1</span></div></td>
+          <td class="cell-low"><div class="mcell"><span class="mscore">2</span></div></td>
+          <td class="cell-low"><div class="mcell"><span class="mscore">3</span><span class="mthreats">Audio injection</span></div></td>
+          <td class="cell-low"><div class="mcell"><span class="mscore">4</span><span class="mthreats">Covert channel</span></div></td>
+          <td class="cell-low"><div class="mcell"><span class="mscore">5</span></div></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Elevation Conditions</h2>
+  <p>Threats that escalate tier under specific deployment conditions.</p>
+  <table class="elevation-table">
+    <tr><th>Threat</th><th>Base</th><th>Elevated</th><th>Elevation Condition</th></tr>
+    <tr><td>Supply Chain (Chain B)</td><td>15</td><td><span class="prio prio-CRITICAL">20</span></td><td>No sandbox / no egress detection before exfiltration</td></tr>
+    <tr><td>Multi-Agent (Chain C)</td><td>15</td><td><span class="prio prio-CRITICAL">19</span></td><td>Agent output can enter another agent's context/action path</td></tr>
+    <tr><td>RAG Context Poisoning</td><td>12</td><td><span class="prio prio-HIGH">15</span></td><td>Data-heavy RAG where poisoned docs influence decisions/actions</td></tr>
+    <tr><td>LoRA/PEFT Adapter Swap</td><td>10</td><td><span class="prio prio-HIGH">15</span></td><td>Fine-tuning-heavy org with weak registry controls</td></tr>
+    <tr><td>Training Data Poisoning</td><td>10</td><td><span class="prio prio-HIGH">14</span></td><td>High-stakes AI or continuous-learning deployment</td></tr>
+    <tr><td>Excessive Agency (standalone)</td><td>12</td><td><span class="prio prio-HIGH">14</span></td><td>Agentic systems with state-changing tools or weak HITL</td></tr>
+    <tr><td>Embedding Inversion</td><td>10</td><td><span class="prio prio-HIGH">14</span></td><td>Personal-data-bearing training/embedding stores</td></tr>
+    <tr><td>DoS — Metered Enterprise API</td><td>12</td><td><span class="prio prio-HIGH">16</span></td><td>Business-critical metered API with material budget/service impact</td></tr>
+  </table>
+</div>
+
+<!-- ══ DEFENSES ══ -->
+<div id="tab-defenses" class="tab-panel">
+  <div class="ctrl-key">
+    <div class="ctrl-key-item"><span class="ctrl-badge ctrl-infra">Technical — Infrastructure</span> Enforced by pipeline/system. Does not depend on LLM behavior. Holds under adversarial conditions.</div>
+    <div class="ctrl-key-item"><span class="ctrl-badge ctrl-align">Alignment</span> Depends on LLM following instructions. Weaker under sophisticated attacks.</div>
+    <div class="ctrl-key-item"><span class="ctrl-badge ctrl-proc">Procedural</span> Enforced by human process. Requires reviewer training and provenance.</div>
+  </div>
+
+  <table class="def-table" style="margin-bottom:28px;">
+    <tr><th style="width:130px">ID</th><th>Defense</th><th>Threat Addressed</th><th>Control Type</th><th>Effectiveness</th></tr>
+    <tr>
+      <td>PI-DEF-1</td><td>Instruction hierarchy hardening</td><td>Prompt Injection</td>
+      <td><span class="ctrl-badge ctrl-align">Alignment</span></td>
+      <td><span class="eff-badge eff-MEDIUM">MEDIUM</span></td>
+    </tr>
+    <tr>
+      <td>PI-DEF-2</td><td>RAG context labeling + load-time sanitization</td><td>Indirect PI</td>
+      <td><span class="ctrl-badge ctrl-infra">Technical</span></td>
+      <td><span class="eff-badge eff-HIGH">HIGH</span></td>
+    </tr>
+    <tr>
+      <td>AGENCY-DEF-1</td><td>Minimal tool permission allowlist</td><td>Excessive Agency</td>
+      <td><span class="ctrl-badge ctrl-infra">Technical</span></td>
+      <td><span class="eff-badge eff-CRITICAL">CRITICAL</span></td>
+    </tr>
+    <tr>
+      <td>AGENCY-DEF-2</td><td>HITL with context provenance for high-stakes tools</td><td>Excessive Agency</td>
+      <td><span class="ctrl-badge ctrl-proc">Procedural</span></td>
+      <td><span class="eff-badge eff-CRITICAL">CRITICAL (high-stakes)</span></td>
+    </tr>
+    <tr>
+      <td>SC-DEF-1</td><td>AIBOM — AI Bill of Materials for all models/adapters/deps</td><td>Supply Chain</td>
+      <td><span class="ctrl-badge ctrl-infra">Technical + Proc</span></td>
+      <td><span class="eff-badge eff-HIGH">HIGH</span></td>
+    </tr>
+    <tr>
+      <td>SC-DEF-2</td><td>Inference sandboxing + network egress monitoring</td><td>Supply Chain</td>
+      <td><span class="ctrl-badge ctrl-infra">Technical</span></td>
+      <td><span class="eff-badge eff-HIGH">HIGH</span></td>
+    </tr>
+    <tr>
+      <td>MA-DEF-1</td><td>Context isolation between agents + inter-agent provenance</td><td>Multi-Agent Propagation</td>
+      <td><span class="ctrl-badge ctrl-infra">Technical (arch)</span></td>
+      <td><span class="eff-badge eff-HIGH">HIGH if enforced</span></td>
+    </tr>
+    <tr>
+      <td>ISC-DEF-1</td><td>Validator harness validation — semantic output safety check</td><td>ISC / Validator Harness</td>
+      <td><span class="ctrl-badge ctrl-infra">Technical + Semantic</span></td>
+      <td><span class="eff-badge eff-HIGH">HIGH</span></td>
+    </tr>
+  </table>
+
+  <h2>Production Cost Annotations</h2>
+  <table class="def-table">
+    <tr><th>Defense</th><th>Latency Cost</th><th>UX Impact</th><th>Expertise Required</th></tr>
+    <tr><td>Input filtering</td><td>50–200ms/call</td><td>False positives block legitimate inputs</td><td>Low–Medium</td></tr>
+    <tr><td>RAG context labeling</td><td>5–20ms/retrieval</td><td>None</td><td>Low</td></tr>
+    <tr><td>Tool allowlist (AGENCY-DEF-1)</td><td>None</td><td>Limits multi-step workflows</td><td>Medium — upfront design</td></tr>
+    <tr><td>Per-call HITL (AGENCY-DEF-2)</td><td>N/A — blocks automation</td><td>Major for automated workflows</td><td>Low (process, not engineering)</td></tr>
+    <tr><td>Custom inference code review</td><td>+1–5 days/deployment</td><td>None</td><td>HIGH — ML security specialist</td></tr>
+    <tr><td>AIBOM maintenance (SC-DEF-1)</td><td>Ongoing ops cost</td><td>None</td><td>Medium — registry tooling</td></tr>
+    <tr><td>Output validation</td><td>20–100ms/output</td><td>False positives filter legitimate outputs</td><td>Low–Medium</td></tr>
+    <tr><td>Multi-agent context isolation (MA-DEF-1)</td><td>Architecture complexity</td><td>May reduce cross-agent workflows</td><td>High — architectural design at build time</td></tr>
+  </table>
+</div>
+
+<!-- ══ DECISION TREE ══ -->
+<div id="tab-dtree" class="tab-panel">
+  <p>Answer 4 questions to identify required defenses. Required defenses accumulate in the panel on the right.</p>
+  <div class="dtree-wrap">
+    <div class="dtree-questions" id="dtree-qs"></div>
+    <div class="dtree-summary">
+      <h3>Required Defenses</h3>
+      <div id="dtree-summary-body"><p class="summary-empty">Answer the questions to see required defenses.</p></div>
+      <button class="dtree-reset" onclick="resetDtree()">Reset all answers</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ OWASP ══ -->
+<div id="tab-owasp" class="tab-panel">
+  <h2>OWASP LLM Top 10 (2025) Mapping</h2>
+  <table class="owasp-table" style="margin-bottom:28px;">
+    <tr><th style="width:110px">OWASP 2025</th><th>Official Name</th><th>Internal Coverage</th></tr>
+    <tr><td><span class="owasp-id">LLM01</span></td><td>Prompt Injection</td><td>Category 1 · Chain A · Chain C</td></tr>
+    <tr><td><span class="owasp-id">LLM02</span></td><td>Sensitive Information Disclosure</td><td>Categories 5, 7 · Chain A exfiltration impact</td></tr>
+    <tr><td><span class="owasp-id">LLM03</span></td><td>Supply Chain</td><td>Category 3 · Chain B</td></tr>
+    <tr><td><span class="owasp-id">LLM04</span></td><td>Data and Model Poisoning</td><td>Category 4</td></tr>
+    <tr><td><span class="owasp-id">LLM05</span></td><td>Improper Output Handling</td><td>Category 11</td></tr>
+    <tr><td><span class="owasp-id">LLM06</span></td><td>Excessive Agency</td><td>Category 2</td></tr>
+    <tr><td><span class="owasp-id">LLM07</span></td><td>System Prompt Leakage</td><td>Category 5</td></tr>
+    <tr><td><span class="owasp-id">LLM08</span></td><td>Vector and Embedding Weaknesses</td><td>Category 7</td></tr>
+    <tr><td><span class="owasp-id">LLM09</span></td><td>Misinformation</td><td>Adjacent — content-safety / decision-support (out of scope)</td></tr>
+    <tr><td><span class="owasp-id">LLM10</span></td><td>Unbounded Consumption</td><td>Category 8</td></tr>
+  </table>
+
+  <h2>Regulatory Quick Reference</h2>
+  <table class="owasp-table">
+    <tr><th>Regulation</th><th>Key Articles / Areas</th><th>Max Penalty</th></tr>
+    <tr>
+      <td><strong style="color:var(--text)">EU AI Act</strong></td>
+      <td>Art. 9 (risk mgmt) · Art. 10 (data governance) · Art. 13 (transparency) · Art. 14 (human oversight) · Art. 15 (robustness/cybersecurity) · Art. 17 (quality mgmt)</td>
+      <td style="white-space:nowrap">6% global turnover or €30M</td>
+    </tr>
+    <tr>
+      <td><strong style="color:var(--text)">GDPR</strong></td>
+      <td>Art. 17 (erasure — embedding inversion) · Art. 25 (privacy by design) · Art. 32 (security — cross-tenant)</td>
+      <td style="white-space:nowrap">4% global turnover or €20M</td>
+    </tr>
+    <tr>
+      <td><strong style="color:var(--text)">US FTC</strong></td>
+      <td>AI Principles (2024): unfair/deceptive security practices · Output validation failures · Supply chain key theft</td>
+      <td style="white-space:nowrap">Civil penalties</td>
+    </tr>
+  </table>
+</div>
+
+</main>
+
+<script>
+// ── DATA ── (JSON load with fallback to embedded)
+let THREATS = [];
+let DTREE_DATA = [];
+
+// Fallback embedded data (used if JSON loading fails)
+const FALLBACK_THREATS = [{"num":"01","title":"Prompt Injection","owasp":"LLM01","prio":"CRITICAL","wild":"4/5 — EchoLeak/CVE-2025-32711 confirmed in wild","desc":"Manipulation of LLM behavior through crafted inputs that override system-level instructions. Attack surface extends to any content the model parses — not just text input fields.","subtypes":["Direct PI — user input explicitly overrides system prompt","Indirect PI — adversarial content in RAG/documents/search results","Multi-turn PI — injection spread across conversation turns","Cross-context PI — propagates between agents","Purchased PI Template — pre-optimized jailbreak from underground market"],"surface":"Text input, RAG pipeline, document ingestion, API messages field, tool outputs","update":"v1.5: Standard per-event detectors fail against slow-burn multi-turn attacks. Temporal accumulation detection required."},{"num":"02","title":"Excessive Agency","owasp":"LLM06","prio":"CRITICAL","wild":"4/5 — EchoLeak, Copilot CRM leak confirmed in production","desc":"LLM granted more tool/action permissions than necessary. Force multiplier for prompt injection: without agency, PI manipulates outputs; with agency, PI becomes remote code execution equivalent.","subtypes":["Unbounded tool access — model calls any registered tool without confirmation","Privilege escalation via PI","Chained tool use — multi-step chain without human review","Cross-system action — email, file write, payment outside AI boundary"],"surface":"Tool registration, function calling API, MCP servers","update":""},{"num":"03","title":"Supply Chain Compromise","owasp":"LLM03","prio":"HIGH","wild":"4/5 — JFrog/ReversingLabs confirmed malicious models on HuggingFace","desc":"Malicious or backdoored models, adapters, dependencies, MCP servers, or skills from third parties. Attack is entirely silent — no behavioral deviation during normal operation.","subtypes":["Malicious model on public registry","Backdoored LoRA/PEFT adapter","Compromised MCP server or skill package","Poisoned dependency (pip/npm)"],"surface":"Model registry, adapter repository, dependency install, MCP marketplace","update":""},{"num":"04","title":"Data / Model Poisoning","owasp":"LLM04","prio":"HIGH","wild":"2/5 — Theoretical; academic demonstrations exist","desc":"Compromising training data, fine-tuning datasets, or RAG document stores to influence model behavior at a systemic level.","subtypes":["Training data poisoning — corrupted data influences model weights","Fine-tuning dataset poisoning","RAG context poisoning — injecting adversarial documents at index time","Feedback loop poisoning — RLHF reward hacking via manipulated ratings"],"surface":"Training pipeline, fine-tuning datasets, RAG document stores, feedback/rating systems","update":""},{"num":"05","title":"System Prompt Leakage","owasp":"LLM07","prio":"MEDIUM","wild":"3/5 — Extraction techniques documented; iterative prompting required","desc":"Extraction of system prompts, API keys, or proprietary instructions through iterative prompting or context manipulation.","subtypes":["Direct extraction — asking the model to repeat its system prompt","Indirect extraction — inferring instructions from model behavior","API key/secret leakage embedded in system prompt"],"surface":"System prompt, developer message, any context containing secrets","update":""},{"num":"06","title":"Model Extraction","owasp":"—","prio":"LOW","wild":"2/5 — Demonstrated against specialized models","desc":"Query-based replication of proprietary models. Low risk for general-purpose LLMs; elevated for specialized or fine-tuned models with significant IP.","subtypes":["Black-box extraction via crafted query sequences","Distillation from API outputs"],"surface":"Public API endpoints with high query volume access","update":""},{"num":"07","title":"Embedding / Vector Weaknesses","owasp":"LLM08","prio":"MEDIUM","wild":"2/5 — Specialized techniques; requires large query volume","desc":"Reconstructing sensitive information from embedding vectors, or leaking data through query-pattern side channels in vector stores.","subtypes":["Embedding inversion — reconstructing training data from embedding vectors","Cross-tenant vector store leakage","Query-pattern side channel — inferring other users' data from search patterns"],"surface":"Embedding APIs, vector stores/databases, similarity search endpoints","update":""},{"num":"08","title":"Denial of Service / Unbounded Consumption","owasp":"LLM10","prio":"MEDIUM","wild":"4/5 — Volume-only attack; no sophistication required","desc":"Context/quota exhaustion degrading LLM service availability. Enterprise metered APIs can be financially destructive — attacker pays nothing, victim loses service AND pays for the calls.","subtypes":["Context window exhaustion — max-length inputs","API quota exhaustion — standard API (score 12)","Enterprise metered API exhaustion — $10K+/month budgets (score 16)","Rate limit abuse"],"surface":"Any LLM API endpoint; metered enterprise deployments especially","update":""},{"num":"09","title":"Multi-Agent Context Propagation","owasp":"—","prio":"HIGH","wild":"3/5 — Source-confirmed data-flow risk; exploitation depends on deployment","desc":"PI propagates between chained agents, amplifying impact. Each agent hop can escalate privilege. Common in enterprise RAG and agentic assistant deployments.","subtypes":["Output-to-input propagation","Privilege escalation across agent chain","MCP / A2A protocol injection","Agent-to-agent trust exploitation"],"surface":"Multi-agent pipelines, MCP servers, A2A communication, LangChain/AutoGen deployments","update":""},{"num":"10","title":"Non-Text Injection","owasp":"—","prio":"MEDIUM","wild":"2/5 — Multi-modal LLMs not yet universal","desc":"Image, audio, or structured data injection bypassing text-focused input filters. Impact 4 because it circumvents most standard detection.","subtypes":["Image-embedded PI (vision models)","Audio injection via ASR pipeline","Structured data (JSON/XML/CSV) injection","PDF/document visual injection"],"surface":"Multi-modal endpoints, vision models, ASR pipelines, document ingestion","update":""},{"num":"11","title":"Output Validation Failures","owasp":"LLM05","prio":"MEDIUM","wild":"3/5 — Standard in LLM deployments without output validation","desc":"Harmful or unsafe model output passes to users or downstream systems unchecked. Especially critical when output is executed (code generation, instructions, structured data fed to other systems).","subtypes":["Harmful content generation passed to user","Generated code execution without safety check","Structured output (JSON/SQL) used directly in downstream systems","Hallucinated facts presented as authoritative"],"surface":"Any LLM output path; critical for code generation, instruction generation, structured output","update":""},{"num":"12","title":"HITL Failures","owasp":"—","prio":"MEDIUM","wild":"3/5 — Procedural failure mode; training-dependent","desc":"Human reviewers fail to catch adversarial manipulation because context provenance is missing. Reviewers cannot distinguish legitimate outputs from PI-influenced outputs without provenance.","subtypes":["Missing provenance — reviewer sees output without source context","Review fatigue — high volume reduces scrutiny","Sophistication gap — reviewer lacks ML security expertise","Time pressure override — SLA pressure defeats safety review"],"surface":"Any HITL checkpoint; approval workflows; human review queues","update":""},{"num":"13","title":"Defense Control Type Confusion","owasp":"—","prio":"MEDIUM","wild":"3/5 — Architectural design failure; very common","desc":"Alignment controls (model instructions) are mistaken for infrastructure-enforced controls. Most common security mistake in LLM deployments — creates false confidence in defenses that fail under attack.","subtypes":["Treating system prompt instructions as hard security boundaries","Using alignment-only controls for compliance requirements","Assuming model refusals are reliable under adversarial conditions"],"surface":"Architectural design phase; security review; compliance mapping","update":"Addendum: Capability Withholding is a taxonomic note — accidental RLHF reward hacking is an operational concern, not a documented external attack path."},{"num":"14","title":"Internal Safety Collapse / Validator Harness Attack","owasp":"—","prio":"CRITICAL","wild":"5/5 for research pattern — ISC-Bench: 53 scenarios, 95.3% worst-case failure","desc":"A benign-looking task + format validator + incomplete data harness causes harmful generation as the only valid task completion. Standard PI detectors miss it entirely — no injection present; harmful content IS the task-correct output.","subtypes":["Task/Validator/Data (TVD) harness attack","Coding harness with harmful completion required","Data-labeling or eval harness manipulation","Fine-tuning dataset construction as attack vector","Autonomous workflow bundle injection"],"surface":"Any system where attacker can shape task + validator + data: coding assistants, eval frameworks, data-labeling tools, fine-tuning pipelines, autonomous agents","update":"arXiv:2603.23509 — ISC-Bench primary research; 8 disciplines; provider-side AND deployer-side controls both required."}];
+
+const FALLBACK_DTREE = [{"id":"q1","label":"Q1","question":"Is there a prompt injection surface? (Any user-controlled input reaches the LLM)","result":null,"subs":[{"id":"q1a","question":"Is RAG / retrieval used?","result":"PI-DEF-2 REQUIRED — RAG context labeling + load-time sanitization"},{"id":"q1b","question":"Does the system have tool permissions?","result":"AGENCY-DEF-1 REQUIRED — minimal tool permission allowlist","subs":[{"id":"q1c","question":"Can high-risk tool calls occur? (email, file write, API with side effects)","result":"AGENCY-DEF-2 REQUIRED — HITL with context provenance"}]}]},{"id":"q2","label":"Q2","question":"Is this multi-agent, MCP, or A2A? (More than one LLM agent in the call chain)","result":"MA-DEF-1 REQUIRED — context isolation + inter-agent provenance tagging"},{"id":"q3","label":"Q3","question":"Can an attacker control or shape: task definition · validator/schema · incomplete data · uploaded documents · tool results · marketplace skills · workflow bundles?","result":"ISC-DEF-1 REQUIRED — validate the harness itself (task + validator + data), not just model output"},{"id":"q4","label":"Q4","question":"Is any model, adapter, skill, MCP server, or dependency third-party?","result":"SC-DEF-1 + SC-DEF-2 REQUIRED — AIBOM + inference sandboxing + network egress monitoring"}];
+
+async function loadData() {
+  try {
+    const [threatsRes, dtreeRes] = await Promise.all([
+      fetch('data/threats.json'),
+      fetch('data/dtree.json')
+    ]);
+    if (threatsRes.ok) THREATS = await threatsRes.json();
+    else THREATS = FALLBACK_THREATS;
+    if (dtreeRes.ok) DTREE_DATA = await dtreeRes.json();
+    else DTREE_DATA = FALLBACK_DTREE;
+  } catch (err) {
+    THREATS = FALLBACK_THREATS;
+    DTREE_DATA = FALLBACK_DTREE;
+  }
+  renderThreats();
+  renderDtree();
+}
+
+// ── STATE ──
+let activeFilter = 'ALL';
+let dtreeAnswers = {};
+
+// ── TAB SWITCHING ──
+function showTab(name, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.site-nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  if (btn) btn.classList.add('active');
+}
+
+// ── OVERVIEW STAT CLICK → filter threats ──
+function filterAndGo(prio) {
+  const btn = document.querySelector(`.filter-btn.f-${prio}`);
+  setFilter(prio, btn);
+  const navBtn = [...document.querySelectorAll('.site-nav button')].find(b => b.textContent.includes('Threats'));
+  showTab('threats', navBtn);
+}
+
+// ── THREAT FILTER ──
+function setFilter(prio, btn) {
+  activeFilter = prio;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  applyFilters();
+}
+
+function searchThreats(q) {
+  applyFilters(q);
+}
+
+function applyFilters(q) {
+  const query = (q !== undefined ? q : document.getElementById('threat-search').value).toLowerCase();
+  document.querySelectorAll('.threat-card').forEach(card => {
+    const matchPrio = activeFilter === 'ALL' || card.dataset.prio === activeFilter;
+    const matchSearch = !query || card.dataset.text.includes(query);
+    card.classList.toggle('hidden', !(matchPrio && matchSearch));
+  });
+}
+
+// ── THREAT CARDS ──
+function renderThreats() {
+  const container = document.getElementById('threats-list');
+  container.innerHTML = THREATS.map((t, i) => {
+    const prioKey = t.prio.split('-')[0];
+    return `<div class="threat-card prio-${prioKey}" id="tc-${i}" data-prio="${prioKey}" data-text="${(t.title+' '+t.desc+' '+t.subtypes.join(' ')).toLowerCase()}">
+      <div class="tc-header" onclick="toggleCard(${i})">
+        <span class="tc-num">${t.num}</span>
+        <span class="tc-title">${t.title}</span>
+        ${t.owasp !== '—' ? `<span class="tc-owasp">${t.owasp}</span>` : ''}
+        <span class="prio prio-${prioKey}">${t.prio}</span>
+        <span class="tc-chevron">▶</span>
+      </div>
+      <div class="tc-body" id="tcb-${i}">
+        <div class="tc-body-inner">
+          <p>${t.desc}</p>
+          <div class="detail-grid">
+            <div class="detail-item"><label>Wild / Theory</label><span>${t.wild}</span></div>
+            <div class="detail-item"><label>Attack Surface</label><span>${t.surface}</span></div>
+          </div>
+          <div><label style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;display:block;margin-bottom:6px;">Sub-types</label>
+            <ul class="subtypes-list">${t.subtypes.map(s=>`<li>${s}</li>`).join('')}</ul>
+          </div>
+          ${t.update ? `<div class="tc-note">${t.update}</div>` : ''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleCard(i) {
+  const card = document.getElementById(`tc-${i}`);
+  const body = document.getElementById(`tcb-${i}`);
+  const isOpen = card.classList.contains('open');
+  card.classList.toggle('open', !isOpen);
+  body.style.maxHeight = isOpen ? '0' : body.scrollHeight + 'px';
+}
+
+// ── DECISION TREE ──
+function renderDtree() {
+  const container = document.getElementById('dtree-qs');
+
+  function renderNode(node, depth) {
+    const a = dtreeAnswers[node.id];
+    const hasSubs = node.subs && node.subs.length > 0;
+    return `<div class="dq ${a === 'yes' ? 'answered-yes' : a === 'no' ? 'answered-no' : ''}" id="dq-${node.id}" style="${depth > 0 ? 'margin-left:0' : ''}">
+      <div class="dq-top">
+        <div class="dq-label">${node.label || ''}</div>
+        <div class="dq-question">${node.question}</div>
+        <div class="dq-btns">
+          <button class="dq-btn yes ${a==='yes'?'sel':''}" onclick="dtreeAnswer('${node.id}','yes')">YES</button>
+          <button class="dq-btn no  ${a==='no' ?'sel':''}" onclick="dtreeAnswer('${node.id}','no')">NO</button>
+        </div>
+      </div>
+      ${node.result ? `<div class="dq-result"><div class="req">${node.result}</div></div>` : ''}
+      ${hasSubs ? `<div class="dq-subs">${node.subs.map(s => renderSub(s)).join('')}</div>` : ''}
+    </div>`;
+  }
+
+  function renderSub(sub) {
+    const a = dtreeAnswers[sub.id];
+    const hasSubs = sub.subs && sub.subs.length > 0;
+    return `<div class="dsub" id="dsub-${sub.id}">
+      <div class="dsub-q">${sub.question}</div>
+      <div class="dsub-btns">
+        <button class="dq-btn yes ${a==='yes'?'sel':''}" onclick="dtreeAnswer('${sub.id}','yes')">YES</button>
+        <button class="dq-btn no  ${a==='no' ?'sel':''}" onclick="dtreeAnswer('${sub.id}','no')">NO</button>
+      </div>
+      <div class="dsub-result ${a==='yes'?'show':''}">${sub.result || ''}</div>
+      ${hasSubs && a === 'yes' ? sub.subs.map(s => renderSub(s)).join('') : ''}
+    </div>`;
+  }
+
+  container.innerHTML = DTREE_DATA.map(q => renderNode(q, 0)).join('');
+  updateSummary();
+}
+
+function dtreeAnswer(id, val) {
+  dtreeAnswers[id] = val;
+  renderDtree();
+}
+
+function resetDtree() {
+  dtreeAnswers = {};
+  renderDtree();
+}
+
+function collectResults(nodes) {
+  const results = [];
+  for (const n of nodes) {
+    if (dtreeAnswers[n.id] === 'yes') {
+      if (n.result) results.push(n.result);
+      if (n.subs) results.push(...collectResults(n.subs));
+    }
+  }
+  return results;
+}
+
+function updateSummary() {
+  const results = collectResults(DTREE_DATA);
+  const body = document.getElementById('dtree-summary-body');
+  if (!results.length) {
+    body.innerHTML = '<p class="summary-empty">Answer the questions to see required defenses.</p>';
+    return;
+  }
+  body.innerHTML = results.map(r => {
+    const [id, ...rest] = r.split(' — ');
+    return `<div class="summary-item"><span class="si-id">${id.replace(' REQUIRED','')}</span><span class="si-desc">${rest.join(' — ')}</span></div>`;
+  }).join('');
+}
+
+// ── INIT ──
+loadData();
+</script>
+</body>
+</html>
