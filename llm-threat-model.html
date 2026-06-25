@@ -842,7 +842,8 @@ function renderThreats() {
   const container = document.getElementById('threats-list');
   container.innerHTML = THREATS.map((t, i) => {
     const prioKey = t.prio.split('-')[0];
-    return `<div class="threat-card prio-${prioKey}" id="tc-${i}" data-prio="${prioKey}" data-text="${(t.title+' '+t.desc+' '+t.subtypes.join(' ')).toLowerCase()}">
+    const searchText = [t.title, t.desc, t.subtypes.join(' '), t.surface, t.wild, t.owasp].join(' ').toLowerCase();
+    return `<div class="threat-card prio-${prioKey}" id="tc-${i}" data-prio="${prioKey}" data-text="${searchText.replace(/"/g,'&quot;')}">
       <div class="tc-header" role="button" tabindex="0" aria-expanded="false" aria-controls="tcb-${i}" onclick="toggleCard(${i})" onkeydown="if(event.key==='Enter'||event.key===' ')toggleCard(${i})">
         <span class="tc-num">${t.num}</span>
         <span class="tc-title">${t.title}</span>

@@ -135,6 +135,16 @@ exactly 1 tab with tabindex=0; ArrowRight advances tab+panel, End→last, wrap l
 no console errors. **Verified (file:// sim):** fetch-reject fallback renders 14 threats,
 em-dash intact, no mojibake.
 
+### Pass 7: Threat search index completeness (2026-06-25)
+**Bug:** search index (`data-text`) only covered title + desc + subtypes. A user searching
+"echoleak" (the CVE in the `wild` field) or "huggingface" (in `surface`) got **0 results**
+despite the term being visible in the expanded card. Verified: echoleak in 2 threats' data,
+0 in index.
+
+**Fix:** index now joins title, desc, subtypes, surface, wild, owasp; added `&quot;` escaping
+on the attribute for safety. Verified end-to-end via `searchThreats()`: echoleak→2 visible,
+huggingface→1, empty→14. No console errors.
+
 ---
 
 ## Summary: Architecture Design Complete
