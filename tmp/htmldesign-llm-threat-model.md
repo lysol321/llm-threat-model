@@ -163,6 +163,15 @@ button → focus dropped to `<body>`. Verified: keyboard activation of Q1 YES le
 (`#dq-<id>` or `#dsub-<id>`, `.dq-btn.<val>`). Verified at top-level (Q1) and sub-question
 (q1a) depth — focus stays on the answered button.
 
+### Pass 10: prefers-reduced-motion (2026-06-25)
+**Gap:** page animates on every tab switch (fadeIn), hover transforms, chevron rotate, and
+card max-height transitions, with no `prefers-reduced-motion` handling (WCAG 2.3.3; vestibular
+users). Confirmed absent.
+
+**Fix:** added a `@media (prefers-reduced-motion: reduce)` block zeroing animation/transition
+durations and scroll-behavior globally. Verified the rule parsed into the stylesheet with the
+correct condition + 0.001ms duration (OS setting not active in test env, so not seen live).
+
 ---
 
 ## Summary: Architecture Design Complete
