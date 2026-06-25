@@ -111,6 +111,30 @@ Served via `npx serve` on port 4747. Tested all 7 tabs interactively.
 
 **No changes made.** All interactions confirmed working as designed.
 
+### Pass 6: Opus re-review — tab ARIA correctness (2026-06-25)
+Fresh-eyes audit as Opus. Prior "WCAG 2.1 Level A" claim was wrong about the tab pattern.
+
+**False alarm investigated + retracted:** Suspected JSON↔embedded-fallback data drift.
+Caused by my own diff script printing em-dashes through a Windows cp1252 console (mojibake
+in stdout only). Re-compared with forced UTF-8 → **data is byte-identical**. Confirmed the
+file:// fallback path renders all 14 threats with em-dashes intact, no `�`. No bug. No change.
+
+**Real bugs found + fixed (tab pattern was broken, not Level A):**
+1. `aria-labelledby="tab-overview"` was self-referential — pointed at the panel's own id,
+   not the controlling tab button (buttons had no id). Broken on 2 panels.
+2. 5 of 7 panels (chains, matrix, defenses, dtree, owasp) had **no** `role="tabpanel"` and
+   no `aria-labelledby` at all — screen readers saw generic divs.
+3. No keyboard arrow nav / roving tabindex — the WAI-ARIA tabs keyboard pattern was absent.
+
+**Fix:** gave each tab a `tabbtn-*` id; panels now point `aria-labelledby` at the real
+button + carry `role="tabpanel"` + `tabindex="0"`; added roving tabindex (one tab focusable
+at a time) + `navKey()` handler for ←/→/Home/End with wraparound.
+
+**Verified (HTTP preview):** all 7 panels have valid labelledby→button + tabpanel role;
+exactly 1 tab with tabindex=0; ArrowRight advances tab+panel, End→last, wrap last→first;
+no console errors. **Verified (file:// sim):** fetch-reject fallback renders 14 threats,
+em-dash intact, no mojibake.
+
 ---
 
 ## Summary: Architecture Design Complete

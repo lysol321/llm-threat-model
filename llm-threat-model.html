@@ -349,20 +349,20 @@
   <button class="print-btn" onclick="window.print()">Export PDF</button>
 </header>
 
-<nav class="site-nav" role="tablist" aria-label="Threat Model Sections">
-  <button role="tab" aria-selected="true" aria-controls="tab-overview" class="active" onclick="showTab('overview', this)">Overview</button>
-  <button role="tab" aria-selected="false" aria-controls="tab-threats" onclick="showTab('threats', this)">14 Threats</button>
-  <button role="tab" aria-selected="false" aria-controls="tab-chains" onclick="showTab('chains', this)">Attack Chains</button>
-  <button role="tab" aria-selected="false" aria-controls="tab-matrix" onclick="showTab('matrix', this)">Risk Matrix</button>
-  <button role="tab" aria-selected="false" aria-controls="tab-defenses" onclick="showTab('defenses', this)">Defenses</button>
-  <button role="tab" aria-selected="false" aria-controls="tab-dtree" onclick="showTab('dtree', this)">Decision Tree</button>
-  <button role="tab" aria-selected="false" aria-controls="tab-owasp" onclick="showTab('owasp', this)">OWASP Mapping</button>
+<nav class="site-nav" role="tablist" aria-label="Threat Model Sections" onkeydown="navKey(event)">
+  <button id="tabbtn-overview" role="tab" aria-selected="true"  aria-controls="tab-overview" tabindex="0"  class="active" onclick="showTab('overview', this)">Overview</button>
+  <button id="tabbtn-threats"  role="tab" aria-selected="false" aria-controls="tab-threats"  tabindex="-1" onclick="showTab('threats', this)">14 Threats</button>
+  <button id="tabbtn-chains"   role="tab" aria-selected="false" aria-controls="tab-chains"   tabindex="-1" onclick="showTab('chains', this)">Attack Chains</button>
+  <button id="tabbtn-matrix"   role="tab" aria-selected="false" aria-controls="tab-matrix"   tabindex="-1" onclick="showTab('matrix', this)">Risk Matrix</button>
+  <button id="tabbtn-defenses" role="tab" aria-selected="false" aria-controls="tab-defenses" tabindex="-1" onclick="showTab('defenses', this)">Defenses</button>
+  <button id="tabbtn-dtree"    role="tab" aria-selected="false" aria-controls="tab-dtree"    tabindex="-1" onclick="showTab('dtree', this)">Decision Tree</button>
+  <button id="tabbtn-owasp"    role="tab" aria-selected="false" aria-controls="tab-owasp"    tabindex="-1" onclick="showTab('owasp', this)">OWASP Mapping</button>
 </nav>
 
 <main>
 
 <!-- ══ OVERVIEW ══ -->
-<div id="tab-overview" class="tab-panel active" role="tabpanel" aria-labelledby="tab-overview">
+<div id="tab-overview" class="tab-panel active" role="tabpanel" aria-labelledby="tabbtn-overview" tabindex="0">
   <h2>LLM Threat Model — v1.7</h2>
   <p>Structured threat model for systems that use large language models. 14 threat categories, 4 critical attack chains, a scored risk matrix, and a defense playbook. For engineering teams — no ML security expertise required. Click a severity card to filter threats.</p>
 
@@ -413,7 +413,7 @@
 </div>
 
 <!-- ══ 14 THREATS ══ -->
-<div id="tab-threats" class="tab-panel" role="tabpanel" aria-labelledby="tab-threats">
+<div id="tab-threats" class="tab-panel" role="tabpanel" aria-labelledby="tabbtn-threats" tabindex="0">
   <div class="filter-bar">
     <button class="filter-btn active" onclick="setFilter('ALL', this)">All</button>
     <button class="filter-btn f-CRITICAL" onclick="setFilter('CRITICAL', this)">Critical</button>
@@ -426,7 +426,7 @@
 </div>
 
 <!-- ══ ATTACK CHAINS ══ -->
-<div id="tab-chains" class="tab-panel">
+<div id="tab-chains" class="tab-panel" role="tabpanel" aria-labelledby="tabbtn-chains" tabindex="0">
   <p>Four highest-risk end-to-end exploitation paths. Each confirmed in production or primary research.</p>
 
   <!-- Chain A -->
@@ -551,7 +551,7 @@
 </div>
 
 <!-- ══ RISK MATRIX ══ -->
-<div id="tab-matrix" class="tab-panel">
+<div id="tab-matrix" class="tab-panel" role="tabpanel" aria-labelledby="tabbtn-matrix" tabindex="0">
   <p>Risk = Likelihood × Impact (1–5). Scores: <span style="color:var(--critical)">19–25 CRITICAL</span> · <span style="color:var(--high)">13–18 HIGH</span> · <span style="color:var(--medium)">7–12 MEDIUM</span> · <span style="color:var(--low)">1–6 LOW</span></p>
 
   <div class="matrix-wrap" style="margin-bottom:28px;">
@@ -627,7 +627,7 @@
 </div>
 
 <!-- ══ DEFENSES ══ -->
-<div id="tab-defenses" class="tab-panel">
+<div id="tab-defenses" class="tab-panel" role="tabpanel" aria-labelledby="tabbtn-defenses" tabindex="0">
   <div class="ctrl-key">
     <div class="ctrl-key-item"><span class="ctrl-badge ctrl-infra">Technical — Infrastructure</span> Enforced by pipeline/system. Does not depend on LLM behavior. Holds under adversarial conditions.</div>
     <div class="ctrl-key-item"><span class="ctrl-badge ctrl-align">Alignment</span> Depends on LLM following instructions. Weaker under sophisticated attacks.</div>
@@ -693,7 +693,7 @@
 </div>
 
 <!-- ══ DECISION TREE ══ -->
-<div id="tab-dtree" class="tab-panel">
+<div id="tab-dtree" class="tab-panel" role="tabpanel" aria-labelledby="tabbtn-dtree" tabindex="0">
   <p>Answer 4 questions to identify required defenses. Required defenses accumulate in the panel on the right.</p>
   <div class="dtree-wrap">
     <div class="dtree-questions" id="dtree-qs"></div>
@@ -706,7 +706,7 @@
 </div>
 
 <!-- ══ OWASP ══ -->
-<div id="tab-owasp" class="tab-panel">
+<div id="tab-owasp" class="tab-panel" role="tabpanel" aria-labelledby="tabbtn-owasp" tabindex="0">
   <h2>OWASP LLM Top 10 (2025) Mapping</h2>
   <table class="owasp-table" style="margin-bottom:28px;">
     <tr><th style="width:110px">OWASP 2025</th><th>Official Name</th><th>Internal Coverage</th></tr>
@@ -783,12 +783,29 @@ function showTab(name, btn) {
   document.querySelectorAll('.site-nav button').forEach(b => {
     b.classList.remove('active');
     b.setAttribute('aria-selected', 'false');
+    b.setAttribute('tabindex', '-1');
   });
   document.getElementById('tab-' + name).classList.add('active');
   if (btn) {
     btn.classList.add('active');
     btn.setAttribute('aria-selected', 'true');
+    btn.setAttribute('tabindex', '0');
   }
+}
+
+// ── TABLIST KEYBOARD NAV (WAI-ARIA tabs pattern) ──
+function navKey(e) {
+  const keys = { ArrowLeft: -1, ArrowRight: 1, Home: 'first', End: 'last' };
+  if (!(e.key in keys)) return;
+  e.preventDefault();
+  const tabs = [...document.querySelectorAll('.site-nav button')];
+  const cur = tabs.indexOf(document.activeElement);
+  let next;
+  if (keys[e.key] === 'first') next = 0;
+  else if (keys[e.key] === 'last') next = tabs.length - 1;
+  else next = (cur + keys[e.key] + tabs.length) % tabs.length;
+  tabs[next].click();   // selects + activates (manual activation also acceptable; follow-focus here)
+  tabs[next].focus();
 }
 
 // ── OVERVIEW STAT CLICK → filter threats ──
