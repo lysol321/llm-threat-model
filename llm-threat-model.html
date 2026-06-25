@@ -367,16 +367,16 @@
   <p>Structured threat model for systems that use large language models. 14 threat categories, 4 critical attack chains, a scored risk matrix, and a defense playbook. For engineering teams — no ML security expertise required. Click a severity card to filter threats.</p>
 
   <div class="stat-row">
-    <div class="stat critical" onclick="filterAndGo('CRITICAL')">
+    <div class="stat critical" role="button" tabindex="0" aria-label="Filter threats: 4 Critical" onclick="filterAndGo('CRITICAL')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();filterAndGo('CRITICAL')}">
       <div class="num">4</div><div class="label">Critical</div>
     </div>
-    <div class="stat high" onclick="filterAndGo('HIGH')">
+    <div class="stat high" role="button" tabindex="0" aria-label="Filter threats: 9 High" onclick="filterAndGo('HIGH')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();filterAndGo('HIGH')}">
       <div class="num">9</div><div class="label">High</div>
     </div>
-    <div class="stat medium" onclick="filterAndGo('MEDIUM')">
+    <div class="stat medium" role="button" tabindex="0" aria-label="Filter threats: 8 Medium" onclick="filterAndGo('MEDIUM')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();filterAndGo('MEDIUM')}">
       <div class="num">8</div><div class="label">Medium</div>
     </div>
-    <div class="stat low" onclick="filterAndGo('LOW')">
+    <div class="stat low" role="button" tabindex="0" aria-label="Filter threats: 4 Low" onclick="filterAndGo('LOW')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();filterAndGo('LOW')}">
       <div class="num">4</div><div class="label">Low</div>
     </div>
   </div>

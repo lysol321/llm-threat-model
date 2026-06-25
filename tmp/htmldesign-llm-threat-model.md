@@ -145,6 +145,15 @@ despite the term being visible in the expanded card. Verified: echoleak in 2 thr
 on the attribute for safety. Verified end-to-end via `searchThreats()`: echoleak→2 visible,
 huggingface→1, empty→14. No console errors.
 
+### Pass 8: Overview stat cards keyboard access (2026-06-25)
+**Bug:** intro says "Click a severity card to filter threats" but the 4 stat cards were
+`<div onclick>` — no role, no tabindex, no keydown. `keyboardReachable: false` on all four.
+WCAG 2.1.1 (Keyboard) fail on an explicitly-advertised feature. Same gap the threat cards
+already had fixed.
+
+**Fix:** role="button", tabindex="0", descriptive aria-label, Enter/Space keydown handler
+on each card. Verified: all 4 reachable; Enter on Critical → Threats tab + Critical filter.
+
 ---
 
 ## Summary: Architecture Design Complete
