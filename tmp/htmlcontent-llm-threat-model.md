@@ -14,32 +14,71 @@
 
 ## Pass log
 
-### Pass 1 — Content audit (findings)
+### Pass 1 — Changes (committed)
 
-| # | Severity | Finding |
-|---|---|---|
-| 1 | HIGH | Stat cards hardcoded as 4C/9H/8M/4L; actual THREATS array is 3C/3H/7M/1L. Clicking "4 Critical" filter shows only 3 threats — visible mismatch. |
-| 2 | MEDIUM | Version: HTML title + h2 say v1.7; release manifest is v1.8. |
-| 3 | MEDIUM | DET-DEF-1 (Audit Logging) and DET-DEF-2 (Anomaly Detection) absent from defenses table. The defense-playbook has them as a full "Detection and Response" layer. |
-| 4 | LOW | Production cost annotations table doesn't include DET-DEF-1/DET-DEF-2 (will fix alongside #3) |
+| Finding | Fix |
+|---|---|
+| Stat cards wrong (4C/9H/8M/4L vs actual 3C/3H/7M/1L) | `renderStats()` computes from THREATS array |
+| Version v1.7 in title/badge/h2 | Updated to v1.8 throughout |
+| DET-DEF-1/DET-DEF-2 missing from defense table | Added with `ctrl-detect` badge + production cost rows |
 
-**Verified correct (no change):**
-- THREATS data (14 entries) matches threat-taxonomy.md priority/content
-- OWASP table matches quick-reference.md exactly
-- Regulatory table: EU AI Act 6% turnover/€30M, GDPR 4%/€20M — both correct
-- Risk matrix values match risk-matrix.md base scores
-- Elevation conditions table matches risk-matrix.md Tier 2 elevation conditions
-- Attack chains match attack-trees content
-- Decision tree matches quick-reference.md decision tree shortcut
-- Defense table controls (PI-DEF-1/2, AGENCY-DEF-1/2, SC-DEF-1/2, MA-DEF-1, ISC-DEF-1) match defense-playbook.md
+### Pass 2 — Changes (committed)
+
+| Finding | Fix |
+|---|---|
+| Defense Investment Guidance absent | Added Tier 1/2/3 + Conditional ISC table (from framework.md) |
+| Comparable Frameworks absent | Added 7-framework table to OWASP tab (from framework.md v1.8) |
+
+### Pass 3 — Changes (committed)
+
+| Finding | Fix |
+|---|---|
+| ISC/Category 14 had no Overview key insight | Added 5th insight card about harness attacks bypassing PI detectors |
+| SC-GAP-1 not surfaced | Added warning note to SC-DEF-1: AIBOM doesn't detect behavioral backdoors |
+
+### Pass 4 — Changes (committed)
+
+| Finding | Fix |
+|---|---|
+| MA-DEF-1 "HIGH if enforced" overstated for LangGraph default | Added LangGraph ToolCallWrapper caveat note + updated effectiveness label |
+| Threat 09 missing source note + Slow-Burn subtype | Added update field + Slow-Burn as 5th subtype |
+
+### Pass 5 — Changes (committed)
+
+| Finding | Fix |
+|---|---|
+| ISC-DEF-2 in investment guidance but not in defense table | Added ISC-DEF-2 (agentic loop visibility) to defense table + investment Tier 2 |
+
+### Pass 6 — NO CHANGES [no-change pass #1]
+
+Comprehensive sweep of all remaining synthesis content:
+- PI-DEF-3 (Input Filtering): SECONDARY; cost table already mentions "Input filtering". Not adding.
+- PI-DEF-4 (Output Validation): SECONDARY; cost table already mentions "Output validation". Not adding.
+- SC-DEF-3 (Model Registry Controls): SECONDARY. Not adding (scope creep for quick-ref tool).
+- Tool Call Budgeting [OPS]: SECONDARY. Not adding.
+- ISC-DEF-3 (Deployment-Level ISC Scanning): Provider-side only; deployers mark N/A. Not adding.
+- Tier 4 Lower Risks: audio injection (score 3), covert channel (score 4), align regression (score 6), JaaS (score 4) — all already shown in risk matrix grid cells. ✓
+- Asset inventory / assumptions / attack surface catalog: detailed reference docs, appropriate to leave in synthesis. Not suitable for quick-ref HTML.
+- Regulatory detail (EU AI Act 3%/€15M for documentation vs 6%/€30M for violations): HTML uses max penalty. Intentional simplification for quick reference. ✓
+- Research/evaluation content: not for HTML. ✓
+
+**State: 1 no-change pass completed. Need 2 more to stop.**
 
 ---
 
-### Pass 1 — Changes planned
+## Final state (after Pass 6)
 
-1. **Stat cards**: Compute counts dynamically from THREATS array in `renderStats()` called at init
-2. **Version**: v1.7 → v1.8 in `<title>` and Overview h2
-3. **DET-DEF-1/DET-DEF-2**: Add to defenses table with `ctrl-detect` type + production cost entries
-4. **CSS**: Add `.ctrl-detect` badge style for detection control type
-
----
+| Component | Status |
+|---|---|
+| Version | v1.8 ✓ |
+| Stat cards | Dynamic from THREATS (3C/3H/7M/1L) ✓ |
+| 14 Threats | All entries match taxonomy; update fields current ✓ |
+| Attack Chains | All 4 chains (A/B/C/ISC) correct ✓ |
+| Risk Matrix | Base scores + elevation conditions match ✓ |
+| Defense Table | 11 controls (incl. ISC-DEF-2, DET-DEF-1/2) + SC-GAP-1 + MA-DEF-1 caveat ✓ |
+| Defense Investment Guidance | Tier 1/2/3 + Conditional ISC ✓ |
+| Decision Tree | 4 questions matching quick-reference ✓ |
+| OWASP Mapping | LLM01-LLM10 correct ✓ |
+| Regulatory Reference | EU AI Act / GDPR / FTC ✓ |
+| Comparable Frameworks | 7 frameworks (v1.8 addition) ✓ |
+| 5 Key Insights | Incl. ISC harness attack insight ✓ |
