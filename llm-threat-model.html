@@ -220,7 +220,7 @@
   .matrix thead th { background: var(--surface2); color: var(--text2); font-size: 11px; font-weight: 600; padding: 8px 10px; }
   .matrix th.axis-cell { background: var(--surface); color: var(--text2); font-size: 11px; font-weight: 600; padding: 8px 10px; text-align: left; min-width: 140px; line-height: 1.4; }
   .matrix td.axis-cell { background: var(--surface); color: var(--text2); font-size: 11px; padding: 10px; text-align: left; line-height: 1.4; }
-  .mcell { padding: 10px 8px; cursor: default; height: 70px; vertical-align: top; position: relative; }
+  .mcell { padding: 10px 8px; cursor: default; min-height: 70px; vertical-align: top; position: relative; }
   .mcell .mscore { font-size: 13px; font-weight: 800; display: block; margin-bottom: 3px; }
   .mcell .mthreats { font-size: 10px; line-height: 1.4; }
   .cell-critical { background: rgba(239,68,68,0.18); }
@@ -534,9 +534,9 @@
     <div class="chain-header">
       <span class="prio prio-CRITICAL">CRITICAL</span>
       <h3>Chain C — Multi-Agent Context Propagation</h3>
-      <span class="chain-wvt">Wild/Theory: 3/5</span>
+      <span class="chain-wvt">Wild/Theory: 4/5</span>
     </div>
-    <div class="chain-desc">Source-confirmed data-flow risk in common multi-agent patterns. Exploitation requires multi-agent deployment with output→context trust.</div>
+    <div class="chain-desc">Confirmed in wild: Sysdig (May 2026) — LLM agent drove post-exploitation autonomously. Exploitation requires multi-agent deployment with output→context trust.</div>
     <div class="chain-flow">
       <div class="chain-step">
         <div class="step-col"><div class="step-dot" style="background:#38bdf8"></div><div class="step-line" style="background:linear-gradient(#38bdf8,#f97316)"></div></div>
@@ -779,6 +779,7 @@
       <td>MA-DEF-1</td>
       <td>Context isolation between agents + inter-agent provenance
         <div class="tc-note" style="margin-top:6px;font-size:11px;">⚠️ LangGraph default: ToolNode.invoke() returns unsanitized ToolMessage to shared state — MA-DEF-1 is MEDIUM without ToolCallWrapper enforced. Explicitly implement ToolCallWrapper or equivalent middleware to achieve HIGH.</div>
+        <div class="tc-note" style="margin-top:4px;font-size:11px;">📊 Empirical: output filtering was the only defense with zero leaks across 20K adaptive attacks (Output-Filtering-Evaluation, 2026). Architecture controls alone insufficient against adaptive adversaries.</div>
       </td>
       <td>Multi-Agent Propagation</td>
       <td><span class="ctrl-badge ctrl-infra">Technical (arch)</span></td>
@@ -857,8 +858,8 @@
     <tr><th>Regulation</th><th>Key Articles / Areas</th><th>Max Penalty</th></tr>
     <tr>
       <td><strong style="color:var(--text)">EU AI Act</strong></td>
-      <td>Art. 9 (risk mgmt) · Art. 10 (data governance) · Art. 13 (transparency) · Art. 14 (human oversight) · Art. 15 (robustness/cybersecurity) · Art. 17 (quality mgmt)</td>
-      <td style="white-space:nowrap">6% global turnover or €30M</td>
+      <td>Art. 9 (risk mgmt) · Art. 10 (data governance) · Art. 13 (transparency) · Art. 14 (human oversight) · Art. 15 (robustness/cybersecurity) · Art. 17 (quality mgmt)<br><span style="font-size:11px;color:var(--text2);">GPAI obligations: Aug 2, 2026 · High-risk systems: ~Dec 2027 (Digital Omnibus delay, May 2026)</span></td>
+      <td style="white-space:nowrap">7% global turnover or €35M (GPAI)</td>
     </tr>
     <tr>
       <td><strong style="color:var(--text)">GDPR</strong></td>
