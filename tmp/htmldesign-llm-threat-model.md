@@ -172,6 +172,15 @@ users). Confirmed absent.
 durations and scroll-behavior globally. Verified the rule parsed into the stylesheet with the
 correct condition + 0.001ms duration (OS setting not active in test env, so not seen live).
 
+### Pass 11: Color contrast — text3 failed WCAG AA (2026-06-25)
+**Bug:** `--text3: #4a6b8a` (table headers, OWASP badges, detail labels, meta, placeholders)
+failed AA on every background it carries text on: 3.42 on bg, 3.18 on surface, 2.63 on
+surface2 (below even 3:1). Computed ratios directly.
+
+**Fix:** raised to `#7a93b0` — minimal bump clearing 4.5:1 on bg (6.03), surface (5.6),
+surface2 (4.63) while staying muted below text2 (hierarchy preserved). One-variable root fix
+covers every text3 usage. Visually confirmed legibility up, tone unchanged.
+
 ---
 
 ## Summary: Architecture Design Complete
