@@ -708,6 +708,11 @@
     </tr>
     <tr>
       <td style="color:var(--high);font-weight:700">Tier 2</td>
+      <td>Agentic loop visibility + rate limiting <em style="font-size:11px;color:var(--text3)">(if ISC applies)</em></td><td><span class="def-tag">ISC-DEF-2</span></td>
+      <td>Limits ISC blast radius; labels TVD harness outputs</td>
+    </tr>
+    <tr>
+      <td style="color:var(--high);font-weight:700">Tier 2</td>
       <td>Audit logging for AI actions</td><td><span class="def-tag">DET-DEF-1</span></td>
       <td>Enables incident response</td>
     </tr>
@@ -783,6 +788,11 @@
       <td>ISC-DEF-1</td><td>Validator harness validation — semantic output safety check</td><td>ISC / Validator Harness</td>
       <td><span class="ctrl-badge ctrl-infra">Technical + Semantic</span></td>
       <td><span class="eff-badge eff-HIGH">HIGH</span></td>
+    </tr>
+    <tr>
+      <td>ISC-DEF-2</td><td>Agentic loop visibility + rate limiting — flag task→incomplete-data→model-completion→validator-acceptance patterns; label TVD harness outputs; treat externally supplied task/validator/data as untrusted</td><td>ISC / Validator Harness (monitoring layer)</td>
+      <td><span class="ctrl-badge ctrl-detect">Detection</span></td>
+      <td><span class="eff-badge eff-MEDIUM">MEDIUM — limits blast radius, does not prevent ISC</span></td>
     </tr>
     <tr>
       <td>DET-DEF-1</td><td>Audit logging for AI actions — tool calls, RAG retrievals, inter-agent messages, model changes, HITL events</td><td>All threat categories (detection layer)</td>
