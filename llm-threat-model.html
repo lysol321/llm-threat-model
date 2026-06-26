@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LLM Threat Model v1.7</title>
+<title>LLM Threat Model v1.8</title>
 <style>
   :root {
     --critical: #ef4444;
@@ -247,6 +247,7 @@
   .def-table td:first-child { color: var(--accent); font-weight: 700; white-space: nowrap; font-size: 12px; }
   .ctrl-badge { display: inline-block; font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 4px; }
   .ctrl-infra { background: rgba(56,189,248,0.12); color: var(--accent); border: 1px solid rgba(56,189,248,0.25); }
+  .ctrl-detect { background: rgba(129,140,248,0.12); color: var(--accent2); border: 1px solid rgba(129,140,248,0.25); }
   .ctrl-align { background: rgba(249,115,22,0.12); color: #fdba74; border: 1px solid rgba(249,115,22,0.25); }
   .ctrl-proc  { background: rgba(129,140,248,0.12); color: var(--accent2); border: 1px solid rgba(129,140,248,0.25); }
   .eff-badge { display: inline-block; font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 4px; }
@@ -381,7 +382,7 @@
 
 <header class="site-header">
   <h1>LLM Threat Model</h1>
-  <span class="badge">v1.7</span>
+  <span class="badge">v1.8</span>
   <span class="meta">Updated 2026-06-24 &nbsp;·&nbsp; Next review 2026-09-24</span>
   <button class="print-btn" onclick="window.print()">Export PDF</button>
 </header>
@@ -400,21 +401,21 @@
 
 <!-- ══ OVERVIEW ══ -->
 <div id="tab-overview" class="tab-panel active" role="tabpanel" aria-labelledby="tabbtn-overview" tabindex="0">
-  <h2>LLM Threat Model — v1.7</h2>
+  <h2>LLM Threat Model — v1.8</h2>
   <p>Structured threat model for systems that use large language models. 14 threat categories, 4 critical attack chains, a scored risk matrix, and a defense playbook. For engineering teams — no ML security expertise required. Click a severity card to filter threats.</p>
 
-  <div class="stat-row">
-    <div class="stat critical" role="button" tabindex="0" aria-label="Filter threats: 4 Critical" onclick="filterAndGo('CRITICAL')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();filterAndGo('CRITICAL')}">
-      <div class="num">4</div><div class="label">Critical</div>
+  <div class="stat-row" id="stat-row">
+    <div class="stat critical" role="button" tabindex="0" id="stat-CRITICAL" aria-label="Filter threats: Critical" onclick="filterAndGo('CRITICAL')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();filterAndGo('CRITICAL')}">
+      <div class="num" id="stat-num-CRITICAL">—</div><div class="label">Critical</div>
     </div>
-    <div class="stat high" role="button" tabindex="0" aria-label="Filter threats: 9 High" onclick="filterAndGo('HIGH')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();filterAndGo('HIGH')}">
-      <div class="num">9</div><div class="label">High</div>
+    <div class="stat high" role="button" tabindex="0" id="stat-HIGH" aria-label="Filter threats: High" onclick="filterAndGo('HIGH')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();filterAndGo('HIGH')}">
+      <div class="num" id="stat-num-HIGH">—</div><div class="label">High</div>
     </div>
-    <div class="stat medium" role="button" tabindex="0" aria-label="Filter threats: 8 Medium" onclick="filterAndGo('MEDIUM')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();filterAndGo('MEDIUM')}">
-      <div class="num">8</div><div class="label">Medium</div>
+    <div class="stat medium" role="button" tabindex="0" id="stat-MEDIUM" aria-label="Filter threats: Medium" onclick="filterAndGo('MEDIUM')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();filterAndGo('MEDIUM')}">
+      <div class="num" id="stat-num-MEDIUM">—</div><div class="label">Medium</div>
     </div>
-    <div class="stat low" role="button" tabindex="0" aria-label="Filter threats: 4 Low" onclick="filterAndGo('LOW')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();filterAndGo('LOW')}">
-      <div class="num">4</div><div class="label">Low</div>
+    <div class="stat low" role="button" tabindex="0" id="stat-LOW" aria-label="Filter threats: Low" onclick="filterAndGo('LOW')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();filterAndGo('LOW')}">
+      <div class="num" id="stat-num-LOW">—</div><div class="label">Low</div>
     </div>
   </div>
 
@@ -713,6 +714,16 @@
       <td><span class="ctrl-badge ctrl-infra">Technical + Semantic</span></td>
       <td><span class="eff-badge eff-HIGH">HIGH</span></td>
     </tr>
+    <tr>
+      <td>DET-DEF-1</td><td>Audit logging for AI actions — tool calls, RAG retrievals, inter-agent messages, model changes, HITL events</td><td>All threat categories (detection layer)</td>
+      <td><span class="ctrl-badge ctrl-detect">Detection</span></td>
+      <td><span class="eff-badge eff-MEDIUM">Detection only — critical for IR</span></td>
+    </tr>
+    <tr>
+      <td>DET-DEF-2</td><td>Anomaly detection — tool call patterns, output deviations, context window spikes, quota consumption anomalies</td><td>All threat categories (detection layer)</td>
+      <td><span class="ctrl-badge ctrl-detect">Detection</span></td>
+      <td><span class="eff-badge eff-MEDIUM">Detection only</span></td>
+    </tr>
   </table>
 
   <h2>Production Cost Annotations</h2>
@@ -726,6 +737,8 @@
     <tr><td>AIBOM maintenance (SC-DEF-1)</td><td>Ongoing ops cost</td><td>None</td><td>Medium — registry tooling</td></tr>
     <tr><td>Output validation</td><td>20–100ms/output</td><td>False positives filter legitimate outputs</td><td>Low–Medium</td></tr>
     <tr><td>Multi-agent context isolation (MA-DEF-1)</td><td>Architecture complexity</td><td>May reduce cross-agent workflows</td><td>High — architectural design at build time</td></tr>
+    <tr><td>Audit logging — DET-DEF-1</td><td>Minimal</td><td>None</td><td>Low — ops tooling + 90-day tamper-evident retention</td></tr>
+    <tr><td>Anomaly detection — DET-DEF-2</td><td>None</td><td>None</td><td>Medium — baseline tuning to avoid alert fatigue</td></tr>
   </table>
 </div>
 
@@ -971,8 +984,21 @@ function updateSummary() {
   }).join('');
 }
 
+// ── STAT CARDS (computed from THREATS) ──
+function renderStats() {
+  const counts = { CRITICAL: 0, HIGH: 0, MEDIUM: 0, LOW: 0 };
+  THREATS.forEach(t => { const k = t.prio.split('-')[0]; if (counts[k] !== undefined) counts[k]++; });
+  for (const [prio, n] of Object.entries(counts)) {
+    const el = document.getElementById(`stat-num-${prio}`);
+    if (el) el.textContent = n;
+    const card = document.getElementById(`stat-${prio}`);
+    if (card) card.setAttribute('aria-label', `Filter threats: ${n} ${prio.charAt(0)+prio.slice(1).toLowerCase()}`);
+  }
+}
+
 // ── INIT ──
 renderThreats();
+renderStats();
 renderDtree();
 </script>
 </body>
