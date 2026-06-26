@@ -793,19 +793,21 @@ const FALLBACK_THREATS = [{"num":"01","title":"Prompt Injection","owasp":"LLM01"
 const FALLBACK_DTREE = [{"id":"q1","label":"Q1","question":"Is there a prompt injection surface? (Any user-controlled input reaches the LLM)","result":null,"subs":[{"id":"q1a","question":"Is RAG / retrieval used?","result":"PI-DEF-2 REQUIRED — RAG context labeling + load-time sanitization"},{"id":"q1b","question":"Does the system have tool permissions?","result":"AGENCY-DEF-1 REQUIRED — minimal tool permission allowlist","subs":[{"id":"q1c","question":"Can high-risk tool calls occur? (email, file write, API with side effects)","result":"AGENCY-DEF-2 REQUIRED — HITL with context provenance"}]}]},{"id":"q2","label":"Q2","question":"Is this multi-agent, MCP, or A2A? (More than one LLM agent in the call chain)","result":"MA-DEF-1 REQUIRED — context isolation + inter-agent provenance tagging"},{"id":"q3","label":"Q3","question":"Can an attacker control or shape: task definition · validator/schema · incomplete data · uploaded documents · tool results · marketplace skills · workflow bundles?","result":"ISC-DEF-1 REQUIRED — validate the harness itself (task + validator + data), not just model output"},{"id":"q4","label":"Q4","question":"Is any model, adapter, skill, MCP server, or dependency third-party?","result":"SC-DEF-1 + SC-DEF-2 REQUIRED — AIBOM + inference sandboxing + network egress monitoring"}];
 
 async function loadData() {
-  try {
-    const [threatsRes, dtreeRes] = await Promise.all([
-      fetch('data/threats.json'),
-      fetch('data/dtree.json')
-    ]);
-    if (threatsRes.ok) THREATS = await threatsRes.json();
-    else THREATS = FALLBACK_THREATS;
-    if (dtreeRes.ok) DTREE_DATA = await dtreeRes.json();
-    else DTREE_DATA = FALLBACK_DTREE;
-  } catch (err) {
-    THREATS = FALLBACK_THREATS;
-    DTREE_DATA = FALLBACK_DTREE;
+  // Over file:// the fetch can only ever fail (CORS blocks file-origin fetch),
+  // so skip it entirely and use the embedded copy — otherwise every local open
+  // logs spurious CORS errors. Over http(s):// prefer the external JSON.
+  if (location.protocol !== 'file:') {
+    try {
+      const [threatsRes, dtreeRes] = await Promise.all([
+        fetch('data/threats.json'),
+        fetch('data/dtree.json')
+      ]);
+      if (threatsRes.ok) THREATS = await threatsRes.json();
+      if (dtreeRes.ok)   DTREE_DATA = await dtreeRes.json();
+    } catch (err) { /* fall back to embedded below */ }
   }
+  if (!THREATS.length)    THREATS = FALLBACK_THREATS;
+  if (!DTREE_DATA.length) DTREE_DATA = FALLBACK_DTREE;
   renderThreats();
   renderDtree();
 }

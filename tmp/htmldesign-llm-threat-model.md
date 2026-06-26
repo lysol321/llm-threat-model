@@ -208,6 +208,18 @@ overflow-x:auto } }` — each wide table becomes its own scroll container. Verif
 first (columns stay aligned, table scrolls), then from the file: all 7 tabs report
 scrollWidth==390 (no page overflow) at 390px. Desktop unaffected (media-scoped).
 
+### Pass 14: Silence CORS errors on file:// (2026-06-25)
+**Bug:** over file:// (the primary distribution mode) every page load fired 4 red console
+errors — `fetch('data/threats.json'/'dtree.json')` is CORS-blocked from origin null, caught,
+then fell back to embedded data. Functionally fine, but a console full of errors reads as
+"broken" for a security deliverable, and the fetch can *never* succeed on file://.
+
+**Fix:** guard the fetch with `location.protocol !== 'file:'` — file:// skips straight to the
+embedded copy (no errors); http(s):// still prefers external JSON. Fallback moved to a
+post-check (`if(!THREATS.length)`) so a partial/failed HTTP fetch still recovers.
+**Verified:** file:// → 0 console errors, 14 threats + 4 dtree render; http:// → guard present
+and JSON endpoint returns 200 (uses JSON path).
+
 ---
 
 ## Summary: Architecture Design Complete
