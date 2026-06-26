@@ -419,7 +419,7 @@
     </div>
   </div>
 
-  <h2>3 Key Insights</h2>
+  <h2>5 Key Insights</h2>
   <div class="grid-2" style="margin-bottom:20px;">
     <div class="insight-card">
       <div class="ic-title"><span class="ic-icon">⚡</span>Prompt injection is the root threat</div>
@@ -436,6 +436,10 @@
     <div class="insight-card">
       <div class="ic-title"><span class="ic-icon">📡</span>Multi-agent = exponential blast radius</div>
       <p>PI in one agent propagates downstream to every agent that consumes its output. Each hop can escalate privilege. Multi-agent deployments require architectural isolation — not just per-agent controls.</p>
+    </div>
+    <div class="insight-card">
+      <div class="ic-title"><span class="ic-icon">🎯</span>Harness attacks bypass PI detectors entirely</div>
+      <p>Category 14 (ISC): a benign-looking task + format validator + incomplete data causes harmful generation as the only valid task completion. No injection present — harmful content IS the task-correct output. Standard PI detectors miss it entirely. Applies to eval frameworks, coding assistants, data-labeling, fine-tuning pipelines, and autonomous agents where an attacker can shape the task/validator/data harness.</p>
     </div>
   </div>
 
@@ -753,7 +757,11 @@
       <td><span class="eff-badge eff-CRITICAL">CRITICAL (high-stakes)</span></td>
     </tr>
     <tr>
-      <td>SC-DEF-1</td><td>AIBOM — AI Bill of Materials for all models/adapters/deps</td><td>Supply Chain</td>
+      <td>SC-DEF-1</td>
+      <td>AIBOM — AI Bill of Materials for all models/adapters/deps
+        <div class="tc-note" style="margin-top:6px;font-size:11px;">⚠️ SC-GAP-1: AIBOM verifies WHO published a model and artifact integrity. It does NOT detect behavioral backdoors or malicious inference code — these require SC-DEF-2 (sandboxing + egress monitoring) to catch.</div>
+      </td>
+      <td>Supply Chain</td>
       <td><span class="ctrl-badge ctrl-infra">Technical + Proc</span></td>
       <td><span class="eff-badge eff-HIGH">HIGH</span></td>
     </tr>
