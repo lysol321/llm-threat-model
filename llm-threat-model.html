@@ -666,6 +666,64 @@
 
 <!-- ══ DEFENSES ══ -->
 <div id="tab-defenses" class="tab-panel" role="tabpanel" aria-labelledby="tabbtn-defenses" tabindex="0">
+
+  <h2>Defense Investment Guidance</h2>
+  <p>For organizations with limited resources: complete Tier 1 before starting Tier 2. Conditional Tier 1 (ISC) applies only when external parties can shape the task/validator/data harness.</p>
+  <table class="def-table" style="margin-bottom:28px;">
+    <tr><th style="width:80px">Tier</th><th>Defense</th><th>Control ID</th><th>Why first</th></tr>
+    <tr>
+      <td style="color:var(--critical);font-weight:700">Tier 1</td>
+      <td>Minimal permission scoping</td><td><span class="def-tag">AGENCY-DEF-1</span></td>
+      <td>If the LLM can't call tools, PI impact is noise</td>
+    </tr>
+    <tr>
+      <td style="color:var(--critical);font-weight:700">Tier 1</td>
+      <td>RAG context labeling</td><td><span class="def-tag">PI-DEF-2</span></td>
+      <td>Distinguishes retrieved content from trusted instructions</td>
+    </tr>
+    <tr>
+      <td style="color:var(--critical);font-weight:700">Tier 1</td>
+      <td>AIBOM maintenance</td><td><span class="def-tag">SC-DEF-1</span></td>
+      <td>Enables supply chain accountability</td>
+    </tr>
+    <tr>
+      <td style="color:var(--critical);font-weight:700;font-size:11px">Tier 1 (ISC)</td>
+      <td>Validator harness validation <em style="font-size:11px;color:var(--text3)">(if attacker can shape task/validator/data)</em></td>
+      <td><span class="def-tag">ISC-DEF-1</span></td>
+      <td>Ranks with Tier 1 for eval, fine-tuning, data-gen, autonomous-tool deployments</td>
+    </tr>
+    <tr>
+      <td style="color:var(--high);font-weight:700">Tier 2</td>
+      <td>Instruction hierarchy hardening</td><td><span class="def-tag">PI-DEF-1</span></td>
+      <td>Makes direct PI harder once tool permissions are scoped</td>
+    </tr>
+    <tr>
+      <td style="color:var(--high);font-weight:700">Tier 2</td>
+      <td>HITL for high-risk tool calls</td><td><span class="def-tag">AGENCY-DEF-2</span></td>
+      <td>Limits damage when other controls fail</td>
+    </tr>
+    <tr>
+      <td style="color:var(--high);font-weight:700">Tier 2</td>
+      <td>Audit logging for AI actions</td><td><span class="def-tag">DET-DEF-1</span></td>
+      <td>Enables incident response</td>
+    </tr>
+    <tr>
+      <td style="color:var(--medium);font-weight:700">Tier 3</td>
+      <td>Inference sandboxing + egress monitoring</td><td><span class="def-tag">SC-DEF-2</span></td>
+      <td>Prevents silent supply chain exfiltration</td>
+    </tr>
+    <tr>
+      <td style="color:var(--medium);font-weight:700">Tier 3</td>
+      <td>Inter-agent context isolation</td><td><span class="def-tag">MA-DEF-1</span></td>
+      <td>Breaks multi-agent kill chains</td>
+    </tr>
+    <tr>
+      <td style="color:var(--medium);font-weight:700">Tier 3</td>
+      <td>Anomaly detection</td><td><span class="def-tag">DET-DEF-2</span></td>
+      <td>Catches attacks that slip past preventive controls</td>
+    </tr>
+  </table>
+
   <div class="ctrl-key">
     <div class="ctrl-key-item"><span class="ctrl-badge ctrl-infra">Technical — Infrastructure</span> Enforced by pipeline/system. Does not depend on LLM behavior. Holds under adversarial conditions.</div>
     <div class="ctrl-key-item"><span class="ctrl-badge ctrl-align">Alignment</span> Depends on LLM following instructions. Weaker under sophisticated attacks.</div>
@@ -789,6 +847,47 @@
       <td><strong style="color:var(--text)">US FTC</strong></td>
       <td>AI Principles (2024): unfair/deceptive security practices · Output validation failures · Supply chain key theft</td>
       <td style="white-space:nowrap">Civil penalties</td>
+    </tr>
+  </table>
+
+  <h2>Comparable Frameworks</h2>
+  <p>This model complements, not replaces, existing AI security frameworks. It provides the deployment-specific connective tissue: assets, surfaces, attack chains, risk scoring, and controls.</p>
+  <table class="owasp-table">
+    <tr><th>Framework</th><th>Primary Coverage</th><th>How This Model Uses It</th></tr>
+    <tr>
+      <td><strong style="color:var(--text)">OWASP LLM Top 10 (2025)</strong></td>
+      <td>LLM vulnerability taxonomy (LLM01–LLM10)</td>
+      <td>Baseline categories and OWASP ID mapping throughout taxonomy and quick reference</td>
+    </tr>
+    <tr>
+      <td><strong style="color:var(--text)">MITRE ATLAS</strong></td>
+      <td>Adversary TTPs for AI-enabled systems (14 tactics, 80+ techniques)</td>
+      <td>Adversary-behavior language for PI, supply chain, poisoning, and exfiltration paths</td>
+    </tr>
+    <tr>
+      <td><strong style="color:var(--text)">NIST AI RMF + GenAI Profile</strong></td>
+      <td>Governance, TEVV, incident response, lifecycle risk management</td>
+      <td>Governance and compliance framing for assessment discipline and evidence handling</td>
+    </tr>
+    <tr>
+      <td><strong style="color:var(--text)">MAESTRO</strong></td>
+      <td>Layered threat modeling for multi-agent and autonomous AI ecosystems</td>
+      <td>Informs inter-agent communication, orchestration boundaries, memory/context poisoning</td>
+    </tr>
+    <tr>
+      <td><strong style="color:var(--text)">Microsoft Agentic Failure Taxonomy</strong></td>
+      <td>Agent safety failure modes: memory poisoning, multi-agent communication failures</td>
+      <td>Informs agent-specific failure analysis behind context propagation and confidentiality concerns</td>
+    </tr>
+    <tr>
+      <td><strong style="color:var(--text)">OWASP Agentic / MCP Guidance</strong></td>
+      <td>Autonomous agents, MCP servers, third-party tool integration, runtime trust boundaries</td>
+      <td>Informs tool poisoning, MCP server risk, tool interference, least privilege, and HITL requirements</td>
+    </tr>
+    <tr>
+      <td><strong style="color:var(--text)">STRIDE / PASTA / LINDDUN</strong></td>
+      <td>General-purpose threat-modeling methods for system, attack-path, and privacy analysis</td>
+      <td>Optional facilitation lenses for trust boundaries, data flows, spoofing, tampering, and privacy harms</td>
     </tr>
   </table>
 </div>
