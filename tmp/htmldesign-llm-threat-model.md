@@ -261,3 +261,47 @@ and JSON endpoint returns 200 (uses JSON path).
 
 ### Open Design Question (Future Work)
 Risk Matrix: Could add col/row ARIA headers for complex table navigation. Current state is readable; upgrade when users report difficulty navigating.
+
+---
+
+## Opus review round (passes 6–14, 2026-06-25) — convergence
+
+The "complete / WCAG 2.1 Level A" claim above was over-stated; a fresh Opus audit found and
+fixed **9 real defects** the server-only visual tests had missed:
+
+| # | Fix | Why it mattered |
+|---|-----|-----------------|
+| 6 | WAI-ARIA tabs pattern | aria-labelledby was self-referential; 5/7 panels had no tabpanel role; no keyboard arrow nav |
+| 7 | Search index | "echoleak"/"huggingface" (in wild/surface) returned 0 results |
+| 8 | Stat-card keyboard | advertised "click a severity card" but div+onclick, unreachable by keyboard |
+| 9 | Decision-tree focus | full re-render dropped keyboard focus to body on every answer |
+| 10 | prefers-reduced-motion | no relief for vestibular users (WCAG 2.3.3) |
+| 11 | Contrast | --text3 failed AA on every background (2.63 on surface2) |
+| 12 | Print/PDF | Export PDF showed only headers — tc-body stayed collapsed; muted text low-contrast |
+| 13 | Mobile overflow | wide tables forced whole page to 591px on a 390px phone |
+| 14 | file:// CORS noise | 4 console errors on every local open |
+
+**Retracted false alarm:** suspected JSON↔fallback data drift was a Windows-console stdout
+artifact in my own diff script; the data is byte-identical. No change made.
+
+### Converged — remaining candidates deliberately NOT changed
+1. **Dead CSS** `.threat-card.open .tc-body{max-height:600px}` — overridden by the JS inline
+   scrollHeight; zero observable effect. Removing is cosmetic churn. Left as-is.
+2. **Open-card clip on cross-breakpoint resize** — the fixed-px max-height set at toggle time
+   doesn't recompute if you open a long card then resize across the mobile breakpoint. Extreme
+   edge case; a resize listener costs more than it's worth. Left as-is.
+3. **innerHTML with author-controlled data** — not attacker-controlled (it *is* the threat
+   model content); not an injection vuln. No change.
+
+### OPEN DESIGN QUESTION for the user (a fork, not a bug)
+**Data lives in two places:** embedded `FALLBACK_*` constants AND `data/*.json` — currently
+byte-identical. On file:// (the primary mode) the JSON is never used; on http:// it's fetched
+but identical to the embedded copy. So the externalization provides no functional benefit today
+while carrying drift risk (two hand-maintained twins). Three defensible resolutions:
+- **(A) Embed-only** — delete `data/*.json` + the fetch; single self-contained file. Best if
+  this ships as a file you open. Loses nothing real (no build pipeline generates the JSON).
+- **(B) JSON-only** — drop the embedded copy, require serving over HTTP. Best if always hosted.
+- **(C) Keep hybrid** — accept the duplication for the option of HTTP-served JSON edits.
+
+I did not pick unilaterally because it deletes prior committed work and reverses a deliberate
+earlier decision. **Recommendation: (A)** — matches how this artifact is actually used.
