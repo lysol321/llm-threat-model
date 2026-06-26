@@ -62,7 +62,26 @@ Comprehensive sweep of all remaining synthesis content:
 - Regulatory detail (EU AI Act 3%/€15M for documentation vs 6%/€30M for violations): HTML uses max penalty. Intentional simplification for quick reference. ✓
 - Research/evaluation content: not for HTML. ✓
 
-**State: 1 no-change pass completed. Need 2 more to stop.**
+**State: 2 no-change passes completed. Need 1 more to stop.**
+
+### Pass 7 — NO CHANGES [no-change pass #2]
+
+Live DOM verification — all content confirmed present:
+- Title/badge/h2: v1.8 ✓
+- 5 insight cards (incl. ISC) ✓
+- 14 threat cards, 3 CRITICAL ✓
+- 11 defense IDs (all DEF- entries) ✓
+- SC-GAP-1 and LangGraph ToolCallWrapper caveats present ✓
+- OWASP table 10 LLM rows ✓
+- Comparable frameworks (MAESTRO present) ✓
+- 4 decision tree questions ✓
+- Stats: 3C/3H/7M/1L dynamically computed ✓
+
+Fresh-eyes check of remaining synthesis sections not yet surfaced:
+- MITRE ATLAS IDs on attack chains: optional cross-reference, beyond HTML quick-ref scope. Not adding.
+- Attack surface catalog / asset inventory / assumptions: reference docs; too detailed for HTML. Not adding.
+- EU AI Act 3%/€15M documentation tier: intentional simplification (show max). Not adding.
+- PI-DEF-3/4, SC-DEF-3, Tool Call Budgeting: SECONDARY controls. Not adding.
 
 ---
 
