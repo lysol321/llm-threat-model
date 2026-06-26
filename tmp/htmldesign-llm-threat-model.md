@@ -181,6 +181,22 @@ surface2 (below even 3:1). Computed ratios directly.
 surface2 (4.63) while staying muted below text2 (hierarchy preserved). One-variable root fix
 covers every text3 usage. Visually confirmed legibility up, tone unchanged.
 
+### Pass 12: Export PDF / print stylesheet (2026-06-25)
+**Bug (headline feature broken):** "Export PDF" → `window.print()`, but the print CSS never
+reset `.tc-body { max-height: 0 }`, so a printed Threats tab showed **only the 14 headers,
+zero threat detail** unless the user had manually expanded each card first. Also: browsers
+drop element background-colors in print but keep text color, so muted greys printed
+low-contrast on white; and an active severity filter would silently drop cards from the PDF.
+
+**Fix:** proper print block — force-expand `.tc-body` (max-height:none !important, beats the
+inline non-important px JS sets), reveal `.threat-card.hidden` + dtree subs/results, hide
+interactive chrome (chevrons, filter bar, reset btn), darken muted text to #1a1a1a/#555 for
+white-paper contrast, keep severity/tier color coding via print-color-adjust:exact.
+
+**Verified:** print @media block parsed (13 rules); tc-body force-open + hidden→block present
+and targeting all 14 bodies. Screen rendering unaffected (media-scoped). True print-media
+visual render not captured — emulate tool exposes no media-type override (tool limitation).
+
 ---
 
 ## Summary: Architecture Design Complete

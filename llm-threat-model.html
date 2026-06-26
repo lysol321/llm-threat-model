@@ -345,8 +345,27 @@
     .site-header .print-btn, .site-nav { display: none; }
     .tab-panel { display: block !important; page-break-inside: avoid; }
     .tab-panel + .tab-panel { page-break-before: always; }
-    body { background: white; color: black; font-size: 11px; }
-    .site-header { position: static; }
+    body { background: #fff; color: #1a1a1a; font-size: 11px; }
+    .site-header { position: static; border-color: #ccc; }
+    /* readable dark text on white (overrides muted greys) */
+    h1, h2, h3, p, td, th, label, li,
+    .tc-title, .tc-num, .tc-owasp, .detail-item span, .step-box .step-text,
+    .chain-desc, .dq-question, .dq-label, .summary-item .si-desc,
+    .elevation-table td, .def-table td, .owasp-table td { color: #1a1a1a !important; }
+    .site-header .meta, .step .step-text, .dsub-q { color: #555 !important; }
+    /* structural borders survive on white */
+    .stat, .insight-card, .how-to, .threat-card, .chain, .dq, .dsub,
+    .dtree-summary, .matrix-wrap { border-color: #ccc !important; }
+    /* expand every collapsible so the PDF is complete */
+    .tc-body { max-height: none !important; overflow: visible !important; }
+    .tc-chevron, .filter-bar, .dtree-reset { display: none !important; }
+    .dq-subs, .dq-result, .dsub-result { display: block !important; }
+    .threat-card.hidden { display: block !important; }   /* print all, ignore active filter */
+    /* keep severity/tier color coding in the printout */
+    .prio, .ctrl-badge, .eff-badge, .def-tag, .mcell, .stat .num,
+    [class*="cell-"], [class*="prio-"] {
+      -webkit-print-color-adjust: exact; print-color-adjust: exact;
+    }
   }
 </style>
 </head>
