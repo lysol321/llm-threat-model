@@ -305,3 +305,13 @@ while carrying drift risk (two hand-maintained twins). Three defensible resoluti
 
 I did not pick unilaterally because it deletes prior committed work and reverses a deliberate
 earlier decision. **Recommendation: (A)** — matches how this artifact is actually used.
+
+### Pass 15: RESOLVED — embed-only (user chose A, 2026-06-25)
+Deleted `data/threats.json` + `data/dtree.json` and the whole fetch/protocol-guard
+machinery. The embedded arrays are now `const THREATS` / `const DTREE_DATA` — single source
+of truth, no duplication, no drift risk, no async. `loadData()` gone; init is just
+`renderThreats(); renderDtree();`. Truly self-contained single file.
+**Verified (file://):** 0 console errors, 14 threats render, decision tree + sub-questions
+work, THREATS/DTREE_DATA populated (14/4). No remaining `data/` references in the HTML.
+
+This closes the only open architectural question. No further defensible changes outstanding.
