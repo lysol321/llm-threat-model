@@ -197,6 +197,17 @@ white-paper contrast, keep severity/tier color coding via print-color-adjust:exa
 and targeting all 14 bodies. Screen rendering unaffected (media-scoped). True print-media
 visual render not captured — emulate tool exposes no media-type override (tool limitation).
 
+### Pass 13: Mobile horizontal overflow on table tabs (2026-06-25)
+**Bug:** the Defenses/OWASP/Elevation tables had no scroll wrapper (unlike the risk matrix's
+`.matrix-wrap`). On a 390px phone the 5-column def-table (567px) forced the **whole page** to
+591px wide → sideways jitter, sticky header misalignment on every tab once visited. Measured:
+Defenses scrollWidth 591 vs viewport 390.
+
+**Fix:** `@media (max-width:640px){ .def-table,.owasp-table,.elevation-table{ display:block;
+overflow-x:auto } }` — each wide table becomes its own scroll container. Verified empirically
+first (columns stay aligned, table scrolls), then from the file: all 7 tabs report
+scrollWidth==390 (no page overflow) at 390px. Desktop unaffected (media-scoped).
+
 ---
 
 ## Summary: Architecture Design Complete

@@ -330,6 +330,14 @@
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 
+  /* ── RESPONSIVE TABLES ── */
+  /* Wide multi-column tables become their own horizontal scroll container on
+     narrow screens, instead of forcing the whole page to overflow sideways.
+     (The risk matrix already has .matrix-wrap; these did not.) */
+  @media (max-width: 640px) {
+    .def-table, .owasp-table, .elevation-table { display: block; overflow-x: auto; }
+  }
+
   /* ── REDUCED MOTION ── */
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
