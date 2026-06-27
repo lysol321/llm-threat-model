@@ -1,0 +1,1006 @@
+{
+  "_meta": {
+    "description": "Source of truth for llm-threat-model.html. Edit here, run scripts/build-html.py to regenerate the HTML.",
+    "version": "1.8",
+    "date": "2026-06-24",
+    "next_review": "2026-09-24",
+    "workflow": [
+      "1. python scripts/export-data.py   -- seeds threats + dtree from current HTML (run once)",
+      "2. Edit this file                  -- update threats, dtree, sidebar, or docs",
+      "3. python scripts/build-html.py   -- regenerates the DATA_START..DATA_END block in the HTML"
+    ]
+  },
+  "threats": [
+    {
+      "num": "01",
+      "title": "Prompt Injection",
+      "owasp": "LLM01",
+      "prio": "CRITICAL",
+      "wild": "4/5 — EchoLeak/CVE-2025-32711 confirmed in wild",
+      "desc": "Manipulation of LLM behavior through crafted inputs that override system-level instructions. Attack surface extends to any content the model parses — not just text input fields.",
+      "subtypes": [
+        "Direct PI — user input explicitly overrides system prompt",
+        "Indirect PI — adversarial content in RAG/documents/search results",
+        "Multi-turn PI — injection spread across conversation turns",
+        "Cross-context PI — propagates between agents",
+        "Purchased PI Template — pre-optimized jailbreak from underground market"
+      ],
+      "surface": "Text input, RAG pipeline, document ingestion, API messages field, tool outputs",
+      "update": "v1.5: Standard per-event detectors fail against slow-burn multi-turn attacks. Temporal accumulation detection required."
+    },
+    {
+      "num": "02",
+      "title": "Excessive Agency",
+      "owasp": "LLM06",
+      "prio": "CRITICAL",
+      "wild": "4/5 — EchoLeak, Copilot CRM leak confirmed in production",
+      "desc": "LLM granted more tool/action permissions than necessary. Force multiplier for prompt injection: without agency, PI manipulates outputs; with agency, PI becomes remote code execution equivalent.",
+      "subtypes": [
+        "Unbounded tool access — model calls any registered tool without confirmation",
+        "Privilege escalation via PI",
+        "Chained tool use — multi-step chain without human review",
+        "Cross-system action — email, file write, payment outside AI boundary"
+      ],
+      "surface": "Tool registration, function calling API, MCP servers",
+      "update": ""
+    },
+    {
+      "num": "03",
+      "title": "Supply Chain Compromise",
+      "owasp": "LLM03",
+      "prio": "HIGH",
+      "wild": "4/5 — JFrog/ReversingLabs confirmed malicious models on HuggingFace",
+      "desc": "Malicious or backdoored models, adapters, dependencies, MCP servers, or skills from third parties. Attack is entirely silent — no behavioral deviation during normal operation.",
+      "subtypes": [
+        "Malicious model on public registry",
+        "Backdoored LoRA/PEFT adapter",
+        "Compromised MCP server or skill package",
+        "Poisoned dependency (pip/npm)"
+      ],
+      "surface": "Model registry, adapter repository, dependency install, MCP marketplace",
+      "update": ""
+    },
+    {
+      "num": "04",
+      "title": "Data / Model Poisoning",
+      "owasp": "LLM04",
+      "prio": "HIGH",
+      "wild": "2/5 — Theoretical; academic demonstrations exist",
+      "desc": "Compromising training data, fine-tuning datasets, or RAG document stores to influence model behavior at a systemic level.",
+      "subtypes": [
+        "Training data poisoning — corrupted data influences model weights",
+        "Fine-tuning dataset poisoning",
+        "RAG context poisoning — injecting adversarial documents at index time",
+        "Feedback loop poisoning — RLHF reward hacking via manipulated ratings"
+      ],
+      "surface": "Training pipeline, fine-tuning datasets, RAG document stores, feedback/rating systems",
+      "update": ""
+    },
+    {
+      "num": "05",
+      "title": "System Prompt Leakage",
+      "owasp": "LLM07",
+      "prio": "MEDIUM",
+      "wild": "3/5 — Extraction techniques documented; iterative prompting required",
+      "desc": "Extraction of system prompts, API keys, or proprietary instructions through iterative prompting or context manipulation.",
+      "subtypes": [
+        "Direct extraction — asking the model to repeat its system prompt",
+        "Indirect extraction — inferring instructions from model behavior",
+        "API key/secret leakage embedded in system prompt"
+      ],
+      "surface": "System prompt, developer message, any context containing secrets",
+      "update": ""
+    },
+    {
+      "num": "06",
+      "title": "Model Extraction",
+      "owasp": "—",
+      "prio": "LOW",
+      "wild": "2/5 — Demonstrated against specialized models",
+      "desc": "Query-based replication of proprietary models. Low risk for general-purpose LLMs; elevated for specialized or fine-tuned models with significant IP.",
+      "subtypes": [
+        "Black-box extraction via crafted query sequences",
+        "Distillation from API outputs"
+      ],
+      "surface": "Public API endpoints with high query volume access",
+      "update": ""
+    },
+    {
+      "num": "07",
+      "title": "Embedding / Vector Weaknesses",
+      "owasp": "LLM08",
+      "prio": "MEDIUM",
+      "wild": "2/5 — Specialized techniques; requires large query volume",
+      "desc": "Reconstructing sensitive information from embedding vectors, or leaking data through query-pattern side channels in vector stores.",
+      "subtypes": [
+        "Embedding inversion — reconstructing training data from embedding vectors",
+        "Cross-tenant vector store leakage",
+        "Query-pattern side channel — inferring other users' data from search patterns"
+      ],
+      "surface": "Embedding APIs, vector stores/databases, similarity search endpoints",
+      "update": ""
+    },
+    {
+      "num": "08",
+      "title": "Denial of Service / Unbounded Consumption",
+      "owasp": "LLM10",
+      "prio": "MEDIUM",
+      "wild": "4/5 — Volume-only attack; no sophistication required",
+      "desc": "Context/quota exhaustion degrading LLM service availability. Enterprise metered APIs can be financially destructive — attacker pays nothing, victim loses service AND pays for the calls.",
+      "subtypes": [
+        "Context window exhaustion — max-length inputs",
+        "API quota exhaustion — standard API (score 12)",
+        "Enterprise metered API exhaustion — $10K+/month budgets (score 16)",
+        "Rate limit abuse"
+      ],
+      "surface": "Any LLM API endpoint; metered enterprise deployments especially",
+      "update": ""
+    },
+    {
+      "num": "09",
+      "title": "Multi-Agent Context Propagation",
+      "owasp": "—",
+      "prio": "HIGH",
+      "wild": "3/5 — Source-confirmed data-flow risk; exploitation depends on deployment",
+      "desc": "PI propagates between chained agents, amplifying impact. Each agent hop can escalate privilege. Common in enterprise RAG and agentic assistant deployments.",
+      "subtypes": [
+        "Output-to-input propagation",
+        "Privilege escalation across agent chain",
+        "MCP / A2A protocol injection",
+        "Agent-to-agent trust exploitation",
+        "Slow-Burn / Temporal Accumulation PI — distributed across multi-turn trajectory, below per-event threshold"
+      ],
+      "surface": "Multi-agent pipelines, MCP servers, A2A communication, LangChain/AutoGen deployments",
+      "update": "Source: LangGraph ToolNode.invoke() returns unsanitized ToolMessage to shared messages state — structurally confirmed Jun 2026. MA-DEF-1 effectiveness is MEDIUM in default LangGraph; requires explicit ToolCallWrapper enforcement for HIGH."
+    },
+    {
+      "num": "10",
+      "title": "Non-Text Injection",
+      "owasp": "—",
+      "prio": "MEDIUM",
+      "wild": "2/5 — Multi-modal LLMs not yet universal",
+      "desc": "Image, audio, or structured data injection bypassing text-focused input filters. Impact 4 because it circumvents most standard detection.",
+      "subtypes": [
+        "Image-embedded PI (vision models)",
+        "Audio injection via ASR pipeline",
+        "Structured data (JSON/XML/CSV) injection",
+        "PDF/document visual injection"
+      ],
+      "surface": "Multi-modal endpoints, vision models, ASR pipelines, document ingestion",
+      "update": ""
+    },
+    {
+      "num": "11",
+      "title": "Output Validation Failures",
+      "owasp": "LLM05",
+      "prio": "MEDIUM",
+      "wild": "3/5 — Standard in LLM deployments without output validation",
+      "desc": "Harmful or unsafe model output passes to users or downstream systems unchecked. Especially critical when output is executed (code generation, instructions, structured data fed to other systems).",
+      "subtypes": [
+        "Harmful content generation passed to user",
+        "Generated code execution without safety check",
+        "Structured output (JSON/SQL) used directly in downstream systems",
+        "Hallucinated facts presented as authoritative"
+      ],
+      "surface": "Any LLM output path; critical for code generation, instruction generation, structured output",
+      "update": ""
+    },
+    {
+      "num": "12",
+      "title": "HITL Failures",
+      "owasp": "—",
+      "prio": "MEDIUM",
+      "wild": "3/5 — Procedural failure mode; training-dependent",
+      "desc": "Human reviewers fail to catch adversarial manipulation because context provenance is missing. Reviewers cannot distinguish legitimate outputs from PI-influenced outputs without provenance.",
+      "subtypes": [
+        "Missing provenance — reviewer sees output without source context",
+        "Review fatigue — high volume reduces scrutiny",
+        "Sophistication gap — reviewer lacks ML security expertise",
+        "Time pressure override — SLA pressure defeats safety review"
+      ],
+      "surface": "Any HITL checkpoint; approval workflows; human review queues",
+      "update": ""
+    },
+    {
+      "num": "13",
+      "title": "Defense Control Type Confusion",
+      "owasp": "—",
+      "prio": "MEDIUM",
+      "wild": "3/5 — Architectural design failure; very common",
+      "desc": "Alignment controls (model instructions) are mistaken for infrastructure-enforced controls. Most common security mistake in LLM deployments — creates false confidence in defenses that fail under attack.",
+      "subtypes": [
+        "Treating system prompt instructions as hard security boundaries",
+        "Using alignment-only controls for compliance requirements",
+        "Assuming model refusals are reliable under adversarial conditions"
+      ],
+      "surface": "Architectural design phase; security review; compliance mapping",
+      "update": "Addendum: Capability Withholding is a taxonomic note — accidental RLHF reward hacking is an operational concern, not a documented external attack path."
+    },
+    {
+      "num": "14",
+      "title": "Internal Safety Collapse / Validator Harness Attack",
+      "owasp": "—",
+      "prio": "CRITICAL",
+      "wild": "5/5 for research pattern — ISC-Bench: 53 scenarios, 95.3% worst-case failure",
+      "desc": "A benign-looking task + format validator + incomplete data harness causes harmful generation as the only valid task completion. Standard PI detectors miss it entirely — no injection present; harmful content IS the task-correct output.",
+      "subtypes": [
+        "Task/Validator/Data (TVD) harness attack",
+        "Coding harness with harmful completion required",
+        "Data-labeling or eval harness manipulation",
+        "Fine-tuning dataset construction as attack vector",
+        "Autonomous workflow bundle injection"
+      ],
+      "surface": "Any system where attacker can shape task + validator + data: coding assistants, eval frameworks, data-labeling tools, fine-tuning pipelines, autonomous agents",
+      "update": "arXiv:2603.23509 — ISC-Bench primary research; 8 disciplines; provider-side AND deployer-side controls both required."
+    }
+  ],
+  "dtree": [
+    {
+      "id": "q1",
+      "label": "Q1",
+      "question": "Is there a prompt injection surface? (Any user-controlled input reaches the LLM)",
+      "result": null,
+      "subs": [
+        {
+          "id": "q1a",
+          "question": "Is RAG / retrieval used?",
+          "result": "PI-DEF-2 REQUIRED — RAG context labeling + load-time sanitization"
+        },
+        {
+          "id": "q1b",
+          "question": "Does the system have tool permissions?",
+          "result": "AGENCY-DEF-1 REQUIRED — minimal tool permission allowlist",
+          "subs": [
+            {
+              "id": "q1c",
+              "question": "Can high-risk tool calls occur? (email, file write, API with side effects)",
+              "result": "AGENCY-DEF-2 REQUIRED — HITL with context provenance"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "q2",
+      "label": "Q2",
+      "question": "Is this multi-agent, MCP, or A2A? (More than one LLM agent in the call chain)",
+      "result": "MA-DEF-1 REQUIRED — context isolation + inter-agent provenance tagging"
+    },
+    {
+      "id": "q3",
+      "label": "Q3",
+      "question": "Can an attacker control or shape: task definition · validator/schema · incomplete data · uploaded documents · tool results · marketplace skills · workflow bundles?",
+      "result": "ISC-DEF-1 REQUIRED — validate the harness itself (task + validator + data), not just model output"
+    },
+    {
+      "id": "q4",
+      "label": "Q4",
+      "question": "Is any model, adapter, skill, MCP server, or dependency third-party?",
+      "result": "SC-DEF-1 + SC-DEF-2 REQUIRED — AIBOM + inference sandboxing + network egress monitoring"
+    }
+  ],
+  "sidebar": {
+    "citations": [
+      {
+        "name": "EchoLeak / CVE-2025-32711",
+        "desc": "Indirect PI exfiltration via AI copilot confirmed in production. No zero-days — exploits instruction-following behavior.",
+        "tags": [
+          {
+            "label": "T01",
+            "tab": "threats"
+          },
+          {
+            "label": "Chain A",
+            "tab": "chains"
+          }
+        ]
+      },
+      {
+        "name": "JFrog / ReversingLabs",
+        "desc": "Malicious models on HuggingFace confirmed. Exfiltrate API keys + conversation data at load time. No behavioral deviation during normal operation.",
+        "tags": [
+          {
+            "label": "T03",
+            "tab": "threats"
+          },
+          {
+            "label": "Chain B",
+            "tab": "chains"
+          }
+        ]
+      },
+      {
+        "name": "Sysdig (May 2026)",
+        "desc": "LLM agent drove post-exploitation autonomously in the wild. Confirms multi-agent propagation as an active threat.",
+        "tags": [
+          {
+            "label": "T09",
+            "tab": "threats"
+          },
+          {
+            "label": "Chain C",
+            "tab": "chains"
+          }
+        ]
+      },
+      {
+        "name": "arXiv:2603.23509 — ISC-Bench",
+        "desc": "Primary research: 53 scenarios, 8 disciplines, 95.3% worst-case failure rate. Standard PI detectors miss ISC entirely — no injection present.",
+        "tags": [
+          {
+            "label": "T14",
+            "tab": "threats"
+          },
+          {
+            "label": "Chain ISC",
+            "tab": "chains"
+          },
+          {
+            "label": "ISC-DEF-1",
+            "tab": "defenses"
+          }
+        ]
+      },
+      {
+        "name": "Output-Filtering-Evaluation (2026)",
+        "desc": "Zero leaks across 20K adaptive attacks when output filtering applied. Architecture controls alone insufficient against adaptive adversaries.",
+        "tags": [
+          {
+            "label": "MA-DEF-1",
+            "tab": "defenses"
+          }
+        ]
+      },
+      {
+        "name": "LangGraph ToolNode Disclosure (Jun 2026)",
+        "desc": "ToolNode.invoke() returns unsanitized ToolMessage to shared messages state. MA-DEF-1 is MEDIUM without ToolCallWrapper enforced.",
+        "tags": [
+          {
+            "label": "T09",
+            "tab": "threats"
+          },
+          {
+            "label": "MA-DEF-1",
+            "tab": "defenses"
+          }
+        ]
+      }
+    ],
+    "frameworks": [
+      {
+        "name": "OWASP LLM Top 10 (2025)",
+        "desc": "LLM01–LLM10 vulnerability taxonomy. Baseline categories and ID mapping throughout this model.",
+        "tags": [
+          {
+            "label": "OWASP Mapping",
+            "tab": "owasp"
+          }
+        ]
+      },
+      {
+        "name": "MITRE ATLAS",
+        "desc": "14 tactics, 80+ techniques for adversary TTPs against AI-enabled systems. Informs PI, supply chain, poisoning, and exfiltration paths.",
+        "tags": [
+          {
+            "label": "Threats",
+            "tab": "threats"
+          },
+          {
+            "label": "Attack Chains",
+            "tab": "chains"
+          }
+        ]
+      },
+      {
+        "name": "NIST AI RMF + GenAI Profile",
+        "desc": "Governance, TEVV, incident response, lifecycle risk management. Compliance framing for assessment discipline.",
+        "tags": [
+          {
+            "label": "Regulatory",
+            "tab": "owasp"
+          }
+        ]
+      },
+      {
+        "name": "MAESTRO",
+        "desc": "Layered threat modeling for multi-agent and autonomous AI ecosystems. Informs inter-agent communication and context poisoning.",
+        "tags": [
+          {
+            "label": "T09",
+            "tab": "threats"
+          },
+          {
+            "label": "Chain C",
+            "tab": "chains"
+          }
+        ]
+      },
+      {
+        "name": "Microsoft Agentic Failure Taxonomy",
+        "desc": "Agent safety failure modes: memory poisoning, multi-agent communication failures, confidentiality breakdowns.",
+        "tags": [
+          {
+            "label": "T09",
+            "tab": "threats"
+          },
+          {
+            "label": "T12",
+            "tab": "threats"
+          }
+        ]
+      },
+      {
+        "name": "OWASP Agentic / MCP Guidance",
+        "desc": "Autonomous agents, MCP servers, third-party tool integration, runtime trust boundaries, least privilege, and HITL requirements.",
+        "tags": [
+          {
+            "label": "T02",
+            "tab": "threats"
+          },
+          {
+            "label": "AGENCY-DEF-1",
+            "tab": "defenses"
+          }
+        ]
+      },
+      {
+        "name": "STRIDE / PASTA / LINDDUN",
+        "desc": "General-purpose threat-modeling methods. Optional facilitation lenses for trust boundaries, data flows, and privacy harms.",
+        "tags": [
+          {
+            "label": "Risk Matrix",
+            "tab": "matrix"
+          }
+        ]
+      }
+    ],
+    "regulatory": [
+      {
+        "name": "EU AI Act",
+        "desc": "Art. 9 (risk mgmt) · Art. 10 (data governance) · Art. 13 (transparency) · Art. 14 (human oversight) · Art. 15 (robustness) · Art. 17 (quality mgmt). GPAI: Aug 2, 2026. High-risk: ~Dec 2027.",
+        "tags": [
+          {
+            "label": "7% turnover / €35M",
+            "cls": "tag-warn"
+          },
+          {
+            "label": "Regulatory tab",
+            "tab": "owasp"
+          }
+        ]
+      },
+      {
+        "name": "GDPR",
+        "desc": "Art. 17 (erasure — embedding inversion) · Art. 25 (privacy by design) · Art. 32 (security — cross-tenant leakage).",
+        "tags": [
+          {
+            "label": "4% turnover / €20M",
+            "cls": "tag-warn"
+          },
+          {
+            "label": "T07",
+            "tab": "threats"
+          }
+        ]
+      },
+      {
+        "name": "US FTC AI Principles (2024)",
+        "desc": "Unfair/deceptive security practices. Output validation failures. Supply chain key theft. Civil penalty exposure.",
+        "tags": [
+          {
+            "label": "T03",
+            "tab": "threats"
+          },
+          {
+            "label": "T11",
+            "tab": "threats"
+          }
+        ]
+      }
+    ]
+  },
+  "synthesis": [
+    {
+      "title": "Framework",
+      "version": "v1.8",
+      "file": "synthesis/framework.md",
+      "desc": "Umbrella framework: deployment model, trust boundaries, regulatory baseline, comparable-framework positioning."
+    },
+    {
+      "title": "Threat Taxonomy",
+      "version": "v1.7",
+      "file": "synthesis/threat-taxonomy.md",
+      "desc": "Master taxonomy of 14 threat categories with evidence, OWASP mapping, and update history."
+    },
+    {
+      "title": "Risk Matrix",
+      "version": "v1.7",
+      "file": "synthesis/risk-matrix.md",
+      "desc": "Likelihood × impact scores (1–25), base/elevated risk tiers, and elevation conditions."
+    },
+    {
+      "title": "Defense Playbook",
+      "version": "v1.7",
+      "file": "synthesis/defense-playbook.md",
+      "desc": "Full defense catalog: control IDs, types, effectiveness, cost annotations, and tier ordering."
+    },
+    {
+      "title": "Attack Trees",
+      "version": "v1.3",
+      "file": "synthesis/attack-trees.md",
+      "desc": "Structured attack decomposition for all 4 chains with qualitative likelihood descriptors."
+    },
+    {
+      "title": "Attack Surface Catalog",
+      "version": "v1.3",
+      "file": "synthesis/attack-surface-catalog.md",
+      "desc": "All attack surfaces mapped to threat categories; surface verification checklist."
+    },
+    {
+      "title": "Asset Inventory",
+      "version": "v1.0",
+      "file": "synthesis/asset-inventory.md",
+      "desc": "Every protected asset with classification, trust tier, and threat applicability."
+    },
+    {
+      "title": "Assumptions",
+      "version": "v1.0",
+      "file": "synthesis/assumptions.md",
+      "desc": "Explicit assumptions the framework makes about LLM behavior, attacker capabilities, and deployment topology."
+    },
+    {
+      "title": "Assessment Template",
+      "version": "v1.8",
+      "file": "synthesis/assessment-template.md",
+      "desc": "Engineering worksheet for a 3-person team; completes a valid threat model in under 4 hours."
+    },
+    {
+      "title": "Quick Reference",
+      "version": "v1.7",
+      "file": "synthesis/quick-reference.md",
+      "desc": "One-page summary: all 14 threats, 4 chains, primary defenses, decision tree, OWASP mapping."
+    },
+    {
+      "title": "Release Manifest",
+      "version": "v1.8",
+      "file": "synthesis/release-manifest.md",
+      "desc": "Coherent corpus state pointer for the v1.8 release."
+    }
+  ],
+  "concepts": [
+    {
+      "title": "EchoLeak / CVE-2025-32711",
+      "file": "research/concepts/EchoLeak-CVE-2025-32711.md",
+      "tags": [
+        {
+          "label": "T01",
+          "tab": "threats"
+        },
+        {
+          "label": "Chain A",
+          "tab": "chains"
+        }
+      ]
+    },
+    {
+      "title": "Internal Safety Collapse",
+      "file": "research/concepts/Internal-Safety-Collapse.md",
+      "tags": [
+        {
+          "label": "T14",
+          "tab": "threats"
+        },
+        {
+          "label": "Chain ISC",
+          "tab": "chains"
+        }
+      ]
+    },
+    {
+      "title": "Multi-Agent Context Propagation",
+      "file": "research/concepts/Multi-Agent-Context-Propagation.md",
+      "tags": [
+        {
+          "label": "T09",
+          "tab": "threats"
+        },
+        {
+          "label": "Chain C",
+          "tab": "chains"
+        }
+      ]
+    },
+    {
+      "title": "LLM Supply Chain Security",
+      "file": "research/concepts/LLM-Supply-Chain-Security.md",
+      "tags": [
+        {
+          "label": "T03",
+          "tab": "threats"
+        },
+        {
+          "label": "Chain B",
+          "tab": "chains"
+        }
+      ]
+    },
+    {
+      "title": "OWASP LLM Top 10",
+      "file": "research/concepts/OWASP-LLM-Top-10.md",
+      "tags": [
+        {
+          "label": "Frameworks",
+          "tab": "owasp"
+        }
+      ]
+    },
+    {
+      "title": "MITRE ATLAS Concepts",
+      "file": "research/concepts/MITRE-ATLAS.md",
+      "tags": [
+        {
+          "label": "Frameworks",
+          "tab": "owasp"
+        }
+      ]
+    },
+    {
+      "title": "Prompt Injection Taxonomy",
+      "file": "research/concepts/Prompt-Injection-Taxonomy.md",
+      "tags": [
+        {
+          "label": "T01",
+          "tab": "threats"
+        }
+      ]
+    },
+    {
+      "title": "Promptware Kill Chain",
+      "file": "research/concepts/Promptware-Kill-Chain.md",
+      "tags": [
+        {
+          "label": "T01",
+          "tab": "threats"
+        },
+        {
+          "label": "T02",
+          "tab": "threats"
+        }
+      ]
+    },
+    {
+      "title": "Multimodal Prompt Injection",
+      "file": "research/concepts/Multimodal-Prompt-Injection.md",
+      "tags": [
+        {
+          "label": "T10",
+          "tab": "threats"
+        }
+      ]
+    },
+    {
+      "title": "STRIDE for LLM",
+      "file": "research/concepts/STRIDE-Threat-Modeling-LLM.md",
+      "tags": [
+        {
+          "label": "Frameworks",
+          "tab": "owasp"
+        }
+      ]
+    },
+    {
+      "title": "Chain C — LangGraph Walkthrough",
+      "file": "research/concepts/Chain-C-LangGraph-Walkthrough.md",
+      "tags": [
+        {
+          "label": "T09",
+          "tab": "threats"
+        },
+        {
+          "label": "Chain C",
+          "tab": "chains"
+        }
+      ]
+    },
+    {
+      "title": "Chain C — Garak Probe Design",
+      "file": "research/concepts/Chain-C-Garak-Probe-Design.md",
+      "tags": [
+        {
+          "label": "T09",
+          "tab": "threats"
+        }
+      ]
+    },
+    {
+      "title": "AIBOM Trust Anchor Audit",
+      "file": "research/concepts/AIBOM-Trust-Anchor-Audit.md",
+      "tags": [
+        {
+          "label": "T03",
+          "tab": "threats"
+        },
+        {
+          "label": "SC-DEF-1",
+          "tab": "defenses"
+        }
+      ]
+    },
+    {
+      "title": "Garak LLM Scanner",
+      "file": "research/concepts/Garak-LLM-Scanner.md",
+      "tags": [
+        {
+          "label": "Tools"
+        }
+      ]
+    },
+    {
+      "title": "Foreign Model Regulatory Mapping",
+      "file": "research/concepts/Foreign-Model-Regulatory-Mapping.md",
+      "tags": [
+        {
+          "label": "Regulatory",
+          "tab": "owasp"
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "title": "Malicious HuggingFace Models",
+      "file": "research/sources/Malicious-HuggingFace-Models.md",
+      "tags": [
+        {
+          "label": "T03",
+          "tab": "threats"
+        },
+        {
+          "label": "Chain B",
+          "tab": "chains"
+        }
+      ]
+    },
+    {
+      "title": "Real-World LLM Incidents",
+      "file": "research/sources/Real-World-LLM-Incidents.md",
+      "tags": [
+        {
+          "label": "T01",
+          "tab": "threats"
+        },
+        {
+          "label": "Chain A",
+          "tab": "chains"
+        }
+      ]
+    },
+    {
+      "title": "TOMA: Multi-Agent Propagation",
+      "file": "research/sources/TOMA-Multi-Agent-Propagation.md",
+      "tags": [
+        {
+          "label": "T09",
+          "tab": "threats"
+        },
+        {
+          "label": "Chain C",
+          "tab": "chains"
+        }
+      ]
+    },
+    {
+      "title": "Output Filtering Evaluation",
+      "file": "research/sources/Output-Filtering-Evaluation.md",
+      "tags": [
+        {
+          "label": "MA-DEF-1",
+          "tab": "defenses"
+        }
+      ]
+    },
+    {
+      "title": "Promptware Kill Chain",
+      "file": "research/sources/Promptware-Kill-Chain.md",
+      "tags": [
+        {
+          "label": "T01",
+          "tab": "threats"
+        },
+        {
+          "label": "T02",
+          "tab": "threats"
+        }
+      ]
+    },
+    {
+      "title": "Agentic AI Attack Chains",
+      "file": "research/sources/Agentic-AI-Attack-Chains.md",
+      "tags": [
+        {
+          "label": "T09",
+          "tab": "threats"
+        },
+        {
+          "label": "Chain C",
+          "tab": "chains"
+        }
+      ]
+    },
+    {
+      "title": "EU AI Act Enforcement 2026",
+      "file": "research/sources/EU-AI-Act-Enforcement-2026.md",
+      "tags": [
+        {
+          "label": "Regulatory",
+          "tab": "owasp"
+        }
+      ]
+    },
+    {
+      "title": "CSA Attack Chain 2026",
+      "file": "research/sources/CSA-Attack-Chain-2026.md",
+      "tags": [
+        {
+          "label": "T01",
+          "tab": "threats"
+        },
+        {
+          "label": "T02",
+          "tab": "threats"
+        }
+      ]
+    },
+    {
+      "title": "LLM Agent Worms",
+      "file": "research/sources/LLM-Agent-Worms.md",
+      "tags": [
+        {
+          "label": "T09",
+          "tab": "threats"
+        }
+      ]
+    },
+    {
+      "title": "Multimodal Prompt Injection",
+      "file": "research/sources/Multimodal-Prompt-Injection.md",
+      "tags": [
+        {
+          "label": "T10",
+          "tab": "threats"
+        }
+      ]
+    },
+    {
+      "title": "OWASP GenAI Security",
+      "file": "research/sources/OWASP-GenAI-Security.md",
+      "tags": [
+        {
+          "label": "Frameworks",
+          "tab": "owasp"
+        }
+      ]
+    },
+    {
+      "title": "MITRE ATLAS",
+      "file": "research/sources/MITRE-ATLAS.md",
+      "tags": [
+        {
+          "label": "Frameworks",
+          "tab": "owasp"
+        }
+      ]
+    },
+    {
+      "title": "Sigstore Model Transparency",
+      "file": "research/sources/Sigstore-Model-Transparency-v1.md",
+      "tags": [
+        {
+          "label": "T03",
+          "tab": "threats"
+        },
+        {
+          "label": "SC-DEF-1",
+          "tab": "defenses"
+        }
+      ]
+    },
+    {
+      "title": "Red Teaming Tooling Landscape",
+      "file": "research/sources/Red-Teaming-Tooling-Landscape.md",
+      "tags": [
+        {
+          "label": "Tools"
+        }
+      ]
+    },
+    {
+      "title": "Arcanum PI Taxonomy",
+      "file": "research/sources/Arcanum-PI-Taxonomy.md",
+      "tags": [
+        {
+          "label": "T01",
+          "tab": "threats"
+        }
+      ]
+    },
+    {
+      "title": "DeepSeek / Qwen Privacy Pitfalls",
+      "file": "research/sources/DeepSeek-Qwen-Privacy-Pitfalls.md",
+      "tags": [
+        {
+          "label": "T03",
+          "tab": "threats"
+        },
+        {
+          "label": "T05",
+          "tab": "threats"
+        }
+      ]
+    },
+    {
+      "title": "SFT Defense Surface Heuristics",
+      "file": "research/sources/SFT-Defense-Surface-Heuristics.md",
+      "tags": [
+        {
+          "label": "Defenses",
+          "tab": "defenses"
+        }
+      ]
+    },
+    {
+      "title": "CORBA: Denial of Collaboration",
+      "file": "research/sources/CORBA-Denial-of-Collaboration.md",
+      "tags": [
+        {
+          "label": "T08",
+          "tab": "threats"
+        }
+      ]
+    }
+  ],
+  "evaluation": [
+    {
+      "title": "Assessment Walkthrough Example",
+      "file": "evaluation/assessment-walkthrough-example.md",
+      "desc": "Complete worked example for a RAG assistant deployment."
+    },
+    {
+      "title": "Scenario Suite Results",
+      "file": "evaluation/scenario-suite-results.md",
+      "desc": "Results from running all 16 scenarios against v1.7 corpus."
+    },
+    {
+      "title": "Scenario Suite (JSON)",
+      "file": "evaluation/scenario-suite.json",
+      "desc": "16-scenario evaluation suite with 9 pass/fail criteria."
+    }
+  ],
+  "analysis": [
+    {
+      "title": "Research Synthesis",
+      "file": "research/synthesis.md",
+      "desc": "Cross-source synthesis of key findings."
+    },
+    {
+      "title": "Defense Interaction Analysis",
+      "file": "research/defense-interaction-analysis.md",
+      "desc": "How defenses interact and stack under attack."
+    },
+    {
+      "title": "Capability Withholding Analysis",
+      "file": "research/capability-withholding-analysis.md",
+      "desc": "Taxonomic analysis of capability withholding as a threat vector."
+    },
+    {
+      "title": "Open Questions 2026",
+      "file": "research/questions/LLM-Threat-Modeling-Open-Questions-2026.md",
+      "desc": "Unresolved questions for future research."
+    },
+    {
+      "title": "Research Gaps v1",
+      "file": "research/questions/Research-LLM-Threat-Modeling-Gaps-v1.md",
+      "desc": "Identified gaps in the current threat model."
+    }
+  ]
+}
