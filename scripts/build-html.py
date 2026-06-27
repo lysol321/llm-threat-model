@@ -32,34 +32,48 @@ def js(value) -> str:
     return json.dumps(value, ensure_ascii=False, separators=(",", ":"))
 
 
-def embed_synthesis_html(synthesis_entries: list, no_md: bool) -> list:
-    """Attach an `html` field to each synthesis entry, reading the markdown file
-    and rendering it via the stdlib-only md_to_html converter. Pass --no-md to
-    preserve any pre-existing `html` field without touching the source files."""
+def embed_doc_html(entries: list, section: str, no_md: bool) -> list:
+    """Attach an `html` field to each sidebar entry whose `file` field points at
+    a readable markdown file. Pass --no-md to preserve any pre-existing `html`
+    field without touching the source files.
+
+    Non-markdown files (e.g. scenario-suite.json) and missing files are
+    silently skipped — the sidebar falls back to an external link for those.
+    """
     if no_md:
-        return synthesis_entries
+        return entries
 
     from md_to_html import render  # local import; only needed for the MD pass
 
     out = []
-    for s in synthesis_entries:
-        file_field = s.get("file")
+    for entry in entries:
+        file_field = entry.get("file")
+        # Already-embedded entries pass through unchanged — supports --no-md
+        # and the case where the JSON file is hand-edited with pre-rendered HTML.
+        if entry.get("html"):
+            out.append(entry)
+            continue
         if not file_field:
-            out.append(s)
+            out.append(entry)
             continue
         md_path = ROOT / file_field
         if not md_path.exists():
-            print(f"WARN: {md_path} not found — synthesis entry '{s.get('title')}' has no html", file=sys.stderr)
-            out.append(s)
+            print(f"WARN: {md_path} not found — {section} entry '{entry.get('title')}' has no html", file=sys.stderr)
+            out.append(entry)
             continue
-        # Normalize line endings: synthesis files may be CRLF on Windows; the
+        # Only attempt MD->HTML for .md files. Other types (e.g. .json in
+        # evaluation/) stay unrendered and the sidebar falls back to a link.
+        if md_path.suffix.lower() != ".md":
+            out.append(entry)
+            continue
+        # Normalize line endings: source files may be CRLF on Windows; the
         # converter expects LF. Without this, embedded HTML would contain \r\n
         # inside JSON string values (invalid JSON).
         md_text = md_path.read_text(encoding="utf-8").replace("\r\n", "\n")
         # compact=True: emit single-line HTML safe to embed in a JS string literal
         # (real LF bytes would break the JS string parse).
         html = render(md_text, compact=True)
-        out.append({**s, "html": html})
+        out.append({**entry, "html": html})
     return out
 
 
@@ -71,18 +85,18 @@ def build_data_block(data: dict, no_md: bool) -> str:
     if data.get("dtree"):
         lines.append(f"const DTREE_DATA = {js(data['dtree'])};")
 
-    synthesis_with_html = embed_synthesis_html(data.get("synthesis", []), no_md)
-
-    # Assemble SIDEBAR_DATA from JSON sections
+    # Embed MD->HTML for every sidebar section that exposes markdown files.
+    # The doc viewer in llm-threat-model.html dispatches on section name, so
+    # the same key names must appear here.
     sidebar_obj = {
         "citations":  data.get("sidebar", {}).get("citations",  []),
         "frameworks": data.get("sidebar", {}).get("frameworks", []),
         "regulatory": data.get("sidebar", {}).get("regulatory", []),
-        "synthesis":  synthesis_with_html,
-        "concepts":   data.get("concepts",   []),
-        "sources":    data.get("sources",    []),
-        "evaluation": data.get("evaluation", []),
-        "analysis":   data.get("analysis",   []),
+        "synthesis":  embed_doc_html(data.get("synthesis",  []), "synthesis",  no_md),
+        "concepts":   embed_doc_html(data.get("concepts",   []), "concepts",   no_md),
+        "sources":    embed_doc_html(data.get("sources",    []), "sources",    no_md),
+        "evaluation": embed_doc_html(data.get("evaluation", []), "evaluation", no_md),
+        "analysis":   embed_doc_html(data.get("analysis",   []), "analysis",   no_md),
     }
     lines.append(f"const SIDEBAR_DATA = {js(sidebar_obj)};")
     lines.append(END_SENTINEL)
@@ -126,18 +140,17 @@ def main():
         HTML_FILE.write_bytes(new_html.encode("utf-8"))
         threats_n = len(data.get("threats", []))
         dtree_n   = len(data.get("dtree",   []))
-        syn_n     = len(data.get("synthesis", []))
-        syn_with_html = sum(1 for s in data.get("synthesis", []) if s.get("file"))
         print(f"Updated {HTML_FILE}")
         print(f"  threats={threats_n}  dtree nodes={dtree_n}")
         print(f"  sidebar sections: citations={len(data.get('sidebar',{}).get('citations',[]))} "
               f"frameworks={len(data.get('sidebar',{}).get('frameworks',[]))} "
               f"regulatory={len(data.get('sidebar',{}).get('regulatory',[]))}")
-        print(f"  docs: synthesis={syn_n} (inlined html={syn_with_html}{'skipped --no-md' if no_md else ''}) "
-              f"concepts={len(data.get('concepts',[]))} "
-              f"sources={len(data.get('sources',[]))} "
-              f"evaluation={len(data.get('evaluation',[]))} "
-              f"analysis={len(data.get('analysis',[]))}")
+        # Per-section inlined-HTML summary (matches the keys the doc viewer dispatches on).
+        md_flag = "skipped --no-md" if no_md else ""
+        for sec in ("synthesis", "concepts", "sources", "evaluation", "analysis"):
+            entries = data.get(sec, [])
+            n_md = sum(1 for e in entries if (ROOT / e["file"]).suffix.lower() == ".md" if e.get("file"))
+            print(f"  {sec}={len(entries)} (inlined html={n_md}{' ' + md_flag if md_flag else ''})")
 
 
 if __name__ == "__main__":
