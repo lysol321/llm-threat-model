@@ -421,20 +421,16 @@
   .doc-row .ref-item-desc { margin: 3px 0 0; }
   .doc-row .ref-tags { margin-top: 4px; }
 
-  /* ── Synthesis doc — collapsible inline body ── */
-  .syn-doc { border-bottom: 1px solid rgba(255,255,255,0.04); padding: 7px 0; }
+  /* ── Synthesis doc ── sidebar nav item (opens in Docs tab) ── */
+  .syn-doc { border-bottom: 1px solid rgba(255,255,255,0.04); }
   .syn-doc:last-child { border-bottom: none; }
   .syn-doc-head {
-    display: flex; align-items: center; gap: 6px; width: 100%;
+    display: flex; align-items: center; gap: 6px; width: 100%%;
     background: none; border: none; cursor: pointer; text-align: left;
     color: var(--text); font-size: 12px; font-weight: 600; line-height: 1.4;
-    padding: 0;
+    padding: 7px 0;
   }
   .syn-doc-head:hover { color: var(--accent); }
-  .syn-doc-head .syn-chev {
-    color: var(--text3); font-size: 9px; transition: transform 0.2s; flex-shrink: 0;
-  }
-  .syn-doc.open .syn-doc-head .syn-chev { transform: rotate(90deg); }
   .syn-doc-head .syn-ver {
     font-size: 10px; color: var(--text3); font-weight: 400; margin-left: 4px;
   }
@@ -443,68 +439,10 @@
     text-decoration: none; opacity: 0.55; padding: 0 4px; line-height: 1;
   }
   .syn-doc-head .syn-open-link:hover { color: var(--accent); opacity: 1; }
-  .syn-doc .ref-item-desc { margin: 3px 0 0 15px; }
-
-  .syn-body {
-    max-height: 0; overflow: hidden;
-    transition: max-height 0.3s cubic-bezier(0.4,0,0.2,1);
-  }
-  .syn-doc.open .syn-body { max-height: 70vh; }
-  .syn-body-inner {
-    margin: 4px 0 0 15px;
-    padding: 4px 8px 12px;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    font-size: 11px; line-height: 1.55; color: var(--text2);
-    /* ponytail: hard-cap + inner scroll — long docs would otherwise blow out the sidebar */
-    max-height: 70vh; overflow-y: auto;
-  }
-  .syn-body-inner h1 { font-size: 14px; font-weight: 700; color: var(--text); margin: 10px 0 6px; line-height: 1.3; }
-  .syn-body-inner h2 { font-size: 13px; font-weight: 700; color: var(--text); margin: 12px 0 6px; padding-bottom: 4px; border-bottom: 1px solid var(--border); line-height: 1.3; }
-  .syn-body-inner h3 { font-size: 12px; font-weight: 700; color: var(--text); margin: 10px 0 4px; line-height: 1.3; }
-  .syn-body-inner h4, .syn-body-inner h5, .syn-body-inner h6 {
-    font-size: 11px; font-weight: 700; color: var(--text3);
-    text-transform: uppercase; letter-spacing: 0.04em;
-    margin: 8px 0 4px; line-height: 1.3;
-  }
-  .syn-body-inner p { margin: 0 0 8px; color: var(--text2); }
-  .syn-body-inner ul, .syn-body-inner ol { margin: 0 0 8px; padding-left: 18px; }
-  .syn-body-inner li { margin-bottom: 3px; }
-  .syn-body-inner code {
-    background: var(--surface2); color: var(--accent);
-    padding: 1px 4px; border-radius: 3px;
-    font-size: 10px; font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
-  }
-  .syn-body-inner pre {
-    background: var(--surface2); border: 1px solid var(--border); border-radius: 5px;
-    padding: 8px 10px; margin: 6px 0;
-    overflow-x: auto; font-size: 10px; line-height: 1.5;
-  }
-  .syn-body-inner pre code { background: none; padding: 0; color: var(--text2); font-size: 10px; }
-  .syn-body-inner table {
-    display: block; overflow-x: auto; border-collapse: collapse;
-    font-size: 10px; margin: 6px 0; max-width: 100%;
-  }
-  .syn-body-inner th, .syn-body-inner td {
-    border: 1px solid var(--border); padding: 4px 6px;
-    text-align: left; vertical-align: top;
-  }
-  .syn-body-inner th { background: var(--surface2); color: var(--text); font-weight: 600; }
-  .syn-body-inner blockquote {
-    border-left: 2px solid var(--accent); padding: 6px 8px; margin: 6px 0;
-    background: rgba(56,189,248,0.04); border-radius: 0 4px 4px 0;
-  }
-  .syn-body-inner blockquote p { margin-bottom: 4px; }
-  .syn-body-inner blockquote p:last-child { margin-bottom: 0; }
-  .syn-body-inner hr { border: none; border-top: 1px solid var(--border); margin: 10px 0; }
-  .syn-body-inner a { color: var(--accent); text-decoration: none; }
-  .syn-body-inner a:hover { text-decoration: underline; }
-  .syn-body-inner strong { color: var(--text); font-weight: 700; }
-  .syn-body-inner em { color: var(--text2); font-style: italic; }
-
-  /* ── DOC VIEWER (main tab) ── */
-  /* Larger, more readable variant of .syn-body-inner. The synthesized HTML
+  .syn-doc .ref-item-desc { margin: 0 0 4px 15px; }
+  .syn-doc.active .syn-doc-head { color: var(--accent); }
+/* ── DOC VIEWER (main tab) ── */
+  /* Larger, more readable variant of .doc-viewer-body. The synthesized HTML
      from md_to_html.py is the same markup either way; only the styling differs. */
   .doc-viewer {
     background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
@@ -570,7 +508,7 @@
   .doc-viewer-body em { color: var(--text2); font-style: italic; }
   /* Sidebar entry visual state when its doc is the active one in the viewer */
   .syn-doc.active .syn-doc-head { color: var(--accent); }
-  .syn-doc.active .syn-doc-head .syn-chev { color: var(--accent); }
+  .syn-doc.active .syn-doc-head { color: var(--accent); }
   @media (max-width: 640px) {
     .doc-viewer { padding: 20px 18px; }
     .doc-viewer-body { font-size: 13px; }
@@ -1420,32 +1358,17 @@ function renderSynDoc(s, idx) {
   return `<div class="syn-doc" id="syndoc-${idx}" data-doc-idx="${idx}">
     <button class="syn-doc-head" type="button"
             onclick="onSynDocClick(${idx})"
-            aria-expanded="false" aria-controls="synbody-${idx}">
-      <span class="syn-chev">▶</span>
+            aria-label="Open ${s.title} in Docs tab">
       <span class="syn-title">${s.title}</span>
       ${s.version ? `<span class="syn-ver">${s.version}</span>` : ''}
       ${hasHtml ? `<a class="syn-open-link" href="#" onclick="event.preventDefault();event.stopPropagation();showDoc(${idx})" title="Open in Docs tab" aria-label="Open ${s.title} in Docs tab">↗</a>` : (s.file ? `<a class="syn-open-link" href="${s.file}" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="Open in new tab" aria-label="Open ${s.title} in new tab">↗</a>` : '')}
     </button>
     ${s.desc ? `<div class="ref-item-desc">${s.desc}</div>` : ''}
-    ${hasHtml ? `<div class="syn-body" id="synbody-${idx}">
-      <div class="syn-body-inner">${s.html}</div>
-    </div>` : (s.file ? `<div class="ref-item-desc" style="margin-left:15px;"><a class="doc-link" href="${s.file}" target="_blank" rel="noopener" style="font-weight:500;font-size:11px;">Open external markdown ↗</a></div>` : '')}
   </div>`;
 }
-function toggleSynDoc(idx) {
-  const doc = document.getElementById('syndoc-' + idx);
-  if (!doc) return;
-  const opening = !doc.classList.contains('open');
-  doc.classList.toggle('open', opening);
-  const head = doc.querySelector('.syn-doc-head');
-  if (head) head.setAttribute('aria-expanded', String(opening));
-}
-// Sidebar click: single click → open in main Docs tab. Toggle inline body too
-// so the sidebar reflects which doc is active without stealing focus from the
-// viewer.
+// Sidebar click: open doc in main Docs tab.
 function onSynDocClick(idx) {
   showDoc(idx);
-  toggleSynDoc(idx);
 }
 // Each section is an accordion: { title, count, body, open }
 function renderSbSection(sec, idx) {
