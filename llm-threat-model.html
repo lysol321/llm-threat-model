@@ -349,23 +349,16 @@
     }
   }
 
-  /* ── SIDEBAR (left) ── */
+  /* ── SIDEBAR (left) ── always visible, collapsible ── */
   .sidebar {
-    position: fixed; top: 93px; left: -320px; width: 304px;
+    position: fixed; top: 93px; left: 0; width: 304px;
     height: calc(100vh - 93px);
     background: var(--surface); border-right: 1px solid var(--border);
     overflow-y: auto; z-index: 90;
     transition: left 0.25s cubic-bezier(0.4,0,0.2,1);
     scrollbar-width: thin;
   }
-  .sidebar.open { left: 0; }
-
-  .sidebar-overlay {
-    position: fixed; inset: 93px 0 0 0; background: rgba(0,0,0,0.4);
-    z-index: 89; opacity: 0; pointer-events: none; transition: opacity 0.25s;
-  }
-  .sidebar-overlay.open { opacity: 1; pointer-events: auto; }
-  @media (min-width: 1280px) { .sidebar-overlay { display: none; } }
+  .sidebar.collapsed { left: -320px; }
 
   .sidebar-header {
     display: flex; align-items: center; justify-content: space-between;
@@ -374,10 +367,12 @@
   }
   .sidebar-header span { font-size: 12px; font-weight: 700; color: var(--text); letter-spacing: 0.02em; }
   .sidebar-close {
-    background: none; border: none; color: var(--text3); cursor: pointer;
-    font-size: 15px; line-height: 1; padding: 2px 6px; border-radius: 4px;
+    background: var(--surface2); border: 1px solid var(--border2); color: var(--text2); cursor: pointer;
+    font-size: 13px; line-height: 1; padding: 4px 8px; border-radius: 5px;
+    transition: all 0.15s; flex-shrink: 0;
   }
-  .sidebar-close:hover { color: var(--text); background: var(--surface2); }
+  .sidebar-close:hover { color: var(--text); background: var(--surface3); }
+  .sidebar.collapsed .sidebar-close { color: var(--accent); border-color: var(--accent); }
 
   /* ── ACCORDION SECTION ── */
   .sb-section { border-bottom: 1px solid var(--border); }
@@ -528,11 +523,11 @@
     transition: all 0.15s;
   }
   .sidebar-toggle-btn:hover { background: var(--surface3); color: var(--text); }
-  .sidebar-toggle-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(56,189,248,0.08); }
 
   @media (min-width: 1280px) {
-    body.sidebar-open main { padding-left: 320px; transition: padding-left 0.25s cubic-bezier(0.4,0,0.2,1); }
+    main { padding-left: 320px; }
   }
+  main { transition: padding-left 0.25s cubic-bezier(0.4,0,0.2,1); }
 
   /* ── PRINT ── */
   @media print {
@@ -570,7 +565,7 @@
   <h1>LLM Threat Model</h1>
   <span class="badge">v1.8</span>
   <span class="meta">Updated 2026-06-24 &nbsp;·&nbsp; Next review 2026-09-24</span>
-  <button class="sidebar-toggle-btn" id="sidebar-toggle-btn" onclick="toggleSidebar()" aria-expanded="false" aria-controls="ref-sidebar">&#128196; References</button>
+  
   <button class="print-btn" onclick="window.print()">Export PDF</button>
 </header>
 
@@ -584,12 +579,10 @@
   <button id="tabbtn-owasp"    role="tab" aria-selected="false" aria-controls="tab-owasp"    tabindex="-1" onclick="showTab('owasp', this)">OWASP Mapping</button>
   <button id="tabbtn-doc"      role="tab" aria-selected="false" aria-controls="tab-doc"      tabindex="-1" onclick="showTab('doc', this)">Docs</button>
 </nav>
-
-<div id="sidebar-overlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
-<aside id="ref-sidebar" class="sidebar" aria-label="Reference materials">
+<aside id="ref-sidebar" class="sidebar" aria-label="Reference materials">
   <div class="sidebar-header">
     <span>Reference Materials</span>
-    <button class="sidebar-close" onclick="toggleSidebar()" aria-label="Close references">✕</button>
+    <button class="sidebar-close" id="sidebar-toggle-btn" onclick="toggleSidebar()" aria-label="Collapse sidebar" aria-expanded="true">▴</button>
   </div>
   <div id="sidebar-body"></div>
 </aside>
@@ -1446,19 +1439,16 @@ function toggleSbSection(idx) {
 // ── SIDEBAR TOGGLE ──
 function toggleSidebar() {
   const sidebar = document.getElementById('ref-sidebar');
-  const overlay = document.getElementById('sidebar-overlay');
   const btn = document.getElementById('sidebar-toggle-btn');
-  const isOpen = sidebar.classList.toggle('open');
-  overlay.classList.toggle('open', isOpen);
-  document.body.classList.toggle('sidebar-open', isOpen);
-  btn.classList.toggle('active', isOpen);
-  btn.setAttribute('aria-expanded', String(isOpen));
+  const collapsed = sidebar.classList.toggle('collapsed');
+  btn.innerHTML = collapsed ? '▶' : '▴';
+  btn.setAttribute('aria-label', collapsed ? 'Expand sidebar' : 'Collapse sidebar');
+  btn.setAttribute('aria-expanded', String(!collapsed));
 }
 
 function goTab(name) {
   const btn = document.getElementById('tabbtn-' + name);
   showTab(name, btn);
-  if (window.innerWidth < 1280) toggleSidebar();
 }
 
 // ── DOC VIEWER (main tab) ──
@@ -1502,7 +1492,6 @@ function showDoc(section, idx) {
   // re-click — see guard).
   if (activeDocKey !== key) host.scrollTop = 0;
   activeDocKey = key;
-  if (window.innerWidth < 1280) toggleSidebar();
   // Optional history entry so back/forward navigates between docs.
   // No-op fallback if history API isn't available (file:// in some browsers).
   try { history.replaceState({ doc: key }, '', '#doc=' + encodeURIComponent(section) + '-' + idx); } catch (e) {}
