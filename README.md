@@ -57,15 +57,16 @@ python scripts/citation_drift_detector.py --batch-requote  # refresh drifted quo
 ```
 LLM Threat Framework
 ├── framework.md               — Umbrella: architecture, version history, principles
-├── assumptions.md             — Explicit assumptions your deployment must satisfy
-├── asset-inventory.md         — What you're protecting (50+ assets, categorized)
-├── attack-surface-catalog.md  — Where threats enter (60+ surfaces, mapped)
-├── threat-taxonomy.md         — 14 threat categories with Wild_vs_Theory ratings
-├── attack-trees.md            — 3 complete kill chains + standalone trees
-├── risk-matrix.md             — Likelihood × impact scores + regulatory mapping
-├── defense-playbook.md        — Layered defenses by ownership [DEV / OPS / PROV]
-├── assessment-template.md      — Engineering worksheet + scoring rubric appendix
-└── quick-reference.md         — Single-page summary for triage and team sharing
+├── assumptions.md             — Explicit assumptions: LLM behavior, attacker, deployment, trust
+├── asset-inventory.md         — Explicit asset inventory: data, model, infrastructure, trust, IP
+├── attack-surface-catalog.md   — Explicit attack surface catalog: input, comm, supply chain, provider, exec
+├── threat-taxonomy.md         — Master threat catalog (14 categories + Category 13 Addendum)
+├── attack-trees.md            — 3 complete kill chains + standalone attack trees
+├── risk-matrix.md            — Likelihood × impact ratings + regulatory mapping
+├── defense-playbook.md        — Layered defenses with ownership and constraints
+├── assessment-template.md     — Engineering worksheet + scoring rubric appendix
+├── quick-reference.md         — Single-page summary for non-expert teams
+└── release-manifest.md       — Coherent corpus state pointer per release
 ```
 
 **Reading order for a 4-hour assessment:**
@@ -218,12 +219,14 @@ llm-threat-model/
 ├── research/                ← Source material (framework is built from this)
 │   ├── synthesis.md         — Research synthesis (tooling, incidents, capability withholding)
 │   ├── concepts/            — Specific concept research (PI taxonomy, MITRE ATLAS, etc.)
-│   ├── entities/            — Entity research (OWASP, DeepSeek, etc.)
+│   ├── entities/            — Entity research (OWASP, DeepSeek, MITRE Corp, Jason Haddix, etc.)
+│   ├── questions/           — Open questions and identified research gaps
 │   └── sources/             — Primary and corroborating sources with annotations
 │
 ├── evaluation/              ← Framework validation
-│   ├── scenario-suite.json  — 16 deployment scenarios with 9 pass/fail criteria each
-│   └── scenario-suite-results.md — Recorded outcomes
+│   ├── scenario-suite.json — 16 deployment scenarios with 9 pass/fail criteria each
+│   ├── scenario-suite-results.md
+│   └── assessment-walkthrough-example.md
 │
 ├── review/                  ← Adversarial review history (18 rounds)
 │   ├── critique-2026-06-17.md through critique-2026-06-18-r18.md
