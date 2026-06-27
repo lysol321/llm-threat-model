@@ -366,13 +366,7 @@
     position: sticky; top: 0; background: var(--surface); z-index: 2;
   }
   .sidebar-header span { font-size: 12px; font-weight: 700; color: var(--text); letter-spacing: 0.02em; }
-  .sidebar-close {
-    background: var(--surface2); border: 1px solid var(--border2); color: var(--text2); cursor: pointer;
-    font-size: 13px; line-height: 1; padding: 4px 8px; border-radius: 5px;
-    transition: all 0.15s; flex-shrink: 0;
-  }
-  .sidebar-close:hover { color: var(--text); background: var(--surface3); }
-  .sidebar.collapsed .sidebar-close { color: var(--accent); border-color: var(--accent); }
+
 
   /* ── ACCORDION SECTION ── */
   .sb-section { border-bottom: 1px solid var(--border); }
@@ -564,6 +558,7 @@
 <header class="site-header">
   <h1>LLM Threat Model</h1>
   <span class="badge">v1.8</span>
+  <button class="sidebar-toggle-btn" id="sidebar-toggle-btn" onclick="toggleSidebar()" aria-label="Collapse sidebar" aria-expanded="true">▴</button>
   <span class="meta">Updated 2026-06-24 &nbsp;·&nbsp; Next review 2026-09-24</span>
   
   <button class="print-btn" onclick="window.print()">Export PDF</button>
@@ -582,7 +577,6 @@
 <aside id="ref-sidebar" class="sidebar" aria-label="Reference materials">
   <div class="sidebar-header">
     <span>Reference Materials</span>
-    <button class="sidebar-close" id="sidebar-toggle-btn" onclick="toggleSidebar()" aria-label="Collapse sidebar" aria-expanded="true">▴</button>
   </div>
   <div id="sidebar-body"></div>
 </aside>
@@ -1342,63 +1336,22 @@ function renderRefItem(name, desc, tags) {
 // the external `target="_blank"` link. Mirrors `renderSynDoc` for synthesis
 // docs but uses section-keyed IDs so multiple sections can coexist.
 function renderDocRow(section, entry, idx) {
-  const hasHtml = !!entry.html;
   const id = `docrow-${section}-${idx}`;
-  const title = entry.title;
-  if (hasHtml) {
-    return `<div class="syn-doc" id="${id}" data-section="${section}" data-doc-idx="${idx}">
-      <button class="syn-doc-head" type="button"
-              onclick="onDocRowClick('${section}', ${idx})"
-              aria-expanded="false" aria-controls="${id}-body">
-        <span class="syn-chev">▶</span>
-        <span class="syn-title">${title}</span>
-        ${entry.version ? `<span class="syn-ver">${entry.version}</span>` : ''}
-        <a class="syn-open-link" href="#" onclick="event.preventDefault();event.stopPropagation();showDoc('${section}', ${idx})" title="Open in Docs tab" aria-label="Open ${title} in Docs tab">↗</a>
-      </button>
-      ${entry.desc ? `<div class="ref-item-desc">${entry.desc}</div>` : ''}
-      ${entry.tags && entry.tags.length ? `<div class="ref-tags">${entry.tags.map(renderTag).join('')}</div>` : ''}
-      <div class="syn-body" id="${id}-body">
-        <div class="syn-body-inner">${entry.html}</div>
-      </div>
-    </div>`;
-  }
-  // No embedded HTML → fall back to external link.
   return `<div class="doc-row" id="${id}">
-    <a class="doc-link" href="${entry.file}" target="_blank" rel="noopener">${title}${entry.version ? `<span class="doc-ver">${entry.version}</span>` : ''}</a>
+    <button class="doc-link" type="button"
+            onclick="onDocRowClick('${section}', ${idx})"
+            aria-label="Open ${entry.title} in Docs tab">
+      ${entry.title}${entry.version ? `<span class="doc-ver">${entry.version}</span>` : ''}
+    </button>
     ${entry.desc ? `<div class="ref-item-desc">${entry.desc}</div>` : ''}
     ${entry.tags && entry.tags.length ? `<div class="ref-tags">${entry.tags.map(renderTag).join('')}</div>` : ''}
   </div>`;
 }
-// Synthesis doc — collapsible inline body. Renders the embedded HTML in-place
-// when present, falls back to a link-out when `s.html` is missing (e.g. data
-// file predates the build-html.py MD→HTML pass).
-function renderSynDoc(s, idx) {
-  const hasHtml = !!s.html;
-  return `<div class="syn-doc" id="syndoc-${idx}" data-doc-idx="${idx}">
-    <button class="syn-doc-head" type="button"
-            onclick="onSynDocClick(${idx})"
-            aria-label="Open ${s.title} in Docs tab">
-      <span class="syn-title">${s.title}</span>
-      ${s.version ? `<span class="syn-ver">${s.version}</span>` : ''}
-      ${hasHtml ? `<a class="syn-open-link" href="#" onclick="event.preventDefault();event.stopPropagation();showDoc('synthesis', ${idx})" title="Open in Docs tab" aria-label="Open ${s.title} in Docs tab">↗</a>` : (s.file ? `<a class="syn-open-link" href="${s.file}" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="Open in new tab" aria-label="Open ${s.title} in new tab">↗</a>` : '')}
-    </button>
-    ${s.desc ? `<div class="ref-item-desc">${s.desc}</div>` : ''}
-  </div>`;
-}
-// Sidebar click: open doc in main Docs tab.
-function onSynDocClick(idx) {
-  showDoc('synthesis', idx);
-}
-// Non-synthesis sidebar rows. Toggles the inline body and dispatches to the
-// unified showDoc.
 function onDocRowClick(section, idx) {
   showDoc(section, idx);
-  const el = document.getElementById(`docrow-${section}-${idx}`);
-  if (!el) return;
-  const opening = !el.classList.contains('open');
-  el.classList.toggle('open', opening);
-  const head = el.querySelector('.syn-doc-head');
-  if (head) head.setAttribute('aria-expanded', String(opening));
+}
+function onSynDocClick(idx) {
+  showDoc('synthesis', idx);
 }
 // Each section is an accordion: { title, count, body, open }
 function renderSbSection(sec, idx) {
