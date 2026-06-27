@@ -1,8 +1,17 @@
+# Framework-internal tooling (not published)
 .opencode/
-.env
-.env.*
-*.pem
-*.key
-*.log
+.claude/
+
+# Working files and drafts
+tmp/
+AGENTS.md
+
+# OS noise
 .DS_Store
 Thumbs.db
+
+# Secrets
+*.pem
+*.key
+.env
+.env.*

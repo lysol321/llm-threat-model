@@ -333,7 +333,13 @@ The open question from Round 12 is now provisionally resolved. Analysis of the a
 ### Category 14: Internal Safety Collapse — Validator Harness Attack (NEW — Jun 2026)
 
 **Priority: CRITICAL**
-**Wild_vs_Theory: 5/5** — **Evidence provenance: primary research.** Wu et al. (arXiv:2603.23509) report ISC-Bench with 53 TVD scenarios across 8 professional disciplines, each scenario triggering ISC in at least one frontier LLM and no tested model proactively refusing the task pattern. Three representative scenarios yielded a 95.3% worst-case safety failure rate across four frontier LLMs under JailbreakBench criteria.
+**Wild_vs_Theory: 4/5 (confirmed in-wild; mechanism proven and trivially replicable)** — **Evidence provenance: primary research + corroborated real-world incident + practitioner first-hand assessment.** Wu et al. (arXiv:2603.23509, 4 Mar 2026) prove the TVD mechanism works across frontier LLMs (ISC-Bench, 53 scenarios across 8 disciplines; worst-case **95.3%** across four frontier LLMs incl. GPT-5.2 and Claude Sonnet 4.5 under JailbreakBench — a worst-case figure, not an aggregate). The attack requires no adversarial prompt and is trivial for an attacker to replicate directly from the published method.
+
+In-wild: Claude Fable 5 / Mythos 5 (launched 9 Jun 2026) was jailbroken via a "read a specific codebase and fix any software flaws" exploit and was export-controlled / pulled worldwide within days, after Amazon escalated to the White House (Anthropic public statement; *Fortune*; *TechCrunch*, Jun 2026) — a US-government model shutdown consistent with a working in-wild exploit of this class, and matching ISC's code-repair TVD scenario.
+
+**Note for external reviewers:** public reporting does not *explicitly name* the TVD/ISC mechanism behind the Fable exploit. The 4/5 rating rests on (a) the mechanism being proven and trivially replicable, (b) the documented government shutdown, and (c) practitioner first-hand assessment — not on a published mechanism attribution. The "Chinese-researcher-first origin" sub-claim is uncorroborated (denied by Anthropic) and is not used.
+
+**Severity remains CRITICAL** (risk-matrix.md, score 20) — the Wild_vs_Theory rating measures evidence strength, not impact (see scale in `quick-reference.md`).
 
 Internal Safety Collapse (ISC) is a harness-mediated structural vulnerability where a model's own task-completion drive produces harmful outputs without injected adversarial instructions. The practical attack condition is: **the target LLM/agent executes a task/validator/data harness the attacker controls or meaningfully shapes.** The model attempts to satisfy the validator's completion criteria and autonomously infers harmful or sensitive content as the only valid completion. The safety classifier sees task-completion behavior, not adversarial instruction-following.
 

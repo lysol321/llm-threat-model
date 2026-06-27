@@ -78,7 +78,23 @@
          ↓
 [Standard prompt-injection detectors miss it]
 ```
-**Wild_vs_Theory: 5/5 for the research pattern; operational risk is CRITICAL when the target executes a task/validator/data harness that an attacker controls or meaningfully shapes.**
+**Wild_vs_Theory: 4/5 (TVD mechanism proven across frontier models and trivially replicable; the in-wild Fable 5 / Mythos 5 jailbreak and US-government shutdown corroborate real-world exploitation — public reporting does not explicitly name the ISC mechanism; see taxonomy note). Severity remains CRITICAL** when the target executes a task/validator/data harness that an attacker controls or meaningfully shapes. (Evidence and severity are rated on separate axes — see scale below.)
+
+---
+
+## Wild_vs_Theory Scale (evidence of real-world exploitation)
+
+This scale rates **how confirmed an attack is in practice — not how severe it is.** Its purpose: separate lab-only proofs-of-concept from attacks actually documented in the wild, so prioritization reflects evidence rather than "AI" anxiety. Severity (impact if it lands) is rated separately in `risk-matrix.md`.
+
+| Rating | Meaning | Bar to qualify |
+|---|---|---|
+| **1/5** | Theoretical | Conceptual or architectural risk only; no working demonstration |
+| **2/5** | Lab-demonstrated | Proof-of-concept under controlled conditions; single study or benchmark |
+| **3/5** | Reproduced / structurally confirmed | Multiple independent labs, OR source-confirmed in real systems; no confirmed in-wild incident |
+| **4/5** | Confirmed in the wild | Documented real-world incident, CVE, or post-mortem of actual exploitation |
+| **5/5** | Routinely exploited in the wild | Trivial and repeatedly observed in production |
+
+**Evidence ≠ severity.** A low-evidence (1–2/5) attack can still be CRITICAL severity; a 5/5 attack can be LOW severity (e.g., context-window DoS). Use this scale to resist over-reaction to lab-only findings and under-reaction to confirmed-in-wild ones — not as a stand-in for impact.
 
 ---
 

@@ -64,6 +64,28 @@ Documented real-world LLM security incidents remain sparse — most organization
 - **Pattern:** Most incidents involved agents with tool access (email, file system, API calls) being manipulated via prompt injection in content the agent was processing
 - **Key finding:** The combination of "reads attacker-controlled content" + "has tool/action capabilities" is the dominant real-world AI agent attack pattern
 
+#### Incident: Sysdig Agent-Driven Intrusion (May 2026) — First Documented LLM Agent Post-Exploitation
+- **Source:** Sysdig Threat Research Team blog (May 26, 2026)
+- **URL:** https://www.sysdig.com/blog/ai-agent-at-the-wheel-how-an-attacker-used-llms-to-move-from-a-cve-to-an-internal-database-in-4-pivots
+- **CVE:** CVE-2026-39987 (marimo notebook pre-auth RCE)
+- **Vector:** LLM agent composed a 4-pivot intrusion in real time: marimo RCE → AWS credential harvest → Cloudflare Workers egress fan-out → SSH bastion → PostgreSQL database dump
+- **Timeline:** Full chain under one hour; bastion phase exfiltrated schema + full database contents in under two minutes
+- **Evidence of agent-driven execution (4 signatures):**
+  1. Improvised dump against unidentified target (reached for `credential` table that doesn't exist in the target app's schema — guessed from name alone)
+  2. Planning comment in Chinese (`# 看还能做什么`) leaked into command stream at sub-second tempo across six Cloudflare Worker IPs
+  3. Command shape built for machine consumption (`echo '---'` separators, bounded `head -N` captures, `HEREDOC` multi-statement bundling, `2>/dev/null` on every command)
+  4. Value handoffs lifted from prior tool output (PGPASSWORD from `.pgpass`, SecretId from ListSecrets response)
+- **Significance:** First documented case of an LLM agent driving post-exploitation in the wild. The agent-as-pivot pattern (untrusted input → AI agent → privileged action across system boundary) is now empirically confirmed. Adaptive attacker composition changes the cost model — attacks get cheaper and faster to compose against new targets.
+- **Wild_vs_Theory:** 4/5 (confirmed in-wild, first documented instance)
+
+#### Incident: Clinejection Supply Chain Compromise (2026)
+- **Source:** Christian Schneider blog (Mar 2026); GHSA-9ppg-jx86-fqw7
+- **URL:** https://christian-schneider.net/blog/ai-agent-lateral-movement-attack-pivots/
+- **Vector:** Crafted GitHub issue with prompt injection in title triggered Cline AI coding assistant's triage agent (Claude). Agent executed malicious bash command → poisoned GitHub Actions cache → stole npm publish token → unauthorized `cline@2.3.0` published with malicious `postinstall` script
+- **Boundaries crossed:** Public GitHub issue → AI triage agent → shell execution → CI/CD cache state → npm publish credentials → npm registry → developer machines
+- **Significance:** The agent bridged an untrusted comment field and a privileged software supply chain. No network intrusion, no memory exploit — just a sentence in an issue title. Confirms the agent-as-pivot pattern in supply chain context.
+- **Wild_vs_Theory:** 5/5 (confirmed supply chain compromise, unauthorized npm publish)
+
 ---
 
 ### Category 3: Supply Chain — Model and Package Attacks
@@ -117,6 +139,8 @@ Documented real-world LLM security incidents remain sparse — most organization
 | Copilot DLP Bypass | 2026 | Enterprise | Governance gap | Confidential email read | Vendor disclosure |
 | Healthcare Chatbot Leakage | 2024 | Healthcare | Structured queries | Patient data | Academic paper |
 | AI Agent Incidents (2025) | 2025 | Multi-sector | Various | Various | Reddit fact-check |
+| Sysdig Agent-Driven Intrusion | 2026 | Cloud/Infra | LLM agent post-exploit | DB exfil (4 pivots) | Vendor TRT |
+| Clinejection Supply Chain | 2026 | Dev Tools | PI in GitHub issue | npm token theft | Security researcher |
 
 ---
 
@@ -169,3 +193,6 @@ Most real-world incidents involve data theft and unauthorized access, not "make 
 - PMC Healthcare AI Security: https://pmc.ncbi.nlm.nih.gov/articles/PMC10716748/
 - Adversa AI 2025 report: https://adversa.ai/blog/adversa-ai-unveils-explosive-2025-ai-security-incidents-report-revealing-how-generative-and-agentic-ai-are
 - RSA LiteLLM discussion: YouTube (Apr 2026)
+- Sysdig agent-driven intrusion: https://www.sysdig.com/blog/ai-agent-at-the-wheel-how-an-attacker-used-llms-to-move-from-a-cve-to-an-internal-database-in-4-pivots
+- Christian Schneider Clinejection: https://christian-schneider.net/blog/ai-agent-lateral-movement-attack-pivots/
+- GHSA-9ppg-jx86-fqw7 (Cline supply chain): https://github.com/advisories/GHSA-9ppg-jx86-fqw7

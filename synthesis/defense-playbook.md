@@ -244,7 +244,7 @@ Defense mechanism:
 **Effectiveness:** HIGH (but requires architectural changes to agentic systems)
 **Latency cost:** Minimal (harness validation is a static analysis step)
 **Constraint notes:** Effective for task/validator/data harnesses that attacker-controlled or attacker-shaped material can enter. Internal-only harnesses with no attacker-shaped inputs are ordinary QA/supply-chain risk, not the ISC attack path.
-**Wild_vs_Theory: 5/5** — **Evidence provenance: primary research.** arXiv:2603.23509 reports ISC-Bench with 53 TVD scenarios across 8 disciplines, no proactive refusal for the tested task pattern, and 95.3% worst-case failure across representative scenarios. Fable/export-control/open-letter details are press/community narrative unless independently corroborated.
+**Wild_vs_Theory: 4/5 (confirmed in-wild; mechanism proven and trivially replicable)** — **Evidence provenance: primary research + corroborated real-world incident + practitioner first-hand assessment.** arXiv:2603.23509 reports ISC-Bench (53 TVD scenarios, 8 disciplines; 95.3% worst-case across four frontier LLMs). The mechanism needs no adversarial prompt and is trivially replicable. The in-wild Fable 5 / Mythos 5 jailbreak and US-government shutdown (Jun 2026) corroborate exploitation; public reporting does not explicitly name the TVD mechanism — see `threat-taxonomy.md` Category 14 for the full rating basis.
 
 ```
 Defense mechanism:

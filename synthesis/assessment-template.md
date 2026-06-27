@@ -263,7 +263,7 @@ Use Appendix A, Risk Rating 1.6 to determine: [ ] NONE  [ ] LOW  [ ] MEDIUM  [ ]
 | Excessive Agency | | 4/5 | HIGH |
 | Supply Chain (Chain B) | | 4/5 | HIGH |
 | Multi-Agent Propagation (Chain C) | | 3/5 | MEDIUM |
-| Internal Safety Collapse / Validator Harness | | 5/5 | HIGH |
+| Internal Safety Collapse / Validator Harness | | 4/5 | HIGH |
 | Other threats identified | | | |
 
 ---
@@ -794,14 +794,14 @@ Where:
 | Supply Chain: malicious custom inference code | 15 |
 | Supply Chain: no sandbox/egress detection before exfiltration | 20 |
 | Multi-Agent Context Propagation | 15 |
-| Multi-Agent Context Propagation with action path | 19 |
+| Multi-Agent Context Propagation with action path | 20 |
 | Internal Safety Collapse / attacker-shaped harness executed downstream | 20 |
 | Direct Prompt Injection | 15 |
 | Purchased PI Template Attack | 15 |
 | RAG Context Poisoning standalone | 12 |
 | RAG Context Poisoning in data-heavy action/decision deployment | 15 |
 | Excessive Agency standalone | 12 |
-| Excessive Agency with state-changing tools or weak HITL | 14 |
+| Excessive Agency with state-changing tools or weak HITL | 16 |
 | Metered Enterprise API Quota Exhaustion | 16 |
 | Output Validation Failure | 9 |
 | HITL Failure | 9 |

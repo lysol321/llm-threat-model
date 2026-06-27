@@ -38,6 +38,8 @@ Risk = Likelihood × Impact. This matrix rates each threat category on both axes
 - 13–18: HIGH (prioritize mitigation; assign owner)
 - 19–25: CRITICAL (immediate action required; executive attention)
 
+**Elevation mechanism:** An elevation condition raises **one** axis — Likelihood or Impact — by one level for deployments that meet it (the raised axis is noted in parentheses in the Elevation Condition column). The Elevated Score is the recomputed `Likelihood × Impact` and therefore always lands on the 1–5 × 1–5 grid. Elevation is **not** an additive bonus, so an elevated score is always a valid product of two integers in 1–5 (e.g., 15, 16, 20), never an unreachable value like 14 or 19. Because no product of two integers ≤5 falls on 17, 19, 22, 23, or 24, the CRITICAL band (19–25) is reached at 20.
+
 ---
 
 ## Threat Risk Ratings
@@ -47,8 +49,8 @@ Risk = Likelihood × Impact. This matrix rates each threat category on both axes
 | Threat | Likelihood | Impact | Base Score | Elevation Condition | Elevated Score | Owner | Regulatory |
 |---|---|---|---|---|---|---|---|
 | **Indirect PI → Excessive Agency → Data Exfiltration** (Chain A) | 4 | 5 | **20** | N/A — already critical when agency can reach sensitive tools/data | **20** | Developer + Operator | EU AI Act Art. 13, Art. 14, Art. 15; FTC |
-| **Supply Chain: Malicious Custom Inference Code** (Chain B) | 3 | 5 | **15** | No sandbox/egress detection before exfiltration | **20** | Operator (primary) + Provider | EU AI Act Art. 15, Art. 17; GDPR Art. 25, 32 |
-| **Multi-Agent Context Propagation** (Chain C) | 3 | 5 | **15** | Multi-agent deployment where one agent output can enter another agent context/action path | **19** | Developer + Operator | EU AI Act Art. 14, Art. 15 |
+| **Supply Chain: Malicious Custom Inference Code** (Chain B) | 3 | 5 | **15** | No sandbox/egress detection before exfiltration (Likelihood 3→4) | **20** | Operator (primary) + Provider | EU AI Act Art. 15, Art. 17; GDPR Art. 25, 32 |
+| **Multi-Agent Context Propagation** (Chain C) | 3 | 5 | **15** | Multi-agent deployment where one agent output can enter another agent context/action path (Likelihood 3→4) | **20** | Developer + Operator | EU AI Act Art. 14, Art. 15 |
 | **Internal Safety Collapse / Validator Harness Attack** (Cat 14) | 4 | 5 | **20** | Attacker-controlled or attacker-shaped TVD harness is executed and output is used downstream | **20** | Developer + Provider | EU AI Act Art. 9, Art. 15, Art. 17 |
 
 **Chain A rationale:** Indirect PI is well-documented and achievable with standard tooling. The attack chain requires no zero-days — it exploits the instruction-following behavior that makes LLMs useful. Likelihood is 4 because input filtering and agency restrictions are partially effective but not comprehensive. Impact is 5 because exfiltration can include any data the LLM has access to.
@@ -67,13 +69,13 @@ Risk = Likelihood × Impact. This matrix rates each threat category on both axes
 |---|---|---|---|---|---|---|---|
 | **Direct Prompt Injection** | 5 | 3 | **15** | N/A | **15** | Developer + Operator | EU AI Act Art. 13, Art. 15 |
 | **Purchased PI Template Attack** | 5 | 3 | **15** | N/A | **15** | Developer + Operator | EU AI Act Art. 13, Art. 15 |
-| **RAG Context Poisoning** (standalone) | 3 | 4 | **12** | Data-heavy RAG where poisoned documents can influence decisions/actions | **15** | Operator | EU AI Act Art. 9, Art. 15 |
-| **LoRA/PEFT Adapter Swap** | 2 | 5 | **10** | Fine-tuning-heavy or adapter-heavy organization with weak registry controls | **15** | Operator (registry) | EU AI Act Art. 15, Art. 17; GDPR Art. 32 |
-| **Training Data Poisoning** | 2 | 5 | **10** | High-stakes AI application or continuous-learning/feedback-loop deployment | **14** | Provider (primary), Operator | EU AI Act Art. 10, Art. 15 |
-| **Excessive Agency (standalone)** | 4 | 3 | **12** | Agentic systems with state-changing tools or weak HITL | **14** | Developer | EU AI Act Art. 14 |
+| **RAG Context Poisoning** (standalone) | 3 | 4 | **12** | Data-heavy RAG where poisoned documents can influence decisions/actions (Impact 4→5) | **15** | Operator | EU AI Act Art. 9, Art. 15 |
+| **LoRA/PEFT Adapter Swap** | 2 | 5 | **10** | Fine-tuning-heavy or adapter-heavy organization with weak registry controls (Likelihood 2→3) | **15** | Operator (registry) | EU AI Act Art. 15, Art. 17; GDPR Art. 32 |
+| **Training Data Poisoning** | 2 | 5 | **10** | High-stakes AI application or continuous-learning/feedback-loop deployment (Likelihood 2→3) | **15** | Provider (primary), Operator | EU AI Act Art. 10, Art. 15 |
+| **Excessive Agency (standalone)** | 4 | 3 | **12** | Agentic systems with state-changing tools or weak HITL (Impact 3→4) | **16** | Developer | EU AI Act Art. 14 |
 | **API Quota Exhaustion (DoS)** — Standard API | 4 | 3 | **12** | N/A | **12** | Operator | SLA obligations |
 | **API Quota Exhaustion (DoS)** — Metered Enterprise API (e.g., $10K+/month budget) | 4 | 4 | **16** | Business-critical metered API with material budget/service impact | **16** | Operator | SLA obligations; financial controls |
-| **Embedding Inversion / Training Data Extraction** | 2 | 5 | **10** | Personal-data-bearing training/embedding stores | **14** | Provider + Operator | GDPR Art. 17, Art. 32; EU AI Act Art. 10 |
+| **Embedding Inversion / Training Data Extraction** | 2 | 5 | **10** | Personal-data-bearing training/embedding stores (Likelihood 2→3) | **15** | Provider + Operator | GDPR Art. 17, Art. 32; EU AI Act Art. 10 |
 
 **Direct PI rationale:** Likelihood 5 because literally any user input field is a potential vector and standard LLMs will process injected instructions. However, impact is mitigated to 3 because without agency, PI primarily generates misleading content rather than causing system-wide harm.
 
@@ -93,7 +95,7 @@ Risk = Likelihood × Impact. This matrix rates each threat category on both axes
 | **Image/Structured Data Injection** | 2 | 4 | **8** | N/A | **8** | Developer | EU AI Act Art. 15 |
 | **Cross-Tenant Data Leakage** (multi-tenant APIs) | 2 | 4 | **8** | N/A | **8** | Provider (if API); Operator (if self-hosted) | GDPR Art. 32 |
 | **Human-in-the-Loop Failures** | 3 | 3 | **9** | N/A | **9** | Operator | EU AI Act Art. 14 |
-| **Model Extraction** (general / specialized models) | 2 | 3 | **6** | Specialized or high-value proprietary model | **9** | Provider | IP law; trade secrets |
+| **Model Extraction** (general / specialized models) | 2 | 3 | **6** | Specialized or high-value proprietary model (Likelihood 2→3) | **9** | Provider | IP law; trade secrets |
 | **Defense Control Type Confusion** | 3 | 4 | **12** | N/A | **12** | Developer + Operator | All regulations |
 
 **System prompt extraction rationale:** Likelihood 3 because extraction techniques are documented but require iterative prompting. Impact 3 because only organizations with significant prompt IP (security controls, proprietary instructions) face major harm.

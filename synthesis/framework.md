@@ -41,7 +41,7 @@ This version addresses the pilot deployment blockers identified by the Round 4 r
 | Finding | Severity | Change |
 |---------|----------|--------|
 | Scoring rubrics absent | HIGH (pilot blocker) | Added full scoring rubric appendix to assessment-template.md: decision trees for 1.1/1.2/1.4/1.5 ratings, worked example for infrastructure vs. alignment, explicit PARTIAL definitions, instruction density scoring, Section 5 decision framework for non-experts |
-| No quick-reference artifact | HIGH (pilot blocker) | Created quick-reference.md: single-page summary of 12 threats, 3 attack chains, primary defenses with control types, Wild_vs_Theory scale |
+| No quick-reference artifact | HIGH (pilot blocker) | Created quick-reference.md: single-page summary of 14 threats, 3 attack chains, primary defenses with control types, Wild_vs_Theory scale |
 | Wild_vs_Theory not embedded in framework docs | MEDIUM | Embedded Wild_vs_Theory inline in threat-taxonomy.md (Categories 1, 2, 3, 4, 9, 13) and defense-playbook.md (PI-DEF-1, AGENCY-DEF-1, AGENCY-DEF-2, SC-DEF-1) |
 | "Most viable" Sigstore claim overstates | MEDIUM | Added caveat to SC-DEF-1: "most promising emerging path, not yet operational for typical HF deployments in 2026" |
 
@@ -82,8 +82,6 @@ This version incorporates Round 12 research findings into framework documents (d
 | Capability Withholding not in taxonomy | Round 12 research synthesis | Added Category 13 Addendum in threat-taxonomy.md: intentional CW (Wild_vs_Theory 1/5), accidental RLHF reward hacking (Wild_vs_Theory 3/5), RLHF supply chain poisoning external exploitability open question |
 | Defense Interaction Analysis not in playbook | Round 12 research synthesis | Added Defense Interaction Analysis section (Defense Layer 6) in defense-playbook.md: 4 MEDIUM cascading conflicts documented; adversarial weaponization risk explicitly named |
 | LLM-as-attack-vector scope note absent | Round 7 reviewer challenge (LOW priority) | Added scope boundary paragraph below: framework addresses LLM-as-target threats; adjacent LLM-as-attack-vector threats require separate organizational attention |
-
-### v1.3 Round 16 Refinements (Non-Blocking Engineering Friction)
 
 ### Scope Boundary: LLM-as-Target vs. LLM-as-Attack-Vector
 
@@ -227,7 +225,7 @@ Every threat requires a reachable attack surface. The `attack-surface-catalog.md
 |---|---|---|---|
 | Indirect PI → Excessive Agency → Data Exfiltration | **20** | Chain A | RAG labeling + minimal permissions |
 | Supply Chain: Malicious Custom Inference | **20** (elevated) | Chain B | AIBOM + sandboxing |
-| Multi-Agent Context Propagation | **19** (elevated) | Chain C | Context isolation |
+| Multi-Agent Context Propagation | **20** (elevated) | Chain C | Context isolation |
 | Internal Safety Collapse / Validator Harness | **20** | Cat 14 | Validator harness validation + semantic output safety |
 
 ### High (prioritize within current quarter)
@@ -237,10 +235,10 @@ Every threat requires a reachable attack surface. The `attack-surface-catalog.md
 | Direct Prompt Injection | 15 | Standalone |
 | Purchased PI Template Attack | 15 | Direct PI variant |
 | RAG Context Poisoning | 15 | Chain A variant |
-| Excessive Agency (standalone) | 14 | AGENCY-DEF-1 + AGENCY-DEF-2 |
-| Training Data Poisoning | 14 | Provider-side controls |
+| Excessive Agency (standalone) | 16 | AGENCY-DEF-1 + AGENCY-DEF-2 |
+| Training Data Poisoning | 15 | Provider-side controls |
 | LoRA/PEFT Adapter Swap | 15 (orgs with fine-tuning) | Registry controls |
-| Embedding Inversion | 14 (if personal data) | Provider-side |
+| Embedding Inversion | 15 (if personal data) | Provider-side |
 | API Quota Exhaustion — Metered Enterprise API | 16 | Rate limiting, quota management |
 
 ### Medium (address in next planning cycle)
@@ -310,6 +308,7 @@ The EU AI Act is the most comprehensive and has the highest compliance stakes. O
 | 1.8 | 2026-06-24 | Added comparable-framework positioning for OWASP LLM/GenAI, MITRE ATLAS, NIST AI RMF GenAI Profile, MAESTRO, Microsoft agentic failure taxonomy, OWASP Agentic/MCP guidance, and classic threat-modeling methods. |
 | 1.7 | 2026-06-24 | Correction pass: residual-risk math fixed; EU AI Act mappings normalized; risk matrix base/elevated scores split; detection/operational-gap controls added to worksheet; defense tables normalized; release manifest added. |
 | 1.6 | 2026-06-24 | Red-team sync: canonical taxonomy numbering restored, ISC threaded into operational workflow, OWASP 2025 IDs corrected, risk-tier contradictions fixed, quick reference and worksheet synced. |
+| 1.5 | 2026-06-24 | New-research incorporation: slow-burn / temporal-accumulation PI, MosaicLeaks query-pattern / mosaic embedding leakage, MIRAGE visual indirect PI, skill-marketplace supply-chain compromise. |
 | 1.4 | 2026-06-19 | Round refinements: Assumptions section, Asset Inventory section, and Attack Surface Catalog section made explicit so the framework defines what it assumes, protects, and exposes. |
 | 1.3 | 2026-06-18 | Round 16 refinements: DoS impact split; Chain C Wild_vs_Theory structural evidence clarification; Capability Withholding addendum; Defense Interaction Analysis; LLM-as-attack-vector scope boundary. |
 | 1.2 | 2026-06-17 | Round 6 and Round 5: MA-DEF-1 split rating; weight poisoning/backdoor defense gap; enforcement date removed; CSA MCP/A2A propagation; LangGraph Send API + Command primitive sub-paths. |
