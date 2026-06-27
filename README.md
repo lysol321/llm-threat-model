@@ -16,6 +16,12 @@ The framework was built through 18 rounds of adversarial review and validated ag
 
 ## Quick Start
 
+**Open the interactive HTML viewer:**
+```
+open llm-threat-model.html
+```
+The HTML viewer gives you a tabbed interface — Overview, 14 Threats, Attack Chains, Risk Matrix, Defenses, Decision Tree, OWASP Mapping, and Docs — with a sidebar for navigating reference materials. Click any document in the sidebar to read it inline in the Docs tab.
+
 **Run an assessment on your deployment:**
 
 1. Read [`assumptions.md`](synthesis/assumptions.md) and confirm which apply to your system
@@ -195,7 +201,9 @@ The 16-scenario evaluation suite validates the framework against the quality bar
 
 ```
 llm-threat-model/
-├── synthesis/               ← THE FRAMEWORK (primary deliverable)
+├── llm-threat-model.html          — Interactive HTML viewer (tabbed interface + sidebar doc nav)
+├── threat-model-data.json          — Source of truth for the HTML viewer data
+├── synthesis/                     ← THE FRAMEWORK (primary deliverable)
 │   ├── framework.md         — Umbrella + architecture + version history
 │   ├── assumptions.md       — 35+ explicit assumptions the framework rests on
 │   ├── asset-inventory.md   — 50+ assets across data, model, infrastructure, trust, IP
@@ -223,9 +231,12 @@ llm-threat-model/
 │
 ├── scripts/
 │   ├── test_scenario_suite.py         — CI gate: validates scenario suite integrity
-│   └── citation_drift_detector.py    — Detects and fixes quote/range drift in citations
+│   ├── citation_drift_detector.py    — Detects and fixes quote/range drift in citations
+│   ├── build-html.py                — Embeds all synthesis docs as HTML in llm-threat-model.html
+│   └── md_to_html.py                — Markdown → HTML converter (stdlib-only)
 │
-└── llm-threat-model.html    — Rendered HTML version of the framework
+├── llm-threat-model.html    — Interactive HTML viewer: tabbed interface + sidebar doc navigation
+└── threat-model-data.json    — Single source of truth for all HTML data (threats, sidebar, docs)
 ```
 
 ---
