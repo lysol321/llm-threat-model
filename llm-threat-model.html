@@ -404,7 +404,7 @@
   /* compact doc list (links, less clutter than cards) */
   .doc-row { padding: 7px 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
   .doc-row:last-child { border-bottom: none; }
-  .doc-link { color: var(--text); text-decoration: none; display: block; line-height: 1.4; font-size: 12px; font-weight: 600; }
+  .doc-link { color: var(--text); text-decoration: none; display: block; line-height: 1.4; font-size: 12px; font-weight: 600; background: var(--surface); }
   .doc-link:hover { color: var(--accent); }
   .doc-ver { font-size: 10px; color: var(--text3); font-weight: 400; margin-left: 5px; }
   .doc-row .ref-item-desc { margin: 3px 0 0; }
@@ -1349,6 +1349,21 @@ function renderDocRow(section, entry, idx) {
 }
 function onDocRowClick(section, idx) {
   showDoc(section, idx);
+}
+function onSynDocClick(idx) {
+  showDoc('synthesis', idx);
+}
+
+function renderSynDoc(s, idx) {
+  const id = `syndoc-${idx}`;
+  return `<div class="doc-row" id="${id}">
+    <button class="doc-link" type="button"
+            onclick="onSynDocClick(${idx})"
+            aria-label="Open ${s.title} in Docs tab">
+      ${s.title}${s.version ? `<span class="doc-ver">${s.version}</span>` : ''}
+    </button>
+    ${s.desc ? `<div class="ref-item-desc">${s.desc}</div>` : ''}
+  </div>`;
 }
 function onSynDocClick(idx) {
   showDoc('synthesis', idx);
