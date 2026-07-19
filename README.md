@@ -4,6 +4,8 @@
 
 A complete, actionable threat model for LLM deployments — built for engineering teams, not security researchers. Covers 14 threat categories, 3 full attack chains, a layered defense playbook, a risk matrix with regulatory mapping, and an engineering worksheet that a 3-person team can complete in under 4 hours without ML security expertise.
 
+> **Disclaimer.** This is independent personal research by the author, developed on personal time and built solely from publicly available sources (OWASP, MITRE ATLAS, published CVEs, academic papers, and vendor documentation). It is **not** affiliated with, sponsored by, or derived from any employer, client, or government work, and contains no proprietary, classified, or controlled information. It is provided for defensive and educational purposes only. All views are the author's own.
+
 ---
 
 ## What This Is

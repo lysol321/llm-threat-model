@@ -6,6 +6,16 @@
 tmp/
 AGENTS.md
 
+# Build artifacts and vendored deps
+vendor/
+*.zip
+__pycache__/
+*.pyc
+
+# Local-only test scripts (not published)
+scripts/test_inline_synthesis.js
+scripts/test_md_to_html.py
+
 # OS noise
 .DS_Store
 Thumbs.db
