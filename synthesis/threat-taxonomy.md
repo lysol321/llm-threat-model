@@ -6,7 +6,7 @@
 ---
 
 ## Purpose
-Master taxonomy of threats to LLM systems, organized by attack surface. Each entry links to associated attack trees, defenses, and regulatory mappings. This is the authoritative reference list — not a menu of everything, but a prioritized catalog of what matters.
+Master taxonomy of threats to LLM systems, organized by attack surface. Each entry links to associated attack trees, defenses, and regulatory mappings. This authoritative list prioritizes the threats that matter instead of cataloging every possibility.
 
 ---
 
@@ -19,7 +19,7 @@ Master taxonomy of threats to LLM systems, organized by attack surface. Each ent
 
 Prompt injection is the manipulation of LLM behavior through crafted inputs that override system-level instructions. It is the premier threat to LLM deployments and is not fully mitigated by RAG, fine-tuning, or input filtering.
 
-**Attack economics change (v1.1 update):** Prompt injection no longer requires moderate-to-high attacker sophistication. Pre-optimized PI templates and jailbreak-as-a-service are sold in underground markets. The expertise barrier for PI attacks has been reduced to LOW — any attacker can purchase an optimized template. This fundamentally changes the threat model: PI attacks are no longer limited to skilled adversaries.
+**Attack economics change (v1.1 update):** Prompt injection no longer requires moderate-to-high attacker sophistication. Pre-optimized PI templates and jailbreak-as-a-service are sold in underground markets. The expertise barrier for PI attacks has dropped to LOW — any attacker can purchase an optimized template. This fundamentally changes the threat model: PI attacks are no longer limited to skilled adversaries.
 
 **Sub-types:**
 
@@ -33,7 +33,7 @@ Prompt injection is the manipulation of LLM behavior through crafted inputs that
 
 **Key insight (from Arcanum PI Taxonomy):** Attack surface extends to **any content the model parses** — text, documents, images, API responses, structured data, and retrieved contexts. Restricting analysis to "text input fields" dramatically underestimates the attack surface.
 
-**Key update (v1.5 — Slow-Burn PI, Jun 2026):** Standard per-event PI detectors fail against slow-burn attacks where each step is individually below threshold. The attack surface for multi-turn systems includes the **temporal accumulation** of context across turns, not just the content of any single turn. Detection requires proxy-side temporal analysis, not just per-turn input scanning.
+**Key update (v1.5 — Slow-Burn PI, Jun 2026):** Standard per-event PI detectors fail against slow-burn attacks where each step is individually below threshold. For multi-turn systems, the attack surface includes both the content of each turn and the **temporal accumulation** of context across turns. Detection requires proxy-side temporal analysis alongside per-turn input scanning.
 
 **Underground PI Market impact (v1.1 addition):**
 - Pattern-based input filtering is increasingly ineffective — purchased template variants evade detection

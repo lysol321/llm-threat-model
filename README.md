@@ -2,7 +2,7 @@
 
 **Version 1.8** · Pilot-ready · Updated 2026-06-24
 
-A complete, actionable threat model for LLM deployments — built for engineering teams, not security researchers. Covers 14 threat categories, 3 full attack chains, a layered defense playbook, a risk matrix with regulatory mapping, and an engineering worksheet that a 3-person team can complete in under 4 hours without ML security expertise.
+This threat model is for engineering teams assessing LLM deployments. It assumes no ML security expertise. The framework covers 14 threat categories, 3 full attack chains, a layered defense playbook, a risk matrix with regulatory mapping, and an engineering worksheet that a 3-person team can complete in under 4 hours.
 
 > **Disclaimer.** This is independent personal research by the author, developed on personal time and built solely from publicly available sources (OWASP, MITRE ATLAS, published CVEs, academic papers, and vendor documentation). It is **not** affiliated with, sponsored by, or derived from any employer, client, or government work, and contains no proprietary, classified, or controlled information. It is provided for defensive and educational purposes only. All views are the author's own.
 
@@ -12,7 +12,7 @@ A complete, actionable threat model for LLM deployments — built for engineerin
 
 Most LLM threat guidance is either a flat vulnerability list or an academic kill-chain diagram. This framework connects the two: every threat maps to a complete attack sequence, a risk score grounded in evidence (not speculation), layered defenses with explicit ownership, and a worksheet that teams can apply to their own deployments today.
 
-The framework was built through 18 rounds of adversarial review and validated against 16 deployment scenarios before reaching pilot-ready status.
+The framework went through 18 rounds of adversarial review, then validation against 16 deployment scenarios, before reaching pilot-ready status.
 
 ---
 
@@ -189,14 +189,14 @@ See [`defense-playbook.md`](synthesis/defense-playbook.md) for the full defense 
 
 ## Evidence Provenance
 
-Every risk claim in this framework is grounded in a primary or corroborating source. The framework distinguishes:
+Every risk claim in this framework is grounded in a primary or corroborating source. It uses two source classes:
 
 | Source type | Carries risk ratings | Examples |
 |-------------|---------------------|----------|
 | **Primary / corroborated** | ✅ Yes | Academic papers with empirical results, CVE disclosures, confirmed incident post-mortems |
 | **Press / community narrative** | ❌ Context only | News articles, blog posts, conference talks — used for background, not for risk scores |
 
-The 16-scenario evaluation suite validates the framework against the quality bar: every major conclusion in every scenario must cite a `synthesis/` file and line range. Scenarios that use unsupported incident narratives fail the suite.
+The 16-scenario evaluation suite validates the framework: every major conclusion in every scenario must cite a `synthesis/` file and line range. Scenarios that use unsupported incident narratives fail the suite.
 
 ---
 
@@ -262,7 +262,7 @@ The EU AI Act carries the highest compliance stakes for EU-market deployments. S
 
 ## External Framework Positioning
 
-This framework is designed to **complement, not replace** established AI security standards. It uses them as source-backed reference lenses and adds the connective tissue that engineering teams need.
+This framework works alongside established AI security standards. It uses them as source-backed references and brings their separate pieces into one engineering workflow.
 
 | Framework | Role | How This Framework Uses It |
 |-----------|------|---------------------------|

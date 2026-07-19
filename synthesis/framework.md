@@ -93,7 +93,7 @@ This framework addresses **LLM-as-target** threats: attacks that target the LLM 
 
 ## Executive Summary
 
-This framework provides a complete, actionable threat model for LLM systems. It addresses the critical gap identified in Round 1 research: **taxonomies without kill chains are lists, not models**. Every threat in this framework is connected to:
+This framework provides a complete, actionable threat model for LLM systems. It addresses the gap identified in Round 1 research: **taxonomies without kill chains are lists, not models**. Every threat in this framework connects to:
 
 - **Attack trees** showing full kill chain sequences
 - **Risk ratings** grounded in likelihood × impact with adversary capability context
@@ -123,9 +123,9 @@ LLM Threat Framework
 **Reading order for a 3-person team doing a 4-hour assessment:**
 
 **Step 1 — Confirm what applies:**
-1. Read `assumptions.md` — verify which assumptions match your deployment (check the verification checklist)
-2. Read `asset-inventory.md` — identify which assets are present in your system (complete the asset checklist)
-3. Read `attack-surface-catalog.md` — confirm which surfaces are exposed (complete the surface checklist)
+1. Read `assumptions.md`. Use the verification checklist to confirm which assumptions match your deployment.
+2. Read `asset-inventory.md`. Complete the asset checklist to identify what is present in your system.
+3. Read `attack-surface-catalog.md`. Complete the surface checklist to confirm what is exposed.
 
 **Step 2 — Assess threats:**
 4. Start with `quick-reference.md` — understand the threats and defenses at a glance
@@ -169,13 +169,13 @@ Organizations cannot fully audit closed-source models (OpenAI, Anthropic APIs). 
 Single-agent prompt injection is locally harmful. Multi-agent context propagation turns a localized attack into a cascading failure. Organizations building multi-agent LLM systems must treat **context isolation as architectural security**, not implementation detail.
 
 ### Principle 5: Threat models without kill chains are marketing
-A list of "LLM threats" without attack chain relationships tells engineers what to worry about but not how attacks actually unfold. This framework builds complete kill chains from initial access to final impact, because that is what engineering teams need to design defenses against.
+A list of "LLM threats" without attack chain relationships tells engineers what to worry about but not how attacks actually unfold. This framework builds complete kill chains from initial access to final impact. Engineering teams need those chains to design defenses.
 
 ---
 
 ## Comparable Frameworks and Positioning
 
-This threat model is designed to **complement, not replace**, the established AI security and governance frameworks below. It uses them as source-backed reference lenses, then adds the project-specific connective tissue: assets, assumptions, attack surfaces, attack chains, risk scoring, controls, evidence provenance, and scenario validation.
+This threat model works alongside the established AI security and governance frameworks below. It uses them as source-backed references, then combines the pieces needed for this project: assets, assumptions, attack surfaces, attack chains, risk scoring, controls, evidence provenance, and scenario validation.
 
 | Comparable framework | Primary role | How this framework uses it | Boundary / gap this framework fills |
 |---|---|---|---|
@@ -190,7 +190,7 @@ This threat model is designed to **complement, not replace**, the established AI
 
 **Positioning statement:** OWASP provides the vulnerability categories; MITRE ATLAS provides adversary behavior; NIST provides governance structure; MAESTRO, Microsoft, and OWASP Agentic/MCP guidance cover agentic/tool failure modes. This framework combines those lenses into an evidence-backed assessment workflow with concrete scenarios, risk scoring, and mitigation mapping.
 
-**Evidence-provenance rule for comparable frameworks:** Use official framework pages and primary standards documents as authority for category existence, scope, and definitions. Vendor blogs, implementation guides, and community commentary may explain mappings, but they must not carry risk ratings unless corroborated by primary or source-backed evidence.
+**Evidence-provenance rule for comparable frameworks:** Use official framework pages and primary standards documents as authority for category existence, scope, and definitions. Vendor blogs, implementation guides, and community commentary may explain mappings but must not carry risk ratings unless corroborated by primary or source-backed evidence.
 
 Primary framework references:
 - OWASP Top 10 for LLM Applications / OWASP GenAI Security Project: `https://owasp.org/www-project-top-10-for-large-language-model-applications`, `https://genai.owasp.org/llm-top-10`
@@ -260,7 +260,7 @@ Every threat requires a reachable attack surface. The `attack-surface-catalog.md
 
 For organizations with limited resources, defense investment should follow this priority order:
 
-**Tier 1 (start here — highest leverage):**
+**Tier 1 (start here — highest priority):**
 1. **Minimal permission scoping** — if the LLM can't call tools, PI impact is noise
 2. **RAG context labeling** — distinguishes retrieved content from trusted instructions
 3. **AIBOM maintenance** — enables supply chain accountability
@@ -288,7 +288,7 @@ If external parties can submit or shape any task/validator/data harness the LLM 
 | **GDPR (Article 17, 25, 32)** | Right to erasure for personal data; privacy by design; security of processing; breach notification | Embedding inversion, training data poisoning, cross-tenant leakage |
 | **FTC AI Guidance** | Unfair or deceptive security practices; reasonable security measures | PI → exfiltration, output validation failures |
 
-The EU AI Act is the most comprehensive and has the highest compliance stakes. Organizations deploying LLMs in EU markets should prioritize Article 9 lifecycle risk management, Article 14 human oversight, and Article 15 robustness/cybersecurity as the security baseline; use Article 13 for deployer-facing transparency and instructions, Article 10 for dataset governance, and Article 17 for provider quality-management processes.
+Among these frameworks, the EU AI Act carries the highest compliance stakes. Organizations deploying LLMs in EU markets should prioritize Article 9 lifecycle risk management, Article 14 human oversight, and Article 15 robustness/cybersecurity as the security baseline; use Article 13 for deployer-facing transparency and instructions, Article 10 for dataset governance, and Article 17 for provider quality-management processes.
 
 ---
 
