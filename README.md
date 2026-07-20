@@ -1,8 +1,8 @@
 # LLM Threat Modeling Framework
 
-**Version 1.8** · Pilot-ready · Updated 2026-06-24
+**Release v1.9** · Pilot candidate · Updated 2026-07-20
 
-This threat model is for engineering teams assessing LLM deployments. It assumes no ML security expertise. The framework covers 14 threat categories, 3 full attack chains, a layered defense playbook, a risk matrix with regulatory mapping, and an engineering worksheet that a 3-person team can complete in under 4 hours.
+This threat model is for engineering teams assessing LLM deployments. It assumes no ML security expertise. The framework covers 14 threat categories, 3 canonical attack chains plus scoped agentic trust-boundary branches, a layered defense playbook, a risk matrix with regulatory mapping, and an engineering worksheet that a 3-person team can complete in under 4 hours.
 
 > **Disclaimer.** This is independent personal research by the author, developed on personal time and built solely from publicly available sources (OWASP, MITRE ATLAS, published CVEs, academic papers, and vendor documentation). It is **not** affiliated with, sponsored by, or derived from any employer, client, or government work, and contains no proprietary, classified, or controlled information. It is provided for defensive and educational purposes only. All views are the author's own.
 
@@ -12,7 +12,9 @@ This threat model is for engineering teams assessing LLM deployments. It assumes
 
 Most LLM threat guidance is either a flat vulnerability list or an academic kill-chain diagram. This framework connects the two: every threat maps to a complete attack sequence, a risk score grounded in evidence (not speculation), layered defenses with explicit ownership, and a worksheet that teams can apply to their own deployments today.
 
-The framework went through 18 rounds of adversarial review, then validation against 16 deployment scenarios, before reaching pilot-ready status.
+The framework went through 18 foundational adversarial-review rounds plus a focused July 2026 red-team review. Release v1.9 is validated against 25 deployment scenarios, including nine agentic cases covering memory, skills, agent identity, computer use, session contamination, response relays, representation confusion, and capability disclosure.
+
+Release v1.9 is a **pilot candidate**, not a deployment certification. Teams must complete the worksheet against their own architecture, evidence, and trust boundaries before accepting residual risk. See the canonical [`release-manifest.md`](synthesis/release-manifest.md) for component versions and evidence caveats.
 
 ---
 
@@ -45,6 +47,12 @@ The HTML viewer gives you a tabbed interface — Overview, 14 Threats, Attack Ch
 python scripts/test_scenario_suite.py
 ```
 
+**Validate release coherence and the generated HTML:**
+```bash
+python scripts/test_corpus_coherence.py
+python scripts/build-html.py --check
+```
+
 **Detect citation drift after editing synthesis files:**
 ```bash
 python scripts/citation_drift_detector.py          # detect
@@ -62,8 +70,8 @@ LLM Threat Framework
 ├── assumptions.md             — Explicit assumptions: LLM behavior, attacker, deployment, trust
 ├── asset-inventory.md         — Explicit asset inventory: data, model, infrastructure, trust, IP
 ├── attack-surface-catalog.md   — Explicit attack surface catalog: input, comm, supply chain, provider, exec
-├── threat-taxonomy.md         — Master threat catalog (14 categories + Category 13 Addendum)
-├── attack-trees.md            — 3 complete kill chains + standalone attack trees
+├── threat-taxonomy.md         — Master threat catalog (14 categories + canonical agentic subtype IDs)
+├── attack-trees.md            — 3 canonical chains + scoped agentic trust-boundary branches
 ├── risk-matrix.md            — Likelihood × impact ratings + regulatory mapping
 ├── defense-playbook.md        — Layered defenses with ownership and constraints
 ├── assessment-template.md     — Engineering worksheet + scoring rubric appendix
@@ -196,7 +204,7 @@ Every risk claim in this framework is grounded in a primary or corroborating sou
 | **Primary / corroborated** | ✅ Yes | Academic papers with empirical results, CVE disclosures, confirmed incident post-mortems |
 | **Press / community narrative** | ❌ Context only | News articles, blog posts, conference talks — used for background, not for risk scores |
 
-The 16-scenario evaluation suite validates the framework: every major conclusion in every scenario must cite a `synthesis/` file and line range. Scenarios that use unsupported incident narratives fail the suite.
+The 25-scenario evaluation suite validates the framework: every major conclusion in every scenario must cite a `synthesis/` file and line range. Scenarios that use unsupported incident narratives fail the suite. The validator uses an extensible minimum count plus mandatory capability and named-scenario coverage, so adding valid scenarios does not break the contract.
 
 ---
 
@@ -212,7 +220,7 @@ llm-threat-model/
 │   ├── asset-inventory.md   — 50+ assets across data, model, infrastructure, trust, IP
 │   ├── attack-surface-catalog.md — 60+ surfaces with threat vectors
 │   ├── threat-taxonomy.md  — 14 categories with sub-types, OWASP IDs, evidence ratings
-│   ├── attack-trees.md      — 3 chains + standalone trees with full kill-chain nodes
+│   ├── attack-trees.md      — 3 canonical chains + scoped agentic branches with node IDs
 │   ├── risk-matrix.md       — Likelihood × impact ratings + regulatory mapping
 │   ├── defense-playbook.md — Layered defenses with ownership, effectiveness, constraints
 │   ├── assessment-template.md — Engineering worksheet + scoring rubric appendix
@@ -226,22 +234,23 @@ llm-threat-model/
 │   └── sources/             — Primary and corroborating sources with annotations
 │
 ├── evaluation/              ← Framework validation
-│   ├── scenario-suite.json — 16 deployment scenarios with 9 pass/fail criteria each
+│   ├── scenario-suite.json — 25 deployment scenarios with 9 pass/fail criteria each
 │   ├── scenario-suite-results.md
 │   └── assessment-walkthrough-example.md
 │
 ├── review/                  ← Adversarial review history (18 rounds)
 │   ├── critique-2026-06-17.md through critique-2026-06-18-r18.md
-│   └── red-team-2026-06-24.md (and follow-up passes)
+│   ├── red-team-2026-06-24.md (and follow-up passes)
+│   └── red-team-2026-07-20-agentic-update.md — v1.9 adversarial review and remediation record
 │
 ├── scripts/
 │   ├── test_scenario_suite.py         — CI gate: validates scenario suite integrity
+│   ├── test_corpus_coherence.py       — Release/version/control/HTML coherence gate
 │   ├── citation_drift_detector.py    — Detects and fixes quote/range drift in citations
-│   ├── build-html.py                — Embeds all synthesis docs as HTML in llm-threat-model.html
+│   ├── build-html.py                — Regenerates HTML data and checks checked-in freshness
 │   └── md_to_html.py                — Markdown → HTML converter (stdlib-only)
 │
-├── llm-threat-model.html    — Interactive HTML viewer: tabbed interface + sidebar doc navigation
-└── threat-model-data.json    — Single source of truth for all HTML data (threats, sidebar, docs)
+└── threat-model-data.json    — Structured source for HTML threats, controls, and navigation data
 ```
 
 ---
@@ -281,6 +290,7 @@ Framework docs are versioned independently. Check the version header in each fil
 
 | Version | Date | Key Change |
 |---------|------|-----------|
+| 1.9 | 2026-07-20 | Agentic trust-boundary integration: canonical subtypes, seven assessable controls, nine new scenarios, calibrated overlays, and synchronized HTML |
 | 1.8 | 2026-06-24 | Comparable framework positioning (OWASP, MITRE, NIST, MAESTRO, Microsoft, OWASP Agentic/MCP) |
 | 1.7 | 2026-06-24 | Correction pass: residual-risk math, EU AI Act mappings, base/elevated score split |
 | 1.6 | 2026-06-24 | Red-team sync: taxonomy numbering restored, ISC threaded into workflow |
