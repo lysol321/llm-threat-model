@@ -1,7 +1,7 @@
 # LLM Threat Modeling — Asset Inventory
 
-**Version:** 1.0 (NEW — explicit asset inventory section)
-**Date:** 2026-06-19
+**Version:** 1.1 (agentic memory, skill, identity, relay, and provenance assets)
+**Date:** 2026-07-20
 **Status:** Living document — re-evaluate when system architecture changes
 
 ---
@@ -269,6 +269,9 @@ Confirm which asset classes are present in your deployment:
 | Training / fine-tuning data | [ ] YES  [ ] NO |  |  |
 | Embedding vectors | [ ] YES  [ ] NO |  |  |
 | Derived embeddings | [ ] YES  [ ] NO |  |  |
+| Durable memory / cross-session summaries | [ ] YES  [ ] NO |  |  |
+| Skill registry and semantic skill index | [ ] YES  [ ] NO |  |  |
+| Representation provenance metadata | [ ] YES  [ ] NO |  |  |
 | System prompts | [ ] YES  [ ] NO |  |  |
 | API keys / secrets | [ ] YES  [ ] NO |  |  |
 | Session state | [ ] YES  [ ] NO |  |  |
@@ -330,6 +333,9 @@ harness is executed, mark Cat 14 N/A and skip.
 |-------|----------|-------|
 | AIBOM signing keys | [ ] YES  [ ] NO |  |
 | Sigstore trust anchor | [ ] YES  [ ] NO |  |
+| Agent identity credential / workload identity | [ ] YES  [ ] NO |  |
+| Relay transcript and response-integrity evidence | [ ] YES  [ ] NO |  |
+| Provider response-verification key or trust anchor | [ ] YES  [ ] NO |  |
 | Log integrity controls | [ ] YES  [ ] NO |  |
 
 ### IP Assets
@@ -345,6 +351,6 @@ harness is executed, mark Cat 14 N/A and skip.
 
 ---
 
-**Last updated:** 2026-06-19 (v1.0 — explicit asset inventory added)
+**Last updated:** 2026-07-20 (v1.1 — added durable memory, skill registry, agent identity, relay, and representation-provenance assets)
 **Next review:** 2026-09-17 or when system architecture changes
-**Part of:** LLM Threat Modeling Framework v1.8 release (see `release-manifest.md`)
+**Part of:** LLM Threat Modeling Framework v1.9 release (see `release-manifest.md`)

@@ -1,8 +1,8 @@
 {
   "_meta": {
     "description": "Source of truth for llm-threat-model.html. Edit here, run scripts/build-html.py to regenerate the HTML.",
-    "version": "1.8",
-    "date": "2026-06-24",
+    "version": "1.9",
+    "date": "2026-07-20",
     "next_review": "2026-09-24",
     "workflow": [
       "1. python scripts/export-data.py   -- seeds threats + dtree from current HTML (run once)",
@@ -23,10 +23,11 @@
         "Indirect PI — adversarial content in RAG/documents/search results",
         "Multi-turn PI — injection spread across conversation turns",
         "Cross-context PI — propagates between agents",
-        "Purchased PI Template — pre-optimized jailbreak from underground market"
+        "Purchased PI Template — pre-optimized jailbreak from underground market",
+        "T01-SESSION — Session contamination, goal hijacking, and incremental escalation across a trajectory"
       ],
       "surface": "Text input, RAG pipeline, document ingestion, API messages field, tool outputs",
-      "update": "v1.5: Standard per-event detectors fail against slow-burn multi-turn attacks. Temporal accumulation detection required."
+      "update": "v1.5: Standard per-event detectors fail against slow-burn multi-turn attacks. Temporal accumulation detection required. v1.9: T01-SESSION — Session contamination, goal hijacking, and incremental escalation across a trajectory"
     },
     {
       "num": "02",
@@ -55,10 +56,11 @@
         "Malicious model on public registry",
         "Backdoored LoRA/PEFT adapter",
         "Compromised MCP server or skill package",
-        "Poisoned dependency (pip/npm)"
+        "Poisoned dependency (pip/npm)",
+        "T03-SKILL — Skill lifecycle compromise across admission, retrieval, planner selection, execution, and updates"
       ],
       "surface": "Model registry, adapter repository, dependency install, MCP marketplace",
-      "update": ""
+      "update": "v1.9: T03-SKILL — Skill lifecycle compromise across admission, retrieval, planner selection, execution, and updates"
     },
     {
       "num": "04",
@@ -86,10 +88,11 @@
       "subtypes": [
         "Direct extraction — asking the model to repeat its system prompt",
         "Indirect extraction — inferring instructions from model behavior",
-        "API key/secret leakage embedded in system prompt"
+        "API key/secret leakage embedded in system prompt",
+        "T05-CAPABILITY — Capability and architecture disclosure that enables a separately scored follow-on attack"
       ],
       "surface": "System prompt, developer message, any context containing secrets",
-      "update": ""
+      "update": "v1.9: T05-CAPABILITY — Capability and architecture disclosure that enables a separately scored follow-on attack"
     },
     {
       "num": "06",
@@ -148,10 +151,12 @@
         "Privilege escalation across agent chain",
         "MCP / A2A protocol injection",
         "Agent-to-agent trust exploitation",
-        "Slow-Burn / Temporal Accumulation PI — distributed across multi-turn trajectory, below per-event threshold"
+        "Slow-Burn / Temporal Accumulation PI — distributed across multi-turn trajectory, below per-event threshold",
+        "T09-MEMORY — Persistent cross-session memory poisoning",
+        "T09-IDENTITY — Inter-agent identity, delegation, and privilege escalation"
       ],
       "surface": "Multi-agent pipelines, MCP servers, A2A communication, LangChain/AutoGen deployments",
-      "update": "Source: LangGraph ToolNode.invoke() returns unsanitized ToolMessage to shared messages state — structurally confirmed Jun 2026. MA-DEF-1 effectiveness is MEDIUM in default LangGraph; requires explicit ToolCallWrapper enforcement for HIGH."
+      "update": "Source: LangGraph ToolNode.invoke() returns unsanitized ToolMessage to shared messages state — structurally confirmed Jun 2026. MA-DEF-1 effectiveness is MEDIUM in default LangGraph; requires explicit ToolCallWrapper enforcement for HIGH. v1.9: T09-MEMORY — Persistent cross-session memory poisoning; T09-IDENTITY — Inter-agent identity, delegation, and privilege escalation"
     },
     {
       "num": "10",
@@ -164,10 +169,12 @@
         "Image-embedded PI (vision models)",
         "Audio injection via ASR pipeline",
         "Structured data (JSON/XML/CSV) injection",
-        "PDF/document visual injection"
+        "PDF/document visual injection",
+        "T10-CUA — Computer-use visual-state disagreement and deceptive UI actions",
+        "T10-REPRESENTATION — Representation confusion (monitored; pipeline-specific evidence required)"
       ],
       "surface": "Multi-modal endpoints, vision models, ASR pipelines, document ingestion",
-      "update": ""
+      "update": "v1.9: T10-CUA — Computer-use visual-state disagreement and deceptive UI actions; T10-REPRESENTATION — Representation confusion (monitored; pipeline-specific evidence required)"
     },
     {
       "num": "11",
@@ -180,10 +187,11 @@
         "Harmful content generation passed to user",
         "Generated code execution without safety check",
         "Structured output (JSON/SQL) used directly in downstream systems",
-        "Hallucinated facts presented as authoritative"
+        "Hallucinated facts presented as authoritative",
+        "T11-RELAY — Response-path relay tampering (provisional; Wild_vs_Theory 1/5)"
       ],
       "surface": "Any LLM output path; critical for code generation, instruction generation, structured output",
-      "update": ""
+      "update": "v1.9: T11-RELAY — Response-path relay tampering (provisional; Wild_vs_Theory 1/5)"
     },
     {
       "num": "12",
@@ -502,67 +510,67 @@
   "synthesis": [
     {
       "title": "Framework",
-      "version": "v1.8",
+      "version": "1.9",
       "file": "synthesis/framework.md",
       "desc": "Umbrella framework: deployment model, trust boundaries, regulatory baseline, comparable-framework positioning."
     },
     {
       "title": "Threat Taxonomy",
-      "version": "v1.7",
+      "version": "1.8",
       "file": "synthesis/threat-taxonomy.md",
       "desc": "Master taxonomy of 14 threat categories with evidence, OWASP mapping, and update history."
     },
     {
       "title": "Risk Matrix",
-      "version": "v1.7",
+      "version": "1.8",
       "file": "synthesis/risk-matrix.md",
       "desc": "Likelihood × impact scores (1–25), base/elevated risk tiers, and elevation conditions."
     },
     {
       "title": "Defense Playbook",
-      "version": "v1.7",
+      "version": "1.8",
       "file": "synthesis/defense-playbook.md",
       "desc": "Full defense catalog: control IDs, types, effectiveness, cost annotations, and tier ordering."
     },
     {
       "title": "Attack Trees",
-      "version": "v1.3",
+      "version": "1.4",
       "file": "synthesis/attack-trees.md",
       "desc": "Structured attack decomposition for all 4 chains with qualitative likelihood descriptors."
     },
     {
       "title": "Attack Surface Catalog",
-      "version": "v1.3",
+      "version": "1.4",
       "file": "synthesis/attack-surface-catalog.md",
       "desc": "All attack surfaces mapped to threat categories; surface verification checklist."
     },
     {
       "title": "Asset Inventory",
-      "version": "v1.0",
+      "version": "1.1",
       "file": "synthesis/asset-inventory.md",
       "desc": "Every protected asset with classification, trust tier, and threat applicability."
     },
     {
       "title": "Assumptions",
-      "version": "v1.0",
+      "version": "1.1",
       "file": "synthesis/assumptions.md",
       "desc": "Explicit assumptions the framework makes about LLM behavior, attacker capabilities, and deployment topology."
     },
     {
       "title": "Assessment Template",
-      "version": "v1.8",
+      "version": "1.9",
       "file": "synthesis/assessment-template.md",
       "desc": "Engineering worksheet for a 3-person team; completes a valid threat model in under 4 hours."
     },
     {
       "title": "Quick Reference",
-      "version": "v1.7",
+      "version": "1.8",
       "file": "synthesis/quick-reference.md",
       "desc": "One-page summary: all 14 threats, 4 chains, primary defenses, decision tree, OWASP mapping."
     },
     {
       "title": "Release Manifest",
-      "version": "v1.8",
+      "version": "1.9",
       "file": "synthesis/release-manifest.md",
       "desc": "Coherent corpus state pointer for the v1.8 release."
     }
@@ -957,6 +965,20 @@
           "tab": "threats"
         }
       ]
+    },
+    {
+      "title": "Agentic Threat Updates — July 2026",
+      "file": "research/sources/Last-30-Days-Agentic-Threat-Updates-2026-07.md",
+      "tags": [
+        {
+          "label": "v1.9",
+          "tab": "threats"
+        },
+        {
+          "label": "Agentic",
+          "tab": "threats"
+        }
+      ]
     }
   ],
   "evaluation": [
@@ -973,7 +995,7 @@
     {
       "title": "Scenario Suite (JSON)",
       "file": "evaluation/scenario-suite.json",
-      "desc": "16-scenario evaluation suite with 9 pass/fail criteria."
+      "desc": "25-scenario v1.9 tabletop suite, including nine agentic trust-boundary scenarios."
     }
   ],
   "analysis": [
@@ -1001,6 +1023,50 @@
       "title": "Research Gaps v1",
       "file": "research/questions/Research-LLM-Threat-Modeling-Gaps-v1.md",
       "desc": "Identified gaps in the current threat model."
+    }
+  ],
+  "controls": [
+    {
+      "id": "MEM-DEF-1",
+      "name": "Durable Memory Write Authorization",
+      "status": "primary",
+      "wild": "2/5"
+    },
+    {
+      "id": "SKILL-DEF-1",
+      "name": "Skill Lifecycle Security",
+      "status": "primary",
+      "wild": "2/5"
+    },
+    {
+      "id": "MA-DEF-3",
+      "name": "Authenticated Agent Identity and Privilege Ceilings",
+      "status": "primary",
+      "wild": "2/5"
+    },
+    {
+      "id": "CUA-DEF-1",
+      "name": "Computer-Use Semantic Action Validation",
+      "status": "primary",
+      "wild": "2/5"
+    },
+    {
+      "id": "RELAY-DEF-1",
+      "name": "Response-Path Integrity",
+      "status": "provisional; unresolved without provider-authenticated responses",
+      "wild": "1/5"
+    },
+    {
+      "id": "DET-DEF-3",
+      "name": "Trajectory and Influence Monitoring",
+      "status": "secondary detection control",
+      "wild": "2/5"
+    },
+    {
+      "id": "REP-DEF-1",
+      "name": "Representation Boundary Validation",
+      "status": "monitored; pipeline-specific",
+      "wild": "1/5"
     }
   ]
 }

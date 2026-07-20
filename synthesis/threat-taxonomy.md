@@ -1,6 +1,6 @@
 # LLM Threat Taxonomy
 
-**Version:** 1.7 (red-team sync — canonical numbering restored: OWASP-aligned Categories 1–13 plus Category 14 ISC/Validator Harness; OWASP 2025 IDs corrected)
+**Version:** 1.8 (agentic trust-boundary integration; canonical categories preserved)
 **Status:** Living document — update quarterly or after major incidents
 
 ---
@@ -389,6 +389,14 @@ When the model fills the data gaps to complete the task, it autonomously generat
 | Non-Text Injection | Chain A (variant) | Input validation layers | EU AI Act Art. 13 |
 | Output Validation | — | Output filtering, sandboxing | FTC deceptive practices |
 | HITL Failures | — | Defense in depth, monitoring | EU AI Act Art. 14 |
+| T01-SESSION — Session contamination / goal hijacking | Chain A extension | DET-DEF-3, AGENCY-DEF-3 | EU AI Act Art. 14, 15 |
+| T03-SKILL — Skill lifecycle compromise | Chain B extension | SKILL-DEF-1, SC-DEF-1 | EU AI Act Art. 15, 17 |
+| T05-CAPABILITY — Capability and architecture disclosure | Follow-on enabler | PI-DEF-1, MA-DEF-3 | EU AI Act Art. 13, 15 |
+| T09-MEMORY — Persistent memory poisoning | Chain C extension | MEM-DEF-1, DET-DEF-3 | EU AI Act Art. 9, 15 |
+| T09-IDENTITY — Inter-agent trust escalation | Chain C extension | MA-DEF-3, AGENCY-DEF-2 | EU AI Act Art. 14, 15 |
+| T10-CUA — Computer-use visual attack | Computer-use branch | CUA-DEF-1, AGENCY-DEF-2 | EU AI Act Art. 14, 15 |
+| T10-REPRESENTATION — Representation confusion *(monitor)* | Representation branch | REP-DEF-1 | EU AI Act Art. 15 |
+| T11-RELAY — Response-path relay tampering *(provisional)* | Relay branch | RELAY-DEF-1 | EU AI Act Art. 15 |
 
 ---
 
@@ -403,5 +411,71 @@ When a new threat is discovered or an incident occurs:
 5. **Map** to regulatory framework
 6. **Add** to `assessment-template.md` checklist
 
-**Last updated:** 2026-06-24 (v1.7 — red-team sync: canonical numbering restored, ISC moved to Category 14, OWASP 2025 IDs and table formatting corrected)
+## v1.8 Agentic Trust-Boundary Updates — July 2026
+
+The July 2026 last-30-days scan does not justify additional top-level categories. It does justify explicit agentic-era subtypes and one new trust-boundary module. These updates extend Categories 1, 3, 5, 9, 10, and 11 without changing the canonical category numbering.
+
+### T03-SKILL — Category 3 / 9: Agent Skill Lifecycle Compromise
+
+Reusable agent skills are not only runtime artifacts. Their security lifecycle includes repository admission, semantic retrieval, planner selection, execution, and later skill evolution. A skill can be benign at admission but become dangerous through misleading metadata, retrieval manipulation, planner deception, composition with another skill, or a malicious update.
+
+**Required subtypes:**
+- Repository admission compromise
+- Semantic retrieval manipulation
+- Planner-selection deception
+- Skill-composition abuse
+- Post-install rug pull or malicious evolution
+
+**Evidence:** SkillSec-Eval reports a lifecycle-aware evaluation over 327 real-world skills and identifies vulnerabilities beyond runtime execution (arXiv:2607.13987, July 2026). This strengthens the existing Category 3 skill-marketplace entry; it does not establish a new Wild_vs_Theory score for every skill ecosystem.
+
+### T05-CAPABILITY — Category 5: Capability and Architecture Disclosure
+
+In agentic systems, disclosure of tool names, schemas, memory interfaces, agent topology, approval triggers, or validator behavior is not merely reputational leakage. It can convert black-box probing into a white-box follow-on attack against Categories 1, 2, 9, and 14.
+
+Rate this subtype according to whether the disclosed capability materially reduces the effort needed to reach a privileged action. Do not automatically rate ordinary prompt leakage as critical.
+
+### T09-MEMORY / T09-IDENTITY — Category 9: Persistent Memory Poisoning and Inter-Agent Trust Escalation
+
+Add two explicit Chain C subtypes:
+
+- **Persistent memory poisoning:** attacker-controlled content is written into durable memory, summaries, preferences, or retrieval stores and influences later sessions.
+- **Inter-agent trust escalation:** an agent or message claims an identity, role, capability, or authorization level that the orchestrator accepts without independent verification.
+
+Persistent memory poisoning requires cross-session testing. Inter-agent authorization must be based on authenticated identity and explicit privilege ceilings, not natural-language role claims or workflow position.
+
+Microsoft AI Red Team's June 2026 update reports frequent memory poisoning, session-context contamination, incremental escalation, and inter-agent trust problems in red-team engagements. This is operational evidence for adding the subtypes, not a basis for a universal incident rate.
+
+### T10-CUA — Category 10: Computer-Use Visual Attack
+
+Computer-use agents require a dedicated visual subtype distinct from ordinary multimodal prompt injection. Attackers can use hidden or off-screen text, deceptive interface structure, visually innocuous content that changes agent interpretation, or UI elements positioned outside the human review area.
+
+Assess rendered pixels, DOM/accessibility state, viewport boundaries, and the final semantic action separately. Human-visible harmlessness is not evidence of agent safety.
+
+### T01-SESSION — Category 1 / 9: Session Context Contamination and Goal Hijacking
+
+The existing Slow-Burn / Temporal Accumulation PI subtype is expanded with:
+
+- **Session context contamination:** early, individually benign content biases later reasoning across a multi-step session.
+- **Goal hijacking:** the agent continues to perform the apparent task while silently changing the terminal objective.
+- **Incremental escalation:** no individual action crosses the review threshold, but the sequence produces a high-impact result.
+
+Detection must operate over trajectories and accumulated influence, not only per-message classifiers.
+
+### T11-RELAY — Category 11: Response-Path Integrity / Relay Tampering
+
+Deployments using BYOK relays, model routers, third-party gateways, or response-transforming middleware have a trust boundary between the LLM provider and the agent runtime. A malicious or compromised relay may rewrite tool names, arguments, control fields, or response content after model generation and before agent execution.
+
+This is distinct from prompt injection: the model may generate a safe response and the agent may still execute a forged response. Treat this as a **provisional architectural threat with potentially high impact** pending independent replication. It should not receive a Wild_vs_Theory score above 1/5 solely from one preprint.
+
+**Source:** Zhang et al., *When Alignment Isn't Enough: Response-Path Attacks on LLM Agents* (arXiv:2605.02187, May 2026; adjacent research lead, outside the strict June 20–July 20 scan window).
+
+### T10-REPRESENTATION — Category 10 / 11: Representation Confusion
+
+The cited preprint demonstrates representation confusion in LLM-assisted reverse engineering, where binary-derived representations can be interpreted as instructions or non-independent evidence. Treat broader code/comment, metadata/instruction, and generated-evidence variants as hypotheses for deployment testing rather than demonstrated universal attack classes.
+
+Keep this as a monitored research subtype until independent reproduction establishes deployment prevalence.
+
+**Source:** Santos-Grueiro et al., *When Binaries Talk Back: Representation-Confusion Attacks* (arXiv:2607.12507, submitted 2026-07-14).
+
+**Last updated:** 2026-07-20 (v1.8 — July scan: persistent memory, skill lifecycle, inter-agent trust, computer-use visual attacks, session contamination, response-path integrity, representation confusion, and capability disclosure)
 **Next review:** 2026-09-24

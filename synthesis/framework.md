@@ -1,10 +1,24 @@
 # LLM Threat Modeling Framework
 
-**Version:** 1.8 (comparative framework positioning added)
-**Date:** 2026-06-24
-**Status:** Living document — pilot-ready after v1.8 comparable-framework positioning
+**Version:** 1.9 (agentic trust-boundary integration)
+**Date:** 2026-07-20
+**Status:** Living document — pilot candidate after v1.9 coherence validation
 **Framework target:** Pilot-ready: 3-person engineering team, no ML security expertise, completes assessment in under 4 hours
 
+
+## v1.9 Revision Notes (Agentic Trust-Boundary Integration — 2026-07-20)
+
+This release resolves the findings in `review/red-team-2026-07-20-agentic-update.md`:
+
+| Finding | Severity | Change |
+|---|---|---|
+| New controls were not assessable | HIGH | Integrated seven controls into Section 3.7, routing, PARTIAL definitions, base-risk lookup, and residual-risk workflow. |
+| Agentic threats lacked scenario coverage | HIGH | Added nine scenarios for memory, skill retrieval/update, identity, computer use, session contamination, relay, representation, and capability disclosure. |
+| HIGH overlays exceeded evidence gate | HIGH | Calibrated overlays to Wild_vs_Theory 1–2 and risk scores 4–10; named each elevation axis. |
+| Structured/HTML model lagged prose | HIGH | Updated `threat-model-data.json` and regenerated the HTML model. |
+| Release/version metadata was split | HIGH | Issued one v1.9 manifest and removed post-footer/mid-document version fragments. |
+| Relay control overstated upstream assurance | HIGH | Distinguished relay accountability from provider-authenticated upstream authorization and documented the unresolved gap. |
+| Foundation assets and subtype IDs were missing | MEDIUM | Added asset/assumption coverage and canonical IDs T01-SESSION through T11-RELAY. |
 
 ## v1.6 Revision Notes (Red-Team Sync — 2026-06-24)
 
@@ -101,7 +115,7 @@ This framework provides a complete, actionable threat model for LLM systems. It 
 - **Regulatory mapping** (EU AI Act, GDPR, FTC) for compliance-driven prioritization
 - **An engineering worksheet** that teams can apply directly to their own deployments
 
-The framework covers 14 threat categories plus one Category 13 addendum across 3 critical risk tiers, 3 complete attack chains, and a defense playbook with explicit effectiveness ratings.
+The framework covers 14 threat categories plus one Category 13 addendum across 3 critical risk tiers, 3 canonical attack chains with scoped agentic branches, and a defense playbook with explicit effectiveness ratings.
 
 ---
 
@@ -113,7 +127,7 @@ LLM Threat Framework
 ├── asset-inventory.md          — Explicit asset inventory: data, model, infrastructure, trust, IP (NEW v1.4)
 ├── attack-surface-catalog.md    — Explicit attack surface catalog: input, comm, supply chain, provider, exec (NEW v1.4)
 ├── threat-taxonomy.md          — Master threat catalog (14 categories + Category 13 Addendum)
-├── attack-trees.md             — 3 complete kill chains + standalone attack trees
+├── attack-trees.md             — 3 canonical kill chains + scoped agentic branches + standalone trees
 ├── risk-matrix.md             — Likelihood × impact ratings + regulatory mapping
 ├── defense-playbook.md        — Layered defenses with ownership and constraints
 ├── assessment-template.md      — Engineering worksheet + scoring rubric appendix
@@ -305,6 +319,7 @@ Among these frameworks, the EU AI Act carries the highest compliance stakes. Org
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 1.9 | 2026-07-20 | Integrated evidence-calibrated agentic trust-boundary subtypes, controls, worksheet routing, nine scenarios, structured/HTML synchronization, and one release manifest. |
 | 1.8 | 2026-06-24 | Added comparable-framework positioning for OWASP LLM/GenAI, MITRE ATLAS, NIST AI RMF GenAI Profile, MAESTRO, Microsoft agentic failure taxonomy, OWASP Agentic/MCP guidance, and classic threat-modeling methods. |
 | 1.7 | 2026-06-24 | Correction pass: residual-risk math fixed; EU AI Act mappings normalized; risk matrix base/elevated scores split; detection/operational-gap controls added to worksheet; defense tables normalized; release manifest added. |
 | 1.6 | 2026-06-24 | Red-team sync: canonical taxonomy numbering restored, ISC threaded into operational workflow, OWASP 2025 IDs corrected, risk-tier contradictions fixed, quick reference and worksheet synced. |
@@ -329,7 +344,7 @@ Among these frameworks, the EU AI Act carries the highest compliance stakes. Org
 | **Asset Inventory (NEW v1.4)** | `synthesis/asset-inventory.md` | Explicit asset inventory: data, model, infrastructure, trust boundary, IP assets with classification and ownership tags |
 | **Attack Surface Catalog (NEW v1.4)** | `synthesis/attack-surface-catalog.md` | Explicit attack surface catalog: input, communication, supply chain, provider API, execution surfaces |
 | Threat Taxonomy | `synthesis/threat-taxonomy.md` | Master threat catalog, 14 categories with cross-references, Wild_vs_Theory embedded |
-| Attack Trees | `synthesis/attack-trees.md` | 3 complete kill chains + standalone attack trees |
+| Attack Trees | `synthesis/attack-trees.md` | 3 canonical kill chains + scoped agentic branches + standalone attack trees |
 | Risk Matrix | `synthesis/risk-matrix.md` | Likelihood × impact ratings, regulatory mapping, production constraints |
 | Defense Playbook | `synthesis/defense-playbook.md` | Layered defenses by threat, ownership, effectiveness, control type |
 | Assessment Template | `synthesis/assessment-template.md` | Engineering worksheet for self-audit + scoring rubric appendix |
@@ -340,5 +355,5 @@ Among these frameworks, the EU AI Act carries the highest compliance stakes. Org
 ---
 
 **Framework prepared by:** Synthesizer (LLM Threat Modeling project)
-**Date:** 2026-06-24
-**Status:** Version 1.8 — comparable-framework positioning added; pilot candidate pending team-specific assessment and sign-off
+**Date:** 2026-07-20
+**Status:** Version 1.9 — agentic trust-boundary integration validated; pilot candidate pending team-specific assessment and sign-off

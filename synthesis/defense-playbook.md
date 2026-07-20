@@ -1,7 +1,7 @@
 # LLM Defense Playbook
 
-**Version:** 1.7 (correction pass — malformed tables normalized; detection/operational-gap worksheet alignment completed. Supersedes v1.6 red-team sync.)
-**Date:** 2026-06-24
+**Version:** 1.8 (agentic trust-boundary controls integrated)
+**Date:** 2026-07-20
 **Status:** Living document — update when new defenses prove effective in adversarial testing
 
 ## Revisions from v1.0
@@ -836,5 +836,86 @@ The availability of jailbreak-as-a-service and PI template marketplaces **reduce
 
 ---
 
-**Last updated:** 2026-06-24 (v1.7 — correction pass: malformed tables normalized; detection/operational-gap worksheet alignment completed)
-**Next review:** 2026-09-17
+## Agentic Trust-Boundary Controls — July 2026
+
+### MEM-DEF-1: Durable Memory Write Authorization [DEV + OPS] — **PRIMARY**
+
+Durable memory is a security-sensitive write target, not an ordinary convenience feature.
+
+```text
+Required controls:
+1. Do not permit model-derived content to write durable memory without a separate policy check.
+2. Store source, author, trust level, timestamp, session, and originating tool for every memory item.
+3. Separate user-confirmed facts from retrieved content and model-generated summaries.
+4. Apply TTL, rollback, quarantine, and deletion workflows.
+5. Test poisoning across sessions, including retrieval into a higher-privilege workflow.
+```
+
+**Effectiveness:** HIGH when enforced outside the model; LOW when implemented only as a prompt instruction.
+
+### SKILL-DEF-1: Lifecycle-Aware Skill Supply Chain [DEV + OPS] — **PRIMARY**
+
+Treat skill metadata, descriptions, examples, permissions, retrieval embeddings, and updates as supply-chain artifacts.
+
+```text
+Required controls:
+1. Admission review for code, metadata, permissions, and hidden instructions.
+2. Retrieval and planner tests using semantically similar benign and malicious skills.
+3. Version pinning, signed provenance, dependency inventory, and change monitoring.
+4. Re-review when a skill, description, permission, or dependency changes.
+5. Runtime sandboxing and least privilege independent of skill claims.
+```
+
+### MA-DEF-3: Cryptographic Inter-Agent Identity [DEV + OPS] — **PRIMARY**
+
+Orchestrators must not grant privilege based on natural-language role claims or workflow position.
+
+```text
+Required controls:
+1. Authenticate each agent and bind messages to an issued identity.
+2. Attach explicit capability and privilege ceilings to the identity.
+3. Reject self-asserted role, authorization, or urgency claims.
+4. Re-authorize state-changing actions at the receiving boundary.
+5. Preserve sender identity and authorization scope in audit records.
+```
+
+### CUA-DEF-1: Visual and Interface-State Validation [DEV] — **PRIMARY**
+
+Computer-use agents require validation across rendered pixels and machine-readable interface state.
+
+- Bound the viewport and reject actions based on off-screen content.
+- Compare screenshot, DOM, and accessibility-tree representations where available.
+- Treat page text, images, buttons, and labels as untrusted input.
+- Validate the final semantic action and destination, not only the agent's explanation.
+- Require default-deny approval for irreversible or external actions.
+
+### RELAY-DEF-1: Response-Path Integrity [DEV + OPS] — **PRIMARY where a relay exists**
+
+The preferred assurance is a direct trusted provider-to-agent path or a provider-authenticated response that the agent can verify independently.
+
+- Prefer direct provider-to-agent connections for high-privilege workflows.
+- If a relay is required, authenticate it and bind the transcript to the request, model ID, response, tool name, arguments, and control fields for accountability.
+- Relay authentication alone does not prove upstream authorization: a malicious authenticated relay can generate internally consistent hashes, MACs, and logs.
+- Verify provider-authenticated response signatures or equivalent upstream field-level integrity where supported.
+- Validate tool schemas and authorization again at the agent boundary.
+- Log provider response hash, relay identity, transformation status, and executed response hash.
+
+**Unresolved assurance gap:** When the provider does not authenticate responses and the relay cannot be removed, the agent cannot cryptographically prove that relay output matches the provider-authorized response. Treat relay logs as detection/accountability evidence, not end-to-end authorization proof.
+
+**Evidence status:** This control addresses a provisional response-path threat identified in arXiv:2605.02187. Independent replication is still required before assigning a universal Wild_vs_Theory rating.
+
+### DET-DEF-3: Trajectory and Influence Monitoring [OPS] — **SECONDARY**
+
+Per-message prompt-injection detection is insufficient for session contamination, incremental escalation, and persistent memory poisoning.
+
+- Track influence across turns, retrieved documents, tool outputs, memory writes, and agent handoffs.
+- Alert on cumulative risk, not only individual classifier scores.
+- Preserve provenance graphs showing why a tool call or memory write occurred.
+- Replay complete sessions during red-team evaluation.
+
+### REP-DEF-1: Representation Boundary Validation [DEV] — **PRIMARY where conversion exists**
+
+Before model or validator consumption, preserve origin and representation metadata. Do not treat converted code, binary-derived text, generated evidence, or tool-returned records as independent trusted instructions or evidence without validation.
+
+**Last updated:** 2026-07-20 (v1.8 — integrated agentic trust-boundary controls and documented response-integrity assurance gap)
+**Next review:** 2026-09-17 or after new defense validation research

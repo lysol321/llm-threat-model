@@ -1,7 +1,7 @@
 # LLM Risk Matrix
 
-**Version:** 1.7 (correction pass — base/elevated scores split into machine-checkable columns; EU AI Act mapping corrected; ISC evidence and applicability aligned. Supersedes v1.3 red-team sync.)
-**Date:** 2026-06-24
+**Version:** 1.9 (relay impact calibrated to deployment blast radius)
+**Date:** 2026-07-20
 **Status:** Living document — re-evaluate quarterly
 
 ## v1.2 Notes
@@ -219,5 +219,23 @@ Key zones:
 
 ---
 
-**Last updated:** 2026-06-24 (v1.7 — correction pass: base/elevated scores split; EU AI Act mapping corrected; ISC evidence and applicability aligned)
+## Agentic Trust-Boundary Risk Overlays — July 2026
+
+These deployment-specific overlays are MEDIUM or lower because current evidence is limited to controlled research and vendor red-team reporting. Surface presence establishes applicability, not maximum impact. Elevation requires a named axis change and remains below HIGH until Wild_vs_Theory reaches at least 3/5.
+
+| Threat overlay | Wild_vs_Theory | Likelihood | Impact | Base Score | Elevation Condition | Elevated Score | Owner | Regulatory | Primary controls |
+|---|---:|---:|---:|---:|---|---:|---|---|---|
+| Persistent memory poisoning | 2/5 | 2 | 4 | **8** | Poisoned memory is retrieved into a higher-privilege workflow (Impact 4→5) | **10** | Developer + Operator | EU AI Act Art. 9, 15 | MEM-DEF-1, PI-DEF-2, DET-DEF-3 |
+| Skill lifecycle compromise | 2/5 | 2 | 4 | **8** | Unreviewed skill update gains high-impact tool access (Impact 4→5) | **10** | Developer + Operator | EU AI Act Art. 15, 17 | SKILL-DEF-1, AGENCY-DEF-1, SC-DEF-1 |
+| Inter-agent trust escalation | 2/5 | 2 | 4 | **8** | Self-asserted identity can authorize irreversible or sensitive action (Impact 4→5) | **10** | Developer + Operator | EU AI Act Art. 14, 15 | MA-DEF-1, MA-DEF-3, AGENCY-DEF-2 |
+| Computer-use visual attack | 2/5 | 2 | 4 | **8** | Visual state can trigger irreversible external action (Impact 4→5) | **10** | Developer | EU AI Act Art. 14, 15 | CUA-DEF-1, AGENCY-DEF-2 |
+| Session contamination / incremental escalation | 2/5 | 2 | 4 | **8** | Accumulated influence reaches a higher-privilege action path (Impact 4→5) | **10** | Developer + Operator | EU AI Act Art. 14, 15 | PI-DEF-1, DET-DEF-3, AGENCY-DEF-3 |
+| Response-path relay tampering *(provisional)* | 1/5 | 1 | 4 | **4** | Independent replication in the assessed relay path establishes practical exploitability (Likelihood 1→2) | **8** | Developer + Operator + Provider | EU AI Act Art. 15 | RELAY-DEF-1, schema validation, direct provider path |
+| Representation confusion *(monitor)* | 1/5 | 1 | 4 | **4** | Independent reproduction in the assessed representation pipeline (Likelihood 1→2) | **8** | Developer | EU AI Act Art. 15 | REP-DEF-1, PI-DEF-4 |
+
+Do not promote any overlay to HIGH/CRITICAL until evidence meets the Wild_vs_Theory ≥3 gate and the assessed deployment has the required blast radius.
+
+---
+
+**Last updated:** 2026-07-20 (v1.9 — calibrated provisional relay impact and retained machine-checkable elevation semantics)
 **Next review:** 2026-09-17

@@ -1,8 +1,8 @@
 # Worked Assessment Walkthrough — Acme Support Copilot
 
-**Template used:** `synthesis/assessment-template.md` v1.7  
-**Assessment date:** 2026-06-24  
-**Scenario type:** Realistic example assessment, not a certification of an actual vendor deployment  
+**Template used:** `synthesis/assessment-template.md` v1.9
+**Assessment date:** 2026-07-20
+**Scenario type:** Realistic example assessment, not a certification of an actual vendor deployment
 **System assessed:** Acme Support Copilot v0.9 production pilot
 
 ## System description used for the walkthrough

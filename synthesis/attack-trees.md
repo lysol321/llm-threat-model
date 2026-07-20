@@ -1,7 +1,7 @@
 # LLM Attack Trees
 
-**Version:** 1.3 (red-team sync — Chain C language calibrated; OWASP 2025 DoS mapping corrected)
-**Date:** 2026-06-17
+**Version:** 1.5 (agentic branches include canonical severity, goal, prerequisite, and node metadata)
+**Date:** 2026-07-20
 **Status:** Living document — update after each major incident or new attack technique discovery
 
 ## Revisions from v1.0
@@ -613,5 +613,98 @@ Not modeled in v1.0. v1.1 adds:
 
 ---
 
-**Last updated:** 2026-06-24 (v1.3 — red-team sync: Chain C language calibrated, OWASP 2025 DoS mapping corrected; builds on v1.2 CSA MCP/A2A propagation channels and LangGraph Send API / Command primitive sub-paths)
+## Agentic Chain Branches — July 2026
+
+These branches extend canonical Chains A/B/C and add two explicitly scoped trust-boundary branches. They do not create new top-level chain identifiers.
+
+### T01-SESSION — Chain A branch: Session contamination → incremental escalation
+
+```text
+[Benign-looking external content]
+        ↓
+[Content enters session context]
+        ↓
+[Each individual turn remains below detection threshold]
+        ↓
+[Accumulated context changes goal or action ranking]
+        ↓
+[Compound action crosses impact threshold]
+```
+
+Test this branch across complete sessions with DET-DEF-3 rather than isolated prompts.
+
+### T03-SKILL — Chain B branch: Skill lifecycle compromise
+
+```text
+[Skill admitted to registry]
+        ↓
+[Metadata or semantic retrieval manipulated]
+        ↓
+[Planner selects attacker-shaped skill]
+        ↓
+[Skill executes with granted permissions]
+        ↓
+[Later update creates rug pull or capability creep]
+```
+
+Compromise may occur at admission, retrieval, planning, execution, or evolution. Version pinning only addresses later change; it does not make an initially malicious skill safe.
+
+### T09-MEMORY / T09-IDENTITY — Chain C branches
+
+Persistent memory and identity escalation are separate branches that can compose; neither is required for the other.
+
+```text
+[Attacker-controlled content]           [Self-asserted identity/role]
+        ↓                                      ↓
+[Unauthorized durable memory write]     [Receiver trusts claim]
+        ↓                                      ↓
+[Later retrieval changes behavior]      [Privilege ceiling bypassed]
+        └───────────────[optional composition]─┘
+                              ↓
+                    [Unauthorized action]
+```
+
+Mitigate memory writes/reads with MEM-DEF-1 and agent identity/delegation with MA-DEF-3.
+
+### T11-RELAY — Response-path relay branch *(provisional)*
+
+**Branch severity:** MEDIUM (base 4; elevated 8 only after independent reproduction in the assessed relay path)
+**Mission goal:** Alter a provider response or tool-call field between the provider and the agent without triggering rejection.
+**Prerequisites:** The attacker controls or compromises a response relay/router or transformation layer, and the agent lacks a direct trusted provider path or independently verifiable provider-authenticated response.
+
+```text
+[T11-RELAY-N1: Provider response enters relay]
+        ↓
+[T11-RELAY-N2: Relay/router transforms response or tool fields]
+        ↓
+[T11-RELAY-N3: Agent validates schema and authorization]
+        ↓
+[T11-RELAY-N4: Execution or rejection]
+```
+
+Only a direct trusted path or independently verifiable provider-authenticated response can establish upstream authorization. Relay authentication and transcript hashes provide accountability but do not prove what the provider emitted.
+
+### T10-CUA — Computer-use visual branch
+
+**Branch severity:** MEDIUM (base 8; elevated 10 when the semantic mismatch can trigger an irreversible external action)
+**Mission goal:** Cause the agent to execute the wrong state-changing action by making its visual and semantic representations disagree.
+**Prerequisites:** The attacker controls page, image, or UI content; the agent can take state-changing actions; and at least one hidden, off-screen, DOM, accessibility, or pixel representation can influence action selection.
+
+```text
+[T10-CUA-N1: Attacker-controlled page, image, or UI]
+        ↓
+[T10-CUA-N2: Hidden, off-screen, or deceptive visual content]
+        ↓
+[T10-CUA-N3: Pixel, DOM, or accessibility states disagree]
+        ↓
+[T10-CUA-N4: Semantic action validation]
+        ↓
+[T10-CUA-N5: Execution or rejection]
+```
+
+CUA-DEF-1 reconciles representations before state-changing actions; screenshots alone are insufficient when the agent receives additional hidden state.
+
+---
+
+**Last updated:** 2026-07-20 (v1.5 — added canonical metadata and node IDs to relay and computer-use branches)
 **Next review:** 2026-09-17

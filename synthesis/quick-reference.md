@@ -1,9 +1,9 @@
 # LLM Threat Modeling — Quick Reference
 
-**Version:** 1.7
+**Version:** 1.8
 **For:** Engineering teams (no ML security expertise required)
 **Time to complete assessment:** Under 4 hours
-**Date:** 2026-06-24
+**Date:** 2026-07-20
 
 ---
 
@@ -166,7 +166,37 @@ Is any model, adapter, skill, MCP server, or dependency third-party?
 4. Calculate residual risk using the Section 5 decision framework.
 5. Prioritize fixes using the defense investment tiers in `framework.md`.
 
+## Agentic Trust-Boundary Triage
+
+Use these gates for modern agent deployments:
+
+```text
+Does the system write or retrieve durable memory?
+  YES → MEM-DEF-1 memory write authorization + provenance + rollback REQUIRED
+
+Can influence accumulate across turns, sessions, or agent handoffs?
+  YES → DET-DEF-3 trajectory and accumulated-influence monitoring REQUIRED
+        Detection supports response but does not lower preventive residual risk
+
+Are skills selected, installed, or updated dynamically?
+  YES → SKILL-DEF-1 lifecycle review + signed provenance + planner/retrieval tests REQUIRED
+
+Do agents delegate to other agents or assert roles/capabilities?
+  YES → MA-DEF-3 authenticated identity + privilege ceilings REQUIRED
+
+Does the agent operate a browser, desktop, or other visual interface?
+  YES → CUA-DEF-1 pixel/DOM/accessibility reconciliation + semantic action validation REQUIRED
+
+Is a BYOK relay, model router, gateway, or response-transforming middleware in path?
+  YES → RELAY-DEF-1 direct trusted path or provider-authenticated response preferred
+        Relay-only hashes/MACs do NOT prove upstream authorization; record the assurance gap
+
+Can content change representation before model or validator consumption?
+  YES → REP-DEF-1 preserve origin/representation metadata and test the actual conversion pipeline
+```
+
 **Next review date:** 2026-09-24
 
 ---
-*Quick Reference v1.7 — For full framework see: synthesis/framework.md*
+
+*Quick Reference v1.8 — For full framework see: synthesis/framework.md*

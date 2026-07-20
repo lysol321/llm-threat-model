@@ -35,7 +35,7 @@ When updating framework documents, bump the version in the file header and add a
 python scripts/test_scenario_suite.py
 ```
 
-No dependencies. Pure stdlib. Validates that `evaluation/scenario-suite.json` has exactly 16 scenarios, 9 pass/fail criteria, required capability coverage, and all scenarios pass.
+No dependencies. Pure stdlib. Validates that `evaluation/scenario-suite.json` has at least 25 scenarios, 9 pass/fail criteria, required capability coverage, agentic trust-boundary coverage, citation integrity, and all scenarios pass. The lower bound is extensible: named coverage is mandatory, but additional scenarios do not break the validator.
 
 ## Citation drift
 

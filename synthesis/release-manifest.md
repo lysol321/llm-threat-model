@@ -1,40 +1,68 @@
 # LLM Threat Modeling Framework — Release Manifest
 
-**Release:** v1.8 comparable-framework positioning
-**Date:** 2026-06-24
+**Release:** v1.9 agentic trust-boundary integration
+**Date:** 2026-07-20
 **Status:** Pilot candidate pending team-specific assessment and sign-off
 
 ## Purpose
 
-This manifest records the coherent corpus state after the red-team correction pass. It is the release pointer for teams deciding which synthesis files belong together.
+This manifest is the canonical pointer for the coherent v1.9 corpus. Component versions are independent; the table below identifies the exact versions that belong to this release.
 
 ## Included synthesis files
 
 | File | Version / state | Role |
 |---|---|---|
-| `synthesis/framework.md` | v1.8 | Umbrella framework, release history, regulatory baseline, comparable-framework positioning |
-| `synthesis/threat-taxonomy.md` | v1.7 | Master threat taxonomy and evidence calibration |
-| `synthesis/risk-matrix.md` | v1.7 | Machine-checkable base/elevated risk scores and corrected regulatory mapping |
-| `synthesis/defense-playbook.md` | v1.7 | Defense controls, effectiveness notes, operational gaps, interaction analysis |
-| `synthesis/assessment-template.md` | v1.8 | Engineering worksheet and residual-risk scoring rubric with worksheet-friction fixes |
-| `synthesis/quick-reference.md` | v1.7 | One-page operator reference |
-| `synthesis/attack-surface-catalog.md` | v1.3 | Attack surface inventory; ISC references synced in prior pass |
-| `synthesis/asset-inventory.md` | v1.0 | Protected assets inventory |
-| `synthesis/assumptions.md` | v1.0 | Explicit assumptions and deployment boundaries |
-| `synthesis/attack-trees.md` | v1.3 | Attack trees and kill-chain diagrams |
+| `synthesis/framework.md` | v1.9 | Umbrella framework, release history, and operational architecture |
+| `synthesis/threat-taxonomy.md` | v1.8 | Master taxonomy with canonical agentic subtype IDs and evidence calibration |
+| `synthesis/risk-matrix.md` | v1.9 | Machine-checkable base/elevated scores, Wild_vs_Theory gates, and regulatory mapping |
+| `synthesis/defense-playbook.md` | v1.8 | Defense controls, ownership, limitations, and assurance gaps |
+| `synthesis/assessment-template.md` | v1.9 | Engineering worksheet, routing, control ratings, and residual-risk workflow |
+| `synthesis/quick-reference.md` | v1.8 | Operator triage and decision gates |
+| `synthesis/attack-surface-catalog.md` | v1.4 | Classical and agentic trust-boundary surface inventory |
+| `synthesis/attack-trees.md` | v1.5 | Three canonical chains plus scoped agentic branches with canonical metadata and node IDs |
+| `synthesis/asset-inventory.md` | v1.1 | Protected assets, including durable memory, skills, identity, relay, and provenance |
+| `synthesis/assumptions.md` | v1.1 | Explicit behavior, deployment, identity, and trust-boundary assumptions |
 
-## Release summary
+## Operational and generated artifacts
 
-- Residual-risk math now reduces risk only when preventive controls are actually implemented.
-- EU AI Act mappings now distinguish Articles 9, 10, 13, 14, 15, and 17 correctly.
-- Risk matrix separates `Base Score`, `Elevation Condition`, and `Elevated Score`.
-- Assessment worksheet includes `SC-GAP-1` / formerly `SC-DEF-4`, `DET-DEF-1`, and `DET-DEF-2` handling.
-- Defense-playbook malformed tables were normalized.
-- ISC quick-reference wording uses attacker-controlled or attacker-shaped harness execution as the applicability gate.
-- Evidence-provenance rule remains active: primary/corroborated sources carry Wild_vs_Theory; press/community narratives are context only.
-- Comparable-framework positioning was added to `framework.md`, mapping this corpus against OWASP LLM/GenAI, MITRE ATLAS, NIST AI RMF GenAI Profile, MAESTRO, Microsoft agentic failure taxonomy, OWASP Agentic/MCP guidance, and classic STRIDE/PASTA/LINDDUN methods.
-- Assessment worksheet friction was reduced with a Section 2 → Section 3 routing table, N/A handling, hosted API provider checklist, HITL provenance checklist, scoring scale legend, pilot/broad-production acceptance scope, and embedded base-risk lookup table.
+| Artifact | Release state | Validation |
+|---|---|---|
+| `evaluation/scenario-suite.json` | 25 scenarios; nine v1.9 agentic cases | `python scripts/test_scenario_suite.py` |
+| `threat-model-data.json` | Structured source v1.9 | `python scripts/test_corpus_coherence.py` |
+| `llm-threat-model.html` | Generated from structured source and current Markdown | `python scripts/build-html.py --check` |
+| `research/sources/Last-30-Days-Agentic-Threat-Updates-2026-07.md` | Evidence note; June 4 source labeled pre-window corroboration | Citation and corpus checks |
+| `review/red-team-2026-07-20-agentic-update.md` | Adversarial review that drove v1.9 | Findings preserved as review history |
+
+## v1.9 release changes
+
+- Added canonical subtypes T01-SESSION, T03-SKILL, T05-CAPABILITY, T09-MEMORY, T09-IDENTITY, T10-CUA, T10-REPRESENTATION, and T11-RELAY without creating new top-level categories.
+- Calibrated agentic overlays to Wild_vs_Theory 1–2 and base/elevated scores 4–10. No new overlay is HIGH without evidence meeting the framework gate.
+- Integrated MEM-DEF-1, SKILL-DEF-1, MA-DEF-3, CUA-DEF-1, RELAY-DEF-1, DET-DEF-3, and REP-DEF-1 into worksheet routing, PARTIAL definitions, and residual-risk lookup.
+- Added executable scenarios for memory, skill retrieval, skill update/rug pull, agent identity, computer use, session contamination, relay tampering, representation confusion, and capability disclosure.
+- Distinguished relay accountability from upstream authorization. Without a direct trusted path or provider-authenticated response, the assurance gap remains unresolved.
+- Added durable memory, skill registry, agent identity credentials, relay transcripts, provider trust anchors, and representation provenance to the foundation assets and assumptions.
+- Synchronized the structured data source and generated HTML.
+
+## Evidence caveats
+
+- Response-path relay tampering remains provisional at Wild_vs_Theory 1/5 pending independent replication.
+- Representation confusion remains monitored at Wild_vs_Theory 1/5 and must be reproduced in the assessed conversion pipeline before elevation.
+- Vendor red-team reporting and controlled benchmarks support inclusion but do not establish widespread in-wild exploitation.
+- The Microsoft June 4 source is outside the strict June 20–July 20 scan window and is retained only as pre-window corroboration.
 
 ## Pilot caveat
 
-This release is suitable as a pilot candidate only after the assessing team fills out the worksheet for its actual deployment. The framework does not certify a deployment safe by itself.
+The corpus is suitable as a pilot candidate only after the assessing team completes the v1.9 worksheet for its actual deployment. The framework does not certify a deployment safe by itself.
+
+## Release validation
+
+Run from the repository root:
+
+```bash
+python scripts/citation_drift_detector.py
+python scripts/test_scenario_suite.py
+python scripts/test_corpus_coherence.py
+python scripts/build-html.py --check
+```
+
+The release is coherent only when all four commands pass and `git diff --check` reports no errors.

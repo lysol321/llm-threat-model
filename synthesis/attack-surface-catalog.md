@@ -1,7 +1,7 @@
 # LLM Threat Modeling — Attack Surface Catalog
 
-**Version:** 1.3 (red-team sync — ISC moved to Category 14; surface checklist synced)
-**Date:** 2026-06-24
+**Version:** 1.4 (agentic memory, skill, identity, computer-use, relay, and representation surfaces)
+**Date:** 2026-07-20
 **Status:** Living document — re-evaluate when adding new integrations, protocols, or deployment modes
 
 ---
@@ -366,6 +366,34 @@ Confirm which surfaces are present in your deployment:
 
 ---
 
-**Last updated:** 2026-06-24 (v1.3 — ISC Category 14 numbering synced; checklist verified)
+## Agentic Trust-Boundary Surfaces — July 2026
+
+### New or sharpened surfaces
+
+| Surface | Description | Threat Vector | Threat Category | Risk Rating |
+|---|---|---|---|---|
+| **Durable agent memory** | Cross-session memory, summaries, preferences, or memory retrieval store | T09-MEMORY persistent memory poisoning; future-session goal drift | Cat 1, Cat 9 | MEDIUM; elevate impact when later retrieval has greater privilege |
+| **Skill retrieval / planner selection** | Semantic search and planning path that selects reusable skills | T03-SKILL retrieval manipulation; planner deception; capability substitution | Cat 3, Cat 9 | MEDIUM pending field evidence |
+| **Skill evolution channel** | Updates, dependency changes, or post-install metadata changes | T03-SKILL rug pull; delayed malicious behavior; permission creep | Cat 3 | MEDIUM pending field evidence |
+| **Inter-agent identity claim** | Identity and privilege metadata attached to agent messages | T09-IDENTITY trust escalation; confused deputy; privilege inflation | Cat 9 | MEDIUM; elevate impact when claims authorize sensitive actions |
+| **Computer-use visual field** | Rendered UI, viewport, DOM/accessibility tree, and off-screen elements | T10-CUA visual prompt injection; deceptive clicks; approval laundering | Cat 10, Cat 12 | MEDIUM pending field evidence |
+| **LLM response relay / router** | BYOK proxy, gateway, model router, or response-transforming middleware | T11-RELAY post-alignment response forgery; tool-call field tampering | Cat 11 | MEDIUM and provisional pending independent replication |
+| **Representation boundary** | Conversion between binary, text, code, metadata, records, and evidence | T10-REPRESENTATION data interpreted as instructions or non-independent evidence | Cat 10, Cat 11 | LOW/MEDIUM; monitor and test the assessed pipeline |
+
+### Checklist additions
+
+Add the following to the deployment surface verification checklist:
+
+- [ ] Does the model or agent write durable memory, summaries, preferences, or retrieval records?
+- [ ] Can external content influence memory writes or later memory retrieval?
+- [ ] Are skills selected through semantic retrieval or planner ranking?
+- [ ] Can skills, tool descriptions, or permissions change after installation?
+- [ ] Are inter-agent identities and privilege claims independently authenticated?
+- [ ] Does a computer-use agent receive screenshots, rendered pages, DOM data, or accessibility-tree data?
+- [ ] Is there a relay or router between the LLM provider and the agent runtime?
+- [ ] Is the executed response authenticated end-to-end, including tool names and arguments?
+- [ ] Can content change representation before reaching the model or validator?
+
+**Last updated:** 2026-07-20 (v1.4 — integrated agentic trust-boundary surfaces and evidence-calibrated ratings)
 **Next review:** 2026-09-24 or when adding new integrations
-**Part of:** LLM Threat Modeling Framework v1.8 release (see `release-manifest.md`)
+**Part of:** LLM Threat Modeling Framework v1.9 release (see `release-manifest.md`)

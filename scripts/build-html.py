@@ -6,7 +6,7 @@ from threat-model-data.json.
 Edit threat-model-data.json, then run this script to update the HTML.
 
 Usage:
-    python scripts/build-html.py [--dry-run]
+    python scripts/build-html.py [--dry-run | --check]
     python scripts/build-html.py --no-md       # skip MD->HTML (use html field as-is)
 
 Workflow:
@@ -84,6 +84,8 @@ def build_data_block(data: dict, no_md: bool) -> str:
         lines.append(f"const THREATS = {js(data['threats'])};")
     if data.get("dtree"):
         lines.append(f"const DTREE_DATA = {js(data['dtree'])};")
+    if data.get("controls"):
+        lines.append(f"const CONTROLS = {js(data['controls'])};")
 
     # Embed MD->HTML for every sidebar section that exposes markdown files.
     # The doc viewer in llm-threat-model.html dispatches on section name, so
@@ -105,7 +107,12 @@ def build_data_block(data: dict, no_md: bool) -> str:
 
 def main():
     dry_run = "--dry-run" in sys.argv
+    check     = "--check" in sys.argv
     no_md   = "--no-md"   in sys.argv
+
+    if dry_run and check:
+        print("ERROR: --dry-run and --check are mutually exclusive.", file=sys.stderr)
+        sys.exit(2)
 
     if not JSON_FILE.exists():
         print(f"ERROR: {JSON_FILE} not found. Run export-data.py first.", file=sys.stderr)
@@ -132,7 +139,12 @@ def main():
         print("ERROR: replacement failed.", file=sys.stderr)
         sys.exit(1)
 
-    if dry_run:
+    if check:
+        if new_html != html:
+            print(f"ERROR: {HTML_FILE} is stale; run python scripts/build-html.py", file=sys.stderr)
+            sys.exit(1)
+        print(f"PASS: {HTML_FILE} matches generated output")
+    elif dry_run:
         print("-- DRY RUN: new data block --")
         print(new_block[:2000] + ("..." if len(new_block) > 2000 else ""))
     else:

@@ -1,7 +1,7 @@
 # LLM Threat Assessment — Engineering Worksheet
 
-**Version:** 1.8 (worksheet-friction pass — routing table, N/A handling, hosted API checklist, scoring legend)
-**Date:** 2026-06-24
+**Version:** 1.9 (agentic trust-boundary controls integrated into scoring and residual-risk workflow)
+**Date:** 2026-07-20
 **Purpose:** Enable a 3-person engineering team (no ML security expertise required) to complete a valid threat model for their LLM deployment in under 4 hours.
 **How to use:** Work through Sections 1–5 in order. Use the Scoring Rubric Appendix (Appendices A–F) at the end when you need decision guidance for specific ratings. First pick a concrete deployment profile (for example: customer-support RAG assistant with CRM tools; internal code agent with repo write tools; self-hosted open-weight model with LoRA adapter; multi-agent research workflow). Score that deployment, not the abstract product roadmap.
 
@@ -127,6 +127,23 @@ _____________________________________________
 | A workflow can run task → model completion → validator loop autonomously | [ ] YES  [ ] NO | |
 | Validator checks only format/completion, not semantic safety | [ ] YES  [ ] NO | |
 
+### 2.7 Agentic Trust-Boundary Surfaces
+
+Complete this section when the deployment uses durable memory, reusable skills, computer-use interfaces, inter-agent delegation, representation conversion, or an LLM relay/router.
+
+| Threat / surface | Applies? | Notes |
+|---|---|---|
+| Durable memory, summaries, preferences, or memory retrieval store | [ ] YES  [ ] NO | If YES, complete MEM-DEF-1. |
+| Model-derived or retrieved content can write durable memory | [ ] YES  [ ] NO | Record the independent write authorization. |
+| Skills are selected through semantic retrieval or planner ranking | [ ] YES  [ ] NO | If YES, complete SKILL-DEF-1. |
+| Skills, tool descriptions, permissions, or dependencies can change after installation | [ ] YES  [ ] NO | Record version pinning and change monitoring. |
+| Inter-agent messages carry identity, delegation, or privilege claims | [ ] YES  [ ] NO | If YES, complete MA-DEF-3. |
+| Agent identity, delegation scope, and privilege ceiling are independently verified | [ ] YES  [ ] NO | Transport authentication or natural-language claims do not count. |
+| Computer-use agent receives screenshots, rendered pages, DOM, or accessibility data | [ ] YES  [ ] NO | If YES, complete CUA-DEF-1. |
+| BYOK relay, model router, gateway, or response-transforming middleware is in path | [ ] YES  [ ] NO | If YES, complete RELAY-DEF-1 and record any upstream-assurance gap. |
+| Trajectory-level monitoring tracks cumulative influence across turns and handoffs | [ ] YES  [ ] NO | Per-message filtering alone is NO. |
+| Representation changes can occur before model or validator consumption | [ ] YES  [ ] NO | If YES, complete REP-DEF-1. |
+
 ---
 
 ## Section 3: Defense Control Evaluation
@@ -147,6 +164,12 @@ Use this table after completing Section 2 so teams do not skip required controls
 | Multi-agent / MCP / A2A / LangGraph = YES | MA-DEF-1, MA-DEF-2, DET-DEF-1 | Record whether context isolation is infrastructure-enforced or just prompted. |
 | Attacker-shaped task/validator/data harness = YES | ISC-DEF-1, ISC-DEF-2, ISC-DEF-3 | ISC is harness-bound, not role-bound. Plain inference without harness is N/A/LOW. |
 | Any state-changing action or customer-visible output = YES | AGENCY-DEF-2, PI-DEF-4, DET-DEF-1 | HITL must show context provenance, not just proposed action. |
+| Durable memory or model-influenced memory writes = YES | MEM-DEF-1, DET-DEF-3 | Cross-session tests and rollback evidence are required. |
+| Dynamic skill retrieval, installation, or update = YES | SKILL-DEF-1, SC-DEF-1, AGENCY-DEF-1 | Review admission, retrieval, planner selection, execution, and evolution. |
+| Inter-agent identity/delegation claims = YES | MA-DEF-3, MA-DEF-1, AGENCY-DEF-2 | Verify workload identity and delegation scope outside model text. |
+| Computer-use visual interface = YES | CUA-DEF-1, AGENCY-DEF-2 | Reconcile pixel, DOM, accessibility, viewport, and semantic action. |
+| Relay/router/gateway in response path = YES | RELAY-DEF-1, PI-DEF-4 | Prefer a direct path or provider-authenticated response; document unresolved assurance. |
+| Representation conversion = YES | REP-DEF-1, PI-DEF-4 | Preserve origin and representation metadata; test the actual conversion pipeline. |
 
 ### 3.1 Prompt Injection Defenses
 
@@ -230,6 +253,27 @@ Detection controls support response and accountability. They do **not** reduce p
 - DET-DEF-1 PARTIAL if logs record tool calls but omit prompt/context provenance, actor identity, model version, or downstream action result.
 - DET-DEF-2 PARTIAL if anomaly detection exists but does not cover AI-specific behaviors such as unexpected tool chains, unusual token/cost spikes, abnormal egress, or repeated validator-loop failures.
 
+### 3.7 Agentic Trust-Boundary Controls
+
+| Control ID | Control Name | Rating | Evidence / owner / notes |
+|------------|-------------|--------|-------|
+| MEM-DEF-1 | Durable memory write authorization, provenance, expiry, and rollback | [ ] YES  [ ] PARTIAL  [ ] NO  [ ] N/A | N/A only if no durable or cross-session memory exists. |
+| SKILL-DEF-1 | Skill lifecycle admission, retrieval, planner, execution, and update control | [ ] YES  [ ] PARTIAL  [ ] NO  [ ] N/A | N/A only if no reusable/dynamic skills or equivalent bundles exist. |
+| MA-DEF-3 | Authenticated agent identity, delegation scope, and privilege ceiling | [ ] YES  [ ] PARTIAL  [ ] NO  [ ] N/A | N/A only if no inter-agent delegation or identity claims exist. |
+| CUA-DEF-1 | Pixel/DOM/accessibility reconciliation and semantic action validation | [ ] YES  [ ] PARTIAL  [ ] NO  [ ] N/A | N/A only if the agent cannot perceive or act through a visual interface. |
+| RELAY-DEF-1 | Response-path integrity and independent boundary authorization | [ ] YES  [ ] PARTIAL  [ ] NO  [ ] N/A | N/A only if no relay/router/transformation boundary exists. Record provider-authentication support. |
+| DET-DEF-3 | Trajectory and accumulated-influence monitoring | [ ] YES  [ ] PARTIAL  [ ] NO  [ ] N/A | Detection-only; does not reduce preventive residual risk. |
+| REP-DEF-1 | Representation-boundary origin and semantic validation | [ ] YES  [ ] PARTIAL  [ ] NO  [ ] N/A | N/A only if no relevant representation conversion occurs. |
+
+**PARTIAL definitions:**
+- MEM-DEF-1 PARTIAL if writes are logged but lack independent authorization, expiry, rollback, or cross-session regression tests.
+- SKILL-DEF-1 PARTIAL if admission is reviewed but semantic retrieval/planner selection or later updates are not continuously controlled.
+- MA-DEF-3 PARTIAL if transport endpoints are authenticated but workload identity, delegation scope, or privilege ceilings are not independently verified.
+- CUA-DEF-1 PARTIAL if only one representation is checked, or semantic validation covers only some state-changing actions.
+- RELAY-DEF-1 PARTIAL if the relay is authenticated and transcripts are bound but provider output is not independently verifiable; record this as an unresolved assurance gap.
+- DET-DEF-3 PARTIAL if monitoring is per-message or per-agent but cannot reconstruct cumulative influence across handoffs and sessions.
+- REP-DEF-1 PARTIAL if origin metadata is preserved but semantic validation is not run against the deployed conversion pipeline.
+
 ---
 
 ## Section 4: Risk Rating
@@ -264,6 +308,13 @@ Use Appendix A, Risk Rating 1.6 to determine: [ ] NONE  [ ] LOW  [ ] MEDIUM  [ ]
 | Supply Chain (Chain B) | | 4/5 | HIGH |
 | Multi-Agent Propagation (Chain C) | | 3/5 | MEDIUM |
 | Internal Safety Collapse / Validator Harness | | 4/5 | HIGH |
+| Persistent memory poisoning (T09-MEMORY) | | 2/5 | LOW-MEDIUM |
+| Skill lifecycle compromise (T03-SKILL) | | 2/5 | LOW-MEDIUM |
+| Inter-agent trust escalation (T09-IDENTITY) | | 2/5 | LOW-MEDIUM |
+| Computer-use visual attack (T10-CUA) | | 2/5 | LOW-MEDIUM |
+| Session contamination / goal hijacking (T01-SESSION) | | 2/5 | LOW-MEDIUM |
+| Response-path relay tampering (T11-RELAY, provisional) | | 1/5 | LOW |
+| Representation confusion (T10-REPRESENTATION, monitor) | | 1/5 | LOW |
 | Other threats identified | | | |
 
 ---
@@ -319,8 +370,6 @@ For any CRITICAL or HIGH residual risks that cannot be immediately remediated:
 
 # APPENDICES — Scoring Rubric (Appendices A–F)
 
-**Version:** 1.3
-**Date:** 2026-06-24
 **Purpose:** Decision trees and worked examples to enable consistent, calibrated risk ratings by engineers without ML security expertise. Append to `assessment-template.md` after Section 6.
 
 ---
@@ -806,6 +855,13 @@ Where:
 | Output Validation Failure | 9 |
 | HITL Failure | 9 |
 | Defense Control Type Confusion | 12 |
+| Persistent memory poisoning | 8 (10 when elevated) |
+| Skill lifecycle compromise | 8 (10 when elevated) |
+| Inter-agent trust escalation | 8 (10 when elevated) |
+| Computer-use visual attack | 8 (10 when elevated) |
+| Session contamination / incremental escalation | 8 (10 when elevated) |
+| Response-path relay tampering *(provisional)* | 5 (10 only after independent replication) |
+| Representation confusion *(monitor)* | 4 (8 after pipeline-specific reproduction) |
 
 **Example:**
 - Chain A: Elevated base = 20, PI-DEF-2 = PARTIAL (0.7), AGENCY-DEF-1 = PARTIAL (1.5)
@@ -880,8 +936,6 @@ Chain C is the canonical example: no published CVE exists for LangGraph-specific
 
 **Note on regulatory claims:** Wild_vs_Theory does NOT apply to regulatory compliance exposure. EU AI Act Article 55(2) EU representative absence is a binary legal fact (either present or not), not an empirical threat scale. Regulatory exposure ratings use separate evidence standards documented in `risk-matrix.md`.
 
----
-
-**Last updated:** 2026-06-24 (v1.8 — worksheet-friction pass: routing table, N/A handling, hosted API checklist, scoring legend, base-score lookup)
+**Last updated:** 2026-07-20 (v1.9 — July scan addendum: memory, skills, inter-agent identity, computer use, response integrity, trajectory monitoring, representation boundaries)
 **Next review:** 2026-09-24
-**Part of:** LLM Threat Modeling Framework v1.8
+**Part of:** LLM Threat Modeling Framework v1.9

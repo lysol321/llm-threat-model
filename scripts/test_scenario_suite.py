@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Regression tests for the scenario evaluation suite.
 
-These tests define the quality bar before the scenario pack exists:
-- exactly sixteen realistic scenarios, including six foreign-model deployment scenarios
+These tests define the quality bar for an extensible scenario pack:
+- at least 25 realistic scenarios, including six foreign-model and nine agentic scenarios
 - every major framework capability is covered
 - every scenario uses the same pass/fail criteria
 - every scenario records evidence and passes all checks
@@ -61,8 +61,10 @@ def test_suite_exists_and_uses_pass_fail_method() -> None:
     suite = load_suite()
     assert suite["metadata"]["evaluation_method"] == "uniform_pass_fail"
     assert suite["metadata"]["same_conditions"]
-    assert len(suite["scenarios"]) == 16
-    assert suite["metadata"]["n_scenarios"] == 16
+    assert len(suite["scenarios"]) >= 25
+    assert suite["metadata"]["n_scenarios"] == len(suite["scenarios"])
+    for scenario in suite["scenarios"]:
+        assert scenario["same_conditions_applied"] == suite["metadata"]["same_conditions"]
 
 
 def test_foreign_llm_scenario_series_covers_required_distribution_modes() -> None:
@@ -106,6 +108,7 @@ def test_every_scenario_has_evidence_and_passes() -> None:
         for evidence in scenario["evidence"]:
             assert evidence["source"].startswith("synthesis/"), scenario["id"]
             assert evidence["lines"], scenario["id"]
+            assert evidence["quote"].strip(), f"{scenario['id']}::{evidence['id']} has an empty quote"
         for check in scenario["checks"]:
             assert check["result"] == "PASS", f"{scenario['id']}::{check['criterion_id']}"
             assert check["evidence_refs"], f"{scenario['id']}::{check['criterion_id']}"
@@ -122,6 +125,8 @@ def test_failure_log_is_empty_after_corrections() -> None:
 
 def _check_citation(source: str, lines: str, quote: str) -> tuple[str, str]:
     """Returns (status, reason). Mirrors citation_drift_detector.check_citation."""
+    if not quote.strip():
+        return "INVALID_QUOTE", "quote is empty"
     path = ROOT / source
     if not path.exists():
         return "FILE_NOT_FOUND", f"{source} does not exist"

@@ -1,7 +1,7 @@
 # LLM Threat Modeling — Explicit Assumptions
 
-**Version:** 1.0 (explicit assumptions section — new in v1.4 umbrella; minor revisions per open questions research incorporated)
-**Date:** 2026-06-19
+**Version:** 1.1 (agent identity and response-path trust boundaries)
+**Date:** 2026-07-20
 **Status:** Living document — re-evaluate when deploying new model classes, frameworks, or architectural patterns
 
 ---
@@ -162,9 +162,9 @@ These assumptions define what the framework treats as trusted vs. untrusted. The
 **Assumption:** MCP servers are trusted infrastructure. Compromised MCP servers return attacker-controlled data that the MCP Host treats as ground truth.
 **Implication:** MCP server supply chain and runtime security must be treated as equivalent to model supply chain security.
 
-### D6: A2A Channels Represent Authenticated Trust
-**Assumption:** Agent-to-Agent (A2A) protocol channels represent authenticated trust relationships. An agent receiving a message via A2A assumes the sending agent is legitimate.
-**Implication:** A2A message content validation at the receiving agent (treat as external input) is required even within authenticated channels.
+### D6: Authenticated Transport Is Not Agent Authorization
+**Assumption:** Agent-to-Agent (A2A) protocol channels may authenticate a transport endpoint, but authenticated transport does not prove agent identity, current role, delegated capability, or authorization for the requested action. Natural-language and self-asserted identity claims are untrusted.
+**Implication:** Receivers must independently verify workload identity, delegation scope, and privilege ceilings, then validate message content as external input even within authenticated channels (MA-DEF-3).
 
 ### D7: System Prompt Is Often Mistaken for a Security Boundary
 **Assumption:** Some deployments incorrectly encode security controls, API keys, or authorization logic in the system prompt. If the system prompt is extracted, these controls and proprietary instructions are exposed.
@@ -287,6 +287,6 @@ Before starting an assessment, confirm each assumption applies to your deploymen
 
 ---
 
-**Last updated:** 2026-06-19 (v1.0 — explicit assumptions section added)
+**Last updated:** 2026-07-20 (v1.1 — distinguished transport authentication from agent identity and authorization)
 **Next review:** 2026-09-17 or when deploying new model class
-**Part of:** LLM Threat Modeling Framework v1.8 release (see `release-manifest.md`)
+**Part of:** LLM Threat Modeling Framework v1.9 release (see `release-manifest.md`)
