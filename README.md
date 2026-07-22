@@ -290,6 +290,7 @@ Framework docs are versioned independently. Check the version header in each fil
 
 | Version | Date | Key Change |
 |---------|------|-----------|
+| 1.9 (+ 2026-07-22 addendum) | 2026-07-22 | Category 14 in-wild corroboration: OpenAI/Hugging Face model-evaluation incident (first-party post-mortem) logged as a second confirmed validator-harness datapoint; evidence basis strengthened, Wild_vs_Theory unchanged at 4/5. Narrative-only addendum — pinned component versions unchanged |
 | 1.9 | 2026-07-20 | Agentic trust-boundary integration: canonical subtypes, seven assessable controls, nine new scenarios, calibrated overlays, and synchronized HTML |
 | 1.8 | 2026-06-24 | Comparable framework positioning (OWASP, MITRE, NIST, MAESTRO, Microsoft, OWASP Agentic/MCP) |
 | 1.7 | 2026-06-24 | Correction pass: residual-risk math, EU AI Act mappings, base/elevated score split |

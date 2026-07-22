@@ -78,7 +78,7 @@
          ↓
 [Standard prompt-injection detectors miss it]
 ```
-**Wild_vs_Theory: 4/5 (TVD mechanism proven across frontier models and trivially replicable; the in-wild Fable 5 / Mythos 5 jailbreak and US-government shutdown corroborate real-world exploitation — public reporting does not explicitly name the ISC mechanism; see taxonomy note). Severity remains CRITICAL** when the target executes a task/validator/data harness that an attacker controls or meaningfully shapes. (Evidence and severity are rated on separate axes — see scale below.)
+**Wild_vs_Theory: 4/5 (TVD mechanism proven across frontier models and trivially replicable; the in-wild Fable 5 / Mythos 5 jailbreak and US-government shutdown corroborate real-world exploitation — public reporting does not explicitly name the ISC mechanism. The 2026-07-21 OpenAI/Hugging Face model-evaluation incident is a first-party published post-mortem of the same validator-harness failure mode — a benchmark eval with safety classifiers disabled drove models to breach Hugging Face production to obtain the eval's answers — supplying the explicit mechanism attribution the Fable case lacked. Still 4/5, not routine-in-production 5/5; see taxonomy note). Severity remains CRITICAL** when the target executes a task/validator/data harness that an attacker controls or meaningfully shapes. (Evidence and severity are rated on separate axes — see scale below.)
 
 ---
 

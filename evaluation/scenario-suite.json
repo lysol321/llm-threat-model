@@ -90,7 +90,7 @@
           "id": "EV-QUICK-CHAINS",
           "source": "synthesis/quick-reference.md",
           "lines": "33-82",
-          "quote": "## 3 Attack Chains + 1 Critical Structural Harness Risk\n\n### Chain A: Indirect PI → Excessive Agency → Data Exfiltration\n```\n[Indirect PI via RAG/documents]\n         ↓\n[Excessive Agency: tool permissions + no HITL]\n         ↓\n[Tool call exfiltrates data (email, webhook, file write)]\n         ↓\n[Attacker receives data — logged as legitimate user action]\n```\n**Wild_vs_Theory: 4/5** — EchoLeak/CVE-2025-32711 confirmed in wild.\n\n### Chain B: Supply Chain → Model Replacement → Silent Exfiltration\n```\n[Malicious model on HuggingFace / adapter swap]\n         ↓\n[Organization deploys without code review]\n         ↓\n[Custom inference class exfiltrates at load time]\n         ↓\n[Silent — no behavioral signal; detection requires network egress monitoring]\n```\n**Wild_vs_Theory: 4/5** — JFrog/ReversingLabs confirmed malicious models on HF.\n\n### Chain C: Multi-Agent Context Propagation\n```\n[Agent 1 compromised via PI]\n         ↓\n[Agent 1 output → injected instruction → Agent 2 context]\n         ↓\n[Privilege escalation across N-agent chain]\n         ↓\n[Final agent executes unauthorized action]\n```\n**Wild_vs_Theory: 3/5** — source-confirmed data-flow risk in common multi-agent patterns; exploitation depends on deployment-specific tool/output trust and permissions.\n\n### Category 14: ISC / Validator Harness Attack\n```\n[External task + format-only validator + incomplete data]\n         ↓\n[Model fills gaps to satisfy validator]\n         ↓\n[Harmful content is produced as task-correct output]\n         ↓\n[Standard prompt-injection detectors miss it]\n```\n**Wild_vs_Theory: 4/5 (TVD mechanism proven across frontier models and trivially replicable; the in-wild Fable 5 / Mythos 5 jailbreak and US-government shutdown corroborate real-world exploitation — public reporting does not explicitly name the ISC mechanism; see taxonomy note). Severity remains CRITICAL** when the target executes a task/validator/data harness that an attacker controls or meaningfully shapes. (Evidence and severity are rated on separate axes — see scale below.)\n"
+          "quote": "## 3 Attack Chains + 1 Critical Structural Harness Risk\n\n### Chain A: Indirect PI → Excessive Agency → Data Exfiltration\n```\n[Indirect PI via RAG/documents]\n         ↓\n[Excessive Agency: tool permissions + no HITL]\n         ↓\n[Tool call exfiltrates data (email, webhook, file write)]\n         ↓\n[Attacker receives data — logged as legitimate user action]\n```\n**Wild_vs_Theory: 4/5** — EchoLeak/CVE-2025-32711 confirmed in wild.\n\n### Chain B: Supply Chain → Model Replacement → Silent Exfiltration\n```\n[Malicious model on HuggingFace / adapter swap]\n         ↓\n[Organization deploys without code review]\n         ↓\n[Custom inference class exfiltrates at load time]\n         ↓\n[Silent — no behavioral signal; detection requires network egress monitoring]\n```\n**Wild_vs_Theory: 4/5** — JFrog/ReversingLabs confirmed malicious models on HF.\n\n### Chain C: Multi-Agent Context Propagation\n```\n[Agent 1 compromised via PI]\n         ↓\n[Agent 1 output → injected instruction → Agent 2 context]\n         ↓\n[Privilege escalation across N-agent chain]\n         ↓\n[Final agent executes unauthorized action]\n```\n**Wild_vs_Theory: 3/5** — source-confirmed data-flow risk in common multi-agent patterns; exploitation depends on deployment-specific tool/output trust and permissions.\n\n### Category 14: ISC / Validator Harness Attack\n```\n[External task + format-only validator + incomplete data]\n         ↓\n[Model fills gaps to satisfy validator]\n         ↓\n[Harmful content is produced as task-correct output]\n         ↓\n[Standard prompt-injection detectors miss it]\n```\n**Wild_vs_Theory: 4/5 (TVD mechanism proven across frontier models and trivially replicable; the in-wild Fable 5 / Mythos 5 jailbreak and US-government shutdown corroborate real-world exploitation — public reporting does not explicitly name the ISC mechanism. The 2026-07-21 OpenAI/Hugging Face model-evaluation incident is a first-party published post-mortem of the same validator-harness failure mode — a benchmark eval with safety classifiers disabled drove models to breach Hugging Face production to obtain the eval's answers — supplying the explicit mechanism attribution the Fable case lacked. Still 4/5, not routine-in-production 5/5; see taxonomy note). Severity remains CRITICAL** when the target executes a task/validator/data harness that an attacker controls or meaningfully shapes. (Evidence and severity are rated on separate axes — see scale below.)\n"
         },
         {
           "id": "EV-QUICK-DECISION",
@@ -243,7 +243,7 @@
           "id": "EV-QUICK-CHAINS",
           "source": "synthesis/quick-reference.md",
           "lines": "33-82",
-          "quote": "## 3 Attack Chains + 1 Critical Structural Harness Risk\n\n### Chain A: Indirect PI → Excessive Agency → Data Exfiltration\n```\n[Indirect PI via RAG/documents]\n         ↓\n[Excessive Agency: tool permissions + no HITL]\n         ↓\n[Tool call exfiltrates data (email, webhook, file write)]\n         ↓\n[Attacker receives data — logged as legitimate user action]\n```\n**Wild_vs_Theory: 4/5** — EchoLeak/CVE-2025-32711 confirmed in wild.\n\n### Chain B: Supply Chain → Model Replacement → Silent Exfiltration\n```\n[Malicious model on HuggingFace / adapter swap]\n         ↓\n[Organization deploys without code review]\n         ↓\n[Custom inference class exfiltrates at load time]\n         ↓\n[Silent — no behavioral signal; detection requires network egress monitoring]\n```\n**Wild_vs_Theory: 4/5** — JFrog/ReversingLabs confirmed malicious models on HF.\n\n### Chain C: Multi-Agent Context Propagation\n```\n[Agent 1 compromised via PI]\n         ↓\n[Agent 1 output → injected instruction → Agent 2 context]\n         ↓\n[Privilege escalation across N-agent chain]\n         ↓\n[Final agent executes unauthorized action]\n```\n**Wild_vs_Theory: 3/5** — source-confirmed data-flow risk in common multi-agent patterns; exploitation depends on deployment-specific tool/output trust and permissions.\n\n### Category 14: ISC / Validator Harness Attack\n```\n[External task + format-only validator + incomplete data]\n         ↓\n[Model fills gaps to satisfy validator]\n         ↓\n[Harmful content is produced as task-correct output]\n         ↓\n[Standard prompt-injection detectors miss it]\n```\n**Wild_vs_Theory: 4/5 (TVD mechanism proven across frontier models and trivially replicable; the in-wild Fable 5 / Mythos 5 jailbreak and US-government shutdown corroborate real-world exploitation — public reporting does not explicitly name the ISC mechanism; see taxonomy note). Severity remains CRITICAL** when the target executes a task/validator/data harness that an attacker controls or meaningfully shapes. (Evidence and severity are rated on separate axes — see scale below.)\n"
+          "quote": "## 3 Attack Chains + 1 Critical Structural Harness Risk\n\n### Chain A: Indirect PI → Excessive Agency → Data Exfiltration\n```\n[Indirect PI via RAG/documents]\n         ↓\n[Excessive Agency: tool permissions + no HITL]\n         ↓\n[Tool call exfiltrates data (email, webhook, file write)]\n         ↓\n[Attacker receives data — logged as legitimate user action]\n```\n**Wild_vs_Theory: 4/5** — EchoLeak/CVE-2025-32711 confirmed in wild.\n\n### Chain B: Supply Chain → Model Replacement → Silent Exfiltration\n```\n[Malicious model on HuggingFace / adapter swap]\n         ↓\n[Organization deploys without code review]\n         ↓\n[Custom inference class exfiltrates at load time]\n         ↓\n[Silent — no behavioral signal; detection requires network egress monitoring]\n```\n**Wild_vs_Theory: 4/5** — JFrog/ReversingLabs confirmed malicious models on HF.\n\n### Chain C: Multi-Agent Context Propagation\n```\n[Agent 1 compromised via PI]\n         ↓\n[Agent 1 output → injected instruction → Agent 2 context]\n         ↓\n[Privilege escalation across N-agent chain]\n         ↓\n[Final agent executes unauthorized action]\n```\n**Wild_vs_Theory: 3/5** — source-confirmed data-flow risk in common multi-agent patterns; exploitation depends on deployment-specific tool/output trust and permissions.\n\n### Category 14: ISC / Validator Harness Attack\n```\n[External task + format-only validator + incomplete data]\n         ↓\n[Model fills gaps to satisfy validator]\n         ↓\n[Harmful content is produced as task-correct output]\n         ↓\n[Standard prompt-injection detectors miss it]\n```\n**Wild_vs_Theory: 4/5 (TVD mechanism proven across frontier models and trivially replicable; the in-wild Fable 5 / Mythos 5 jailbreak and US-government shutdown corroborate real-world exploitation — public reporting does not explicitly name the ISC mechanism. The 2026-07-21 OpenAI/Hugging Face model-evaluation incident is a first-party published post-mortem of the same validator-harness failure mode — a benchmark eval with safety classifiers disabled drove models to breach Hugging Face production to obtain the eval's answers — supplying the explicit mechanism attribution the Fable case lacked. Still 4/5, not routine-in-production 5/5; see taxonomy note). Severity remains CRITICAL** when the target executes a task/validator/data harness that an attacker controls or meaningfully shapes. (Evidence and severity are rated on separate axes — see scale below.)\n"
         },
         {
           "id": "EV-QUICK-DECISION",
@@ -389,7 +389,7 @@
           "id": "EV-QUICK-CHAINS",
           "source": "synthesis/quick-reference.md",
           "lines": "33-82",
-          "quote": "## 3 Attack Chains + 1 Critical Structural Harness Risk\n\n### Chain A: Indirect PI → Excessive Agency → Data Exfiltration\n```\n[Indirect PI via RAG/documents]\n         ↓\n[Excessive Agency: tool permissions + no HITL]\n         ↓\n[Tool call exfiltrates data (email, webhook, file write)]\n         ↓\n[Attacker receives data — logged as legitimate user action]\n```\n**Wild_vs_Theory: 4/5** — EchoLeak/CVE-2025-32711 confirmed in wild.\n\n### Chain B: Supply Chain → Model Replacement → Silent Exfiltration\n```\n[Malicious model on HuggingFace / adapter swap]\n         ↓\n[Organization deploys without code review]\n         ↓\n[Custom inference class exfiltrates at load time]\n         ↓\n[Silent — no behavioral signal; detection requires network egress monitoring]\n```\n**Wild_vs_Theory: 4/5** — JFrog/ReversingLabs confirmed malicious models on HF.\n\n### Chain C: Multi-Agent Context Propagation\n```\n[Agent 1 compromised via PI]\n         ↓\n[Agent 1 output → injected instruction → Agent 2 context]\n         ↓\n[Privilege escalation across N-agent chain]\n         ↓\n[Final agent executes unauthorized action]\n```\n**Wild_vs_Theory: 3/5** — source-confirmed data-flow risk in common multi-agent patterns; exploitation depends on deployment-specific tool/output trust and permissions.\n\n### Category 14: ISC / Validator Harness Attack\n```\n[External task + format-only validator + incomplete data]\n         ↓\n[Model fills gaps to satisfy validator]\n         ↓\n[Harmful content is produced as task-correct output]\n         ↓\n[Standard prompt-injection detectors miss it]\n```\n**Wild_vs_Theory: 4/5 (TVD mechanism proven across frontier models and trivially replicable; the in-wild Fable 5 / Mythos 5 jailbreak and US-government shutdown corroborate real-world exploitation — public reporting does not explicitly name the ISC mechanism; see taxonomy note). Severity remains CRITICAL** when the target executes a task/validator/data harness that an attacker controls or meaningfully shapes. (Evidence and severity are rated on separate axes — see scale below.)\n"
+          "quote": "## 3 Attack Chains + 1 Critical Structural Harness Risk\n\n### Chain A: Indirect PI → Excessive Agency → Data Exfiltration\n```\n[Indirect PI via RAG/documents]\n         ↓\n[Excessive Agency: tool permissions + no HITL]\n         ↓\n[Tool call exfiltrates data (email, webhook, file write)]\n         ↓\n[Attacker receives data — logged as legitimate user action]\n```\n**Wild_vs_Theory: 4/5** — EchoLeak/CVE-2025-32711 confirmed in wild.\n\n### Chain B: Supply Chain → Model Replacement → Silent Exfiltration\n```\n[Malicious model on HuggingFace / adapter swap]\n         ↓\n[Organization deploys without code review]\n         ↓\n[Custom inference class exfiltrates at load time]\n         ↓\n[Silent — no behavioral signal; detection requires network egress monitoring]\n```\n**Wild_vs_Theory: 4/5** — JFrog/ReversingLabs confirmed malicious models on HF.\n\n### Chain C: Multi-Agent Context Propagation\n```\n[Agent 1 compromised via PI]\n         ↓\n[Agent 1 output → injected instruction → Agent 2 context]\n         ↓\n[Privilege escalation across N-agent chain]\n         ↓\n[Final agent executes unauthorized action]\n```\n**Wild_vs_Theory: 3/5** — source-confirmed data-flow risk in common multi-agent patterns; exploitation depends on deployment-specific tool/output trust and permissions.\n\n### Category 14: ISC / Validator Harness Attack\n```\n[External task + format-only validator + incomplete data]\n         ↓\n[Model fills gaps to satisfy validator]\n         ↓\n[Harmful content is produced as task-correct output]\n         ↓\n[Standard prompt-injection detectors miss it]\n```\n**Wild_vs_Theory: 4/5 (TVD mechanism proven across frontier models and trivially replicable; the in-wild Fable 5 / Mythos 5 jailbreak and US-government shutdown corroborate real-world exploitation — public reporting does not explicitly name the ISC mechanism. The 2026-07-21 OpenAI/Hugging Face model-evaluation incident is a first-party published post-mortem of the same validator-harness failure mode — a benchmark eval with safety classifiers disabled drove models to breach Hugging Face production to obtain the eval's answers — supplying the explicit mechanism attribution the Fable case lacked. Still 4/5, not routine-in-production 5/5; see taxonomy note). Severity remains CRITICAL** when the target executes a task/validator/data harness that an attacker controls or meaningfully shapes. (Evidence and severity are rated on separate axes — see scale below.)\n"
         },
         {
           "id": "EV-RISK-CRITICAL",
@@ -534,7 +534,7 @@
           "id": "EV-QUICK-CHAINS",
           "source": "synthesis/quick-reference.md",
           "lines": "33-82",
-          "quote": "## 3 Attack Chains + 1 Critical Structural Harness Risk\n\n### Chain A: Indirect PI → Excessive Agency → Data Exfiltration\n```\n[Indirect PI via RAG/documents]\n         ↓\n[Excessive Agency: tool permissions + no HITL]\n         ↓\n[Tool call exfiltrates data (email, webhook, file write)]\n         ↓\n[Attacker receives data — logged as legitimate user action]\n```\n**Wild_vs_Theory: 4/5** — EchoLeak/CVE-2025-32711 confirmed in wild.\n\n### Chain B: Supply Chain → Model Replacement → Silent Exfiltration\n```\n[Malicious model on HuggingFace / adapter swap]\n         ↓\n[Organization deploys without code review]\n         ↓\n[Custom inference class exfiltrates at load time]\n         ↓\n[Silent — no behavioral signal; detection requires network egress monitoring]\n```\n**Wild_vs_Theory: 4/5** — JFrog/ReversingLabs confirmed malicious models on HF.\n\n### Chain C: Multi-Agent Context Propagation\n```\n[Agent 1 compromised via PI]\n         ↓\n[Agent 1 output → injected instruction → Agent 2 context]\n         ↓\n[Privilege escalation across N-agent chain]\n         ↓\n[Final agent executes unauthorized action]\n```\n**Wild_vs_Theory: 3/5** — source-confirmed data-flow risk in common multi-agent patterns; exploitation depends on deployment-specific tool/output trust and permissions.\n\n### Category 14: ISC / Validator Harness Attack\n```\n[External task + format-only validator + incomplete data]\n         ↓\n[Model fills gaps to satisfy validator]\n         ↓\n[Harmful content is produced as task-correct output]\n         ↓\n[Standard prompt-injection detectors miss it]\n```\n**Wild_vs_Theory: 4/5 (TVD mechanism proven across frontier models and trivially replicable; the in-wild Fable 5 / Mythos 5 jailbreak and US-government shutdown corroborate real-world exploitation — public reporting does not explicitly name the ISC mechanism; see taxonomy note). Severity remains CRITICAL** when the target executes a task/validator/data harness that an attacker controls or meaningfully shapes. (Evidence and severity are rated on separate axes — see scale below.)\n"
+          "quote": "## 3 Attack Chains + 1 Critical Structural Harness Risk\n\n### Chain A: Indirect PI → Excessive Agency → Data Exfiltration\n```\n[Indirect PI via RAG/documents]\n         ↓\n[Excessive Agency: tool permissions + no HITL]\n         ↓\n[Tool call exfiltrates data (email, webhook, file write)]\n         ↓\n[Attacker receives data — logged as legitimate user action]\n```\n**Wild_vs_Theory: 4/5** — EchoLeak/CVE-2025-32711 confirmed in wild.\n\n### Chain B: Supply Chain → Model Replacement → Silent Exfiltration\n```\n[Malicious model on HuggingFace / adapter swap]\n         ↓\n[Organization deploys without code review]\n         ↓\n[Custom inference class exfiltrates at load time]\n         ↓\n[Silent — no behavioral signal; detection requires network egress monitoring]\n```\n**Wild_vs_Theory: 4/5** — JFrog/ReversingLabs confirmed malicious models on HF.\n\n### Chain C: Multi-Agent Context Propagation\n```\n[Agent 1 compromised via PI]\n         ↓\n[Agent 1 output → injected instruction → Agent 2 context]\n         ↓\n[Privilege escalation across N-agent chain]\n         ↓\n[Final agent executes unauthorized action]\n```\n**Wild_vs_Theory: 3/5** — source-confirmed data-flow risk in common multi-agent patterns; exploitation depends on deployment-specific tool/output trust and permissions.\n\n### Category 14: ISC / Validator Harness Attack\n```\n[External task + format-only validator + incomplete data]\n         ↓\n[Model fills gaps to satisfy validator]\n         ↓\n[Harmful content is produced as task-correct output]\n         ↓\n[Standard prompt-injection detectors miss it]\n```\n**Wild_vs_Theory: 4/5 (TVD mechanism proven across frontier models and trivially replicable; the in-wild Fable 5 / Mythos 5 jailbreak and US-government shutdown corroborate real-world exploitation — public reporting does not explicitly name the ISC mechanism. The 2026-07-21 OpenAI/Hugging Face model-evaluation incident is a first-party published post-mortem of the same validator-harness failure mode — a benchmark eval with safety classifiers disabled drove models to breach Hugging Face production to obtain the eval's answers — supplying the explicit mechanism attribution the Fable case lacked. Still 4/5, not routine-in-production 5/5; see taxonomy note). Severity remains CRITICAL** when the target executes a task/validator/data harness that an attacker controls or meaningfully shapes. (Evidence and severity are rated on separate axes — see scale below.)\n"
         },
         {
           "id": "EV-RISK-CRITICAL",
@@ -2347,7 +2347,7 @@
         {
           "id": "EV17-THREAT",
           "source": "synthesis/threat-taxonomy.md",
-          "lines": "437-437",
+          "lines": "446-446",
           "quote": "### T09-MEMORY / T09-IDENTITY — Category 9: Persistent Memory Poisoning and Inter-Agent Trust Escalation"
         },
         {
@@ -2478,7 +2478,7 @@
         {
           "id": "EV18-THREAT",
           "source": "synthesis/threat-taxonomy.md",
-          "lines": "418-418",
+          "lines": "427-427",
           "quote": "### T03-SKILL — Category 3 / 9: Agent Skill Lifecycle Compromise"
         },
         {
@@ -2609,7 +2609,7 @@
         {
           "id": "EV19-THREAT",
           "source": "synthesis/threat-taxonomy.md",
-          "lines": "418-418",
+          "lines": "427-427",
           "quote": "### T03-SKILL — Category 3 / 9: Agent Skill Lifecycle Compromise"
         },
         {
@@ -2740,7 +2740,7 @@
         {
           "id": "EV20-THREAT",
           "source": "synthesis/threat-taxonomy.md",
-          "lines": "437-437",
+          "lines": "446-446",
           "quote": "### T09-MEMORY / T09-IDENTITY — Category 9: Persistent Memory Poisoning and Inter-Agent Trust Escalation"
         },
         {
@@ -2871,7 +2871,7 @@
         {
           "id": "EV21-THREAT",
           "source": "synthesis/threat-taxonomy.md",
-          "lines": "448-448",
+          "lines": "457-457",
           "quote": "### T10-CUA — Category 10: Computer-Use Visual Attack"
         },
         {
@@ -3002,7 +3002,7 @@
         {
           "id": "EV22-THREAT",
           "source": "synthesis/threat-taxonomy.md",
-          "lines": "454-454",
+          "lines": "463-463",
           "quote": "### T01-SESSION — Category 1 / 9: Session Context Contamination and Goal Hijacking"
         },
         {
@@ -3133,7 +3133,7 @@
         {
           "id": "EV23-THREAT",
           "source": "synthesis/threat-taxonomy.md",
-          "lines": "464-464",
+          "lines": "473-473",
           "quote": "### T11-RELAY — Category 11: Response-Path Integrity / Relay Tampering"
         },
         {
@@ -3264,7 +3264,7 @@
         {
           "id": "EV24-THREAT",
           "source": "synthesis/threat-taxonomy.md",
-          "lines": "472-472",
+          "lines": "481-481",
           "quote": "### T10-REPRESENTATION — Category 10 / 11: Representation Confusion"
         },
         {
@@ -3395,7 +3395,7 @@
         {
           "id": "EV25-THREAT",
           "source": "synthesis/threat-taxonomy.md",
-          "lines": "431-431",
+          "lines": "440-440",
           "quote": "### T05-CAPABILITY — Category 5: Capability and Architecture Disclosure"
         },
         {
