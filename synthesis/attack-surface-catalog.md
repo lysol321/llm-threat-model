@@ -1,7 +1,7 @@
 # LLM Threat Modeling — Attack Surface Catalog
 
-**Version:** 1.4 (agentic memory, skill, identity, computer-use, relay, and representation surfaces)
-**Date:** 2026-07-20
+**Version:** 1.7 (September research integration)
+**Date:** 2026-09-19
 **Status:** Living document — re-evaluate when adding new integrations, protocols, or deployment modes
 
 ---
@@ -103,7 +103,7 @@ Surfaces are organized into five categories:
 
 | Surface | Description | Threat Vector | Threat Category | Risk Rating |
 |---------|-------------|---------------|----------------|-------------|
-| **MCP (Model Context Protocol) channel** | MCP Host ↔ MCP Server communication | Compromised MCP server returns poisoned context; protocol injection; **most remote MCP servers lack authentication** (arXiv May 2026 — "A First Measurement Study on Real-World Remote MCP Servers") | Chain C (MCP propagation) | CRITICAL (MCP in use) |
+| **MCP (Model Context Protocol) channel** | MCP Host ↔ MCP Server communication | Compromised MCP server returns poisoned context; protocol injection; a May 2026 measurement reported authentication gaps in its sample; inventory the actual protocol/version, principal and authorization checks | Chain C (MCP propagation) | CRITICAL (MCP in use) |
 | **A2A (Agent-to-Agent) protocol** | Explicit agent-to-agent authentication and messaging | Authenticated trust bypass; message injection | Chain C (A2A propagation) | HIGH (A2A in use) |
 | **LangGraph Send API** | Dispatch-level tool call with additional state context | Dispatch-level state injection; bypasses ToolNode filtering | Chain C (Send API sub-path) | HIGH (LangGraph Send) |
 | **LangGraph Command primitive** | Direct programmatic state update via Command() | Direct state injection bypassing message-passing entirely | Chain C (Command sub-path) | HIGH (LangGraph Command) |
@@ -126,7 +126,9 @@ Surfaces are organized into five categories:
 
 ## 3. Supply Chain Surfaces
 
-**Risk lifecycle for model supply chain surfaces:** Frontier labs at official release are the safest point in a model's lifecycle. Download from the originating lab's official repository + cryptographic signature verification against the lab's known signing key = **lowest supply chain risk** for model weights. Once weights are modified (fine-tuned, distilled, converted), new supply chain surfaces open and the verified official weights risk profile no longer applies. See assumptions.md B5.
+**Risk lifecycle for model supply chain surfaces:** Official distribution with verified publisher identity and digest reduces intermediary substitution exposure. It does not exclude compromise before signing. Review supplier, build, signing, artifact format, and runtime boundaries; re-verify converted, fine-tuned, and redistributed artifacts. See assumptions.md B5 and defense-playbook.md SC-GAP-1.
+
+
 
 ### 3.1 Model Hub and Registry Surfaces
 
@@ -217,6 +219,8 @@ Surfaces are organized into five categories:
 
 | Surface | Description | Threat Vector | Threat Category | Risk Rating |
 |---------|-------------|---------------|----------------|-------------|
+| **Output consumers (browser/Markdown/stream, SQL, shell/code, files, HTTP)** | Components that render, execute or transmit model output | XSS, SQL/command injection, traversal, SSRF and disclosure; enforce PI-DEF-4 before consumption | Cat 11, Chain A | Deployment-specific |
+| **Data promotion and derived-data stores** | Authorized writers, dataset versions, chunks, embeddings and learned checkpoints | Factual tampering without instruction injection; DATA-DEF-1 | Cat 4 | Deployment-specific |
 | **Tool execution sandbox** | Isolated environment for running tool code | Sandbox escape; privilege escalation; tool return poisoning | Chain A, Cat 2 | HIGH |
 | **File system (read)** | Read access via file tool | Data exfiltration; sensitive file access | Chain A | HIGH |
 | **File system (write)** | Write access via file tool | Persistence; configuration manipulation; artifact injection | Chain A | HIGH |
@@ -290,7 +294,7 @@ The following matrix maps representative surfaces to their threat categories and
 
 | Risk Tier | Surfaces | Priority |
 |-----------|---------|----------|
-| **CRITICAL** | Direct text input, email content (EchoLeak), RAG document ingestion, MCP server response (auth gap — most remote servers lack authentication), attacker-shaped TVD harness (ISC, Cat 14, when harness is executed), HuggingFace model repo (custom code), AIBOM signing keys, tool execution sandbox, file write, network egress, shell execution, database connection, email send | Immediate action |
+| **CRITICAL** | Direct text input, email content (EchoLeak), RAG document ingestion, MCP server response (deployment-specific authorization and output trust), attacker-shaped TVD harness (ISC, Cat 14, when harness is executed), HuggingFace model repo (custom code), AIBOM signing keys, tool execution sandbox, file write, network egress, shell execution, database connection, email send | Immediate action |
 | **HIGH** | Multi-turn context, slow-burn PI trajectory accumulation, file upload, search results, shared memory/state, LangGraph Send/Command, adapter registry, fine-tuning pipeline, RLHF pipeline, PyPI deps, inference API, tool return values, file read, system prompt, custom inference hooks, context window, skill marketplace | This quarter |
 | **MEDIUM** | Structured data input, base64/Unicode, code generation, A2A protocol, streaming endpoint, database query results, webhook response, tokenizer, container image, deployment pipeline, batch API, shared GPU, audit logs, skill permission model | Next planning cycle |
 | **LOW** | API parameters (non-text), metrics endpoint, debug interfaces | Monitor |
@@ -373,10 +377,10 @@ Confirm which surfaces are present in your deployment:
 | Surface | Description | Threat Vector | Threat Category | Risk Rating |
 |---|---|---|---|---|
 | **Durable agent memory** | Cross-session memory, summaries, preferences, or memory retrieval store | T09-MEMORY persistent memory poisoning; future-session goal drift | Cat 1, Cat 9 | MEDIUM; elevate impact when later retrieval has greater privilege |
-| **Skill retrieval / planner selection** | Semantic search and planning path that selects reusable skills | T03-SKILL retrieval manipulation; planner deception; capability substitution | Cat 3, Cat 9 | MEDIUM pending field evidence |
-| **Skill evolution channel** | Updates, dependency changes, or post-install metadata changes | T03-SKILL rug pull; delayed malicious behavior; permission creep | Cat 3 | MEDIUM pending field evidence |
+| **Skill retrieval / planner selection** | Semantic search and planning path that selects reusable skills | T03-SKILL retrieval manipulation; planner deception; capability substitution | Cat 3, Cat 9 | Deployment-specific; malicious skill distribution is confirmed, not every subtype |
+| **Skill evolution channel** | Updates, dependency changes, or post-install metadata changes | T03-SKILL rug pull; delayed malicious behavior; permission creep | Cat 3 | Deployment-specific; malicious skill distribution is confirmed, not every subtype |
 | **Inter-agent identity claim** | Identity and privilege metadata attached to agent messages | T09-IDENTITY trust escalation; confused deputy; privilege inflation | Cat 9 | MEDIUM; elevate impact when claims authorize sensitive actions |
-| **Computer-use visual field** | Rendered UI, viewport, DOM/accessibility tree, and off-screen elements | T10-CUA visual prompt injection; deceptive clicks; approval laundering | Cat 10, Cat 12 | MEDIUM pending field evidence |
+| **Computer-use visual field** | Rendered UI, viewport, DOM/accessibility tree, and off-screen elements | T10-CUA visual prompt injection; deceptive clicks; approval laundering | Cat 10, Cat 12 | Deployment-specific; malicious skill distribution is confirmed, not every subtype |
 | **LLM response relay / router** | BYOK proxy, gateway, model router, or response-transforming middleware | T11-RELAY post-alignment response forgery; tool-call field tampering | Cat 11 | MEDIUM and provisional pending independent replication |
 | **Representation boundary** | Conversion between binary, text, code, metadata, records, and evidence | T10-REPRESENTATION data interpreted as instructions or non-independent evidence | Cat 10, Cat 11 | LOW/MEDIUM; monitor and test the assessed pipeline |
 
@@ -394,6 +398,29 @@ Add the following to the deployment surface verification checklist:
 - [ ] Is the executed response authenticated end-to-end, including tool names and arguments?
 - [ ] Can content change representation before reaching the model or validator?
 
-**Last updated:** 2026-07-20 (v1.4 — integrated agentic trust-boundary surfaces and evidence-calibrated ratings)
-**Next review:** 2026-09-24 or when adding new integrations
-**Part of:** LLM Threat Modeling Framework v1.9 release (see `release-manifest.md`)
+## September boundary inventory additions
+
+| Surface | Boundary to test | Existing controls |
+|---|---|---|
+| MCP gateway, cache and continuation | Authorized principal/method/arguments versus executed request; cached data scope; approval replay | MA-DEF-1, MA-DEF-3 |
+| Build scanner, package loader and startup hook | Supplier/build authority into runtime code and production credentials | SC-DEF-1, SC-DEF-2 |
+| Sandbox binary, policy and approval configuration | Workload-writable paths versus enforcement assets, including symlinks | SC-DEF-2, AGENCY-DEF-1 |
+| Shared artifact store and execution logs | Implicit agent communication; actor-controlled evidence versus independent records | MA-DEF-1, DET-DEF-3 |
+
+Evidence and publication/event distinctions: `research/sources/Landscape-Update-2026-09.md`. Presence of MCP alone does not imply CRITICAL risk; triage labels above require an exposed path and assessed impact.
+
+## Research integration boundary inventory
+
+| Surface | Boundary to test | Controls |
+|---|---|---|
+| Live monitor transcript adapter | Agent-authored text versus trusted role/turn/author records; complete pre-compaction and worker context | REP-DEF-1, DET-DEF-3 |
+| Queued/delayed execution | Approved command and executable/dependency contents versus mutable files actually executed | PI-DEF-4, SC-DEF-2, AGENCY-DEF-2 |
+| Ephemeral compaction/resume | Model-authored summary versus authoritative user instructions, approvals and denials | MEM-DEF-1, MA-DEF-3 |
+| Inference rejection/cancellation/abort | Failed request versus retained reservations, pending receives and worker state | DOS-DEF-1 |
+| Watermark/logit/sampling configuration change | Previously validated model behavior versus changed generation and downstream action behavior | PI-DEF-4, AGENCY-DEF-1/2 |
+
+These are extensions of existing surfaces. Source: `research/sources/Latest-Development-Integration-2026-09-19.md`; claims about lab demonstrations, endogenous behavior and provider configuration must retain their prerequisites and evidence limits.
+
+**Last updated:** 2026-09-19 (v1.7 — research integration)
+**Next review:** 2026-10-15 or after a material deployment change
+**Part of:** LLM Threat Modeling Framework v1.12 (see release-manifest.md)

@@ -1,9 +1,9 @@
 # LLM Threat Modeling — Quick Reference
 
-**Version:** 1.8
+**Version:** 1.11 (September research integration)
 **For:** Engineering teams (no ML security expertise required)
 **Time to complete assessment:** Under 4 hours
-**Date:** 2026-07-20
+**Date:** 2026-09-19
 
 ---
 
@@ -36,13 +36,13 @@
 ```
 [Indirect PI via RAG/documents]
          ↓
-[Excessive Agency: tool permissions + no HITL]
+[Sensitive data + reachable output/tool disclosure channel]
          ↓
-[Tool call exfiltrates data (email, webhook, file write)]
+[Answer, renderer request, search query or tool exports data]
          ↓
 [Attacker receives data — logged as legitimate user action]
 ```
-**Wild_vs_Theory: 4/5** — EchoLeak/CVE-2025-32711 confirmed in wild.
+**Wild_vs_Theory: 4/5** — Field AI-wrapper disclosure reporting supports Chain A; EchoLeak individually remains 3/5. See `research/sources/Landscape-Update-2026-09.md`.
 
 ### Chain B: Supply Chain → Model Replacement → Silent Exfiltration
 ```
@@ -78,7 +78,7 @@
          ↓
 [Standard prompt-injection detectors miss it]
 ```
-**Wild_vs_Theory: 4/5 (TVD mechanism proven across frontier models and trivially replicable; the in-wild Fable 5 / Mythos 5 jailbreak and US-government shutdown corroborate real-world exploitation — public reporting does not explicitly name the ISC mechanism. The 2026-07-21 OpenAI/Hugging Face model-evaluation incident is a first-party published post-mortem of the same validator-harness failure mode — a benchmark eval with safety classifiers disabled drove models to breach Hugging Face production to obtain the eval's answers — supplying the explicit mechanism attribution the Fable case lacked. Still 4/5, not routine-in-production 5/5; see taxonomy note). Severity remains CRITICAL** when the target executes a task/validator/data harness that an attacker controls or meaningfully shapes. (Evidence and severity are rated on separate axes — see scale below.)
+**Wild_vs_Theory: 2/5** — TVD/ISC is demonstrated in controlled research (arXiv:2603.23509). OpenAI/Hugging Face is an adjacent containment incident, not explicit ISC attribution. Assess attacker-shaped harness exposure and downstream harm separately; evidence maturity does not cap deployment severity.
 
 ---
 
@@ -94,6 +94,8 @@ This scale rates **how confirmed an attack is in practice — not how severe it 
 | **4/5** | Confirmed in the wild | Documented real-world incident, CVE, or post-mortem of actual exploitation |
 | **5/5** | Routinely exploited in the wild | Trivial and repeatedly observed in production |
 
+**Deployment scoring:** Evidence confidence never caps risk. Use the higher reachable-chain score when a memory, skill, relay or other overlay completes that chain. Round residual arithmetic upward before applying acceptance bands.
+
 **Evidence ≠ severity.** A low-evidence (1–2/5) attack can still be CRITICAL severity; a 5/5 attack can be LOW severity (e.g., context-window DoS). Use this scale to resist over-reaction to lab-only findings and under-reaction to confirmed-in-wild ones — not as a stand-in for impact.
 
 ---
@@ -102,6 +104,9 @@ This scale rates **how confirmed an attack is in practice — not how severe it 
 
 | Defense | Threat Addressed | Control Type | Effectiveness |
 |---------|-----------------|--------------|---------------|
+| **DOS-DEF-1:** Inference resource and spend limits | DoS / quota exhaustion, including no-tool chatbots | Technical (infrastructure) | Bound by tested cutoff |
+| **PI-DEF-4:** Output consumer enforcement | Browser/SQL/command/path/HTTP and answer disclosure | Technical at receiving component | Deployment-specific; test each consumer |
+| **DATA-DEF-1:** Source and dataset integrity | Factual RAG/training/feedback poisoning | Technical + content validation/procedural | Deployment-specific; provenance alone is insufficient |
 | **PI-DEF-1:** Instruction hierarchy hardening | Prompt Injection | Alignment | MEDIUM |
 | **PI-DEF-2:** RAG context labeling + load-time sanitization | Indirect PI | Technical (infrastructure) | HIGH |
 | **AGENCY-DEF-1:** Minimal tool permission allowlist | Excessive Agency | Technical (infrastructure) | CRITICAL |
@@ -138,6 +143,21 @@ This scale rates **how confirmed an attack is in practice — not how severe it 
 ## Decision Tree Shortcut
 
 ```
+Can changeable/external data influence retrieval, training or feedback?
+  YES → DATA-DEF-1 source validation, authorized changes, versions and recovery REQUIRED
+        Plausible false facts need no instruction injection
+
+Does output reach a browser, database, command runner, file writer or HTTP client?
+  YES → PI-DEF-4 encoding/parameterization/constrained execution and authorization REQUIRED
+
+Is sensitive context available, including through read-only retrieval?
+  YES → Validate recipient access, external search queries, and renderer egress (PI-DEF-4)
+        Tool absence or trusted users do not rule out Chain A disclosure
+        LOW requires tested boundaries on every applicable disclosure/execution path
+
+Is metered or exhaustible inference exposed?
+  YES → DOS-DEF-1 enforced request/token/concurrency/retry/spend limits REQUIRED
+
 Is prompt injection surface present?
   YES → Is RAG/retrieval used?
     YES → PI-DEF-2 (load-time sanitization + infrastructure privilege separation) REQUIRED
@@ -165,14 +185,16 @@ Is any model, adapter, skill, MCP server, or dependency third-party?
 3. Rate each defense as YES / PARTIAL / NO using the rubric.
 4. Calculate residual risk using the Section 5 decision framework.
 5. Prioritize fixes using the defense investment tiers in `framework.md`.
+6. Record actual ratings, arithmetic, actions and owners; tabletop PASS describes assessment completeness, not a safe deployment.
+7. Classify jurisdiction, intended use and legal role before applying regulatory articles; EU-market access alone does not imply high-risk system obligations.
 
 ## Agentic Trust-Boundary Triage
 
 Use these gates for modern agent deployments:
 
 ```text
-Does the system write or retrieve durable memory?
-  YES → MEM-DEF-1 memory write authorization + provenance + rollback REQUIRED
+Does the system write/retrieve memory or compact context for a task resume?
+  YES → MEM-DEF-1 write/resume authority + genuine approvals/denials + provenance + rollback REQUIRED
 
 Can influence accumulate across turns, sessions, or agent handoffs?
   YES → DET-DEF-3 trajectory and accumulated-influence monitoring REQUIRED
@@ -195,8 +217,27 @@ Can content change representation before model or validator consumption?
   YES → REP-DEF-1 preserve origin/representation metadata and test the actual conversion pipeline
 ```
 
-**Next review date:** 2026-09-24
+**Next review:** 2026-10-15 or after a material deployment change
 
 ---
 
-*Quick Reference v1.8 — For full framework see: synthesis/framework.md*
+*Quick Reference v1.11 — For full framework see: synthesis/framework.md*
+
+## September operator checks
+
+- MCP: inventory versions; test issuer, execution authorization, cache scope and approval continuation under MA-DEF-1/MA-DEF-3.
+- Skills: T03-SKILL evidence 4/5 for malicious distribution; check remote payloads and persistence with SKILL-DEF-1.
+- Memory: T09-MEMORY evidence 3/5 overall, InjecMEM 2/5; test normal-input ingestion and future topic triggers with MEM-DEF-1.
+- Build/runtime: SC-DEF-1/SC-DEF-2 cover dependencies and immutable sandbox/policy artifacts. Verify real network isolation.
+- Incident response: DET-DEF-3 requires independent, complete execution evidence. Revoke exposed credentials and remove persistence as well as patching.
+
+See `research/sources/Landscape-Update-2026-09.md` for publication dates, primary sources and evidence limits.
+
+## Research integration operator checks
+
+- **Blocking monitor or delayed execution:** REP-DEF-1 preserves trusted role/turn framing; PI-DEF-4/SC-DEF-2 bind approval to immutable executable content or require reauthorization after mutation. Test both changed and unchanged fixtures.
+- **Compaction/resume:** MEM-DEF-1 applies without durable memory. Restore genuine user approval/denial from an independent record; a summary cannot grant authority.
+- **Failed inference requests:** DOS-DEF-1 includes rejection, cancellation, abort and timeout cleanup; measure retained state and subsequent successful traffic.
+- **Changed watermark/logit/sampling settings:** inventory settings and unknowns, then rerun paired denied and legitimate task/action tests before relying on earlier model-level results. Keep independent infrastructure enforcement.
+
+Evidence caveats and source dates: `research/sources/Latest-Development-Integration-2026-09-19.md`. These extend existing categories and do not raise in-the-wild ratings.

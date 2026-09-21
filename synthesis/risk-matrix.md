@@ -1,7 +1,7 @@
 # LLM Risk Matrix
 
-**Version:** 1.9 (relay impact calibrated to deployment blast radius)
-**Date:** 2026-07-20
+**Version:** 1.12 (September research integration)
+**Date:** 2026-09-19
 **Status:** Living document — re-evaluate quarterly
 
 ## v1.2 Notes
@@ -59,7 +59,7 @@ Risk = Likelihood × Impact. This matrix rates each threat category on both axes
 
 **Chain C rationale:** Multi-agent systems are increasingly common (agentic AI). Likelihood is 3 because context propagation requires the specific multi-agent architecture, but this is common in enterprise RAG and assistant deployments. Impact is 5 because escalating across agents compounds the damage of single-agent PI.
 
-**ISC rationale:** ISC requires an attacker-controlled or attacker-shaped task/validator/data harness that the target model/agent executes. Likelihood is 4 when attacker-shaped harness material can enter coding, evaluation, data-labeling, fine-tuning, code-repair, or autonomous workflow systems. Impact is 5 because harmful generation emerges from task completion and bypasses instruction-following safety classifiers; provider-side model controls and deployer-side harness validation are both required. **Evidence provenance:** primary research (arXiv:2603.23509) supports TVD, ISC-Bench, 53 scenarios across 8 disciplines, and 95.3% worst-case failure across representative scenarios; press/community incident narratives are not used for this score.
+**ISC rationale:** ISC requires an attacker-controlled or attacker-shaped task/validator/data harness that the target model/agent executes. Likelihood is 4 when attacker-shaped harness material can enter coding, evaluation, data-labeling, fine-tuning, code-repair, or autonomous workflow systems. Impact 5 is reserved for a deployment where harness-driven output/action can cause catastrophic harm; harmful text alone does not establish that impact. Use lower local axes when consequences are contained; provider-side model controls and deployer-side harness validation are both required. **Evidence provenance:** primary research (arXiv:2603.23509) supports TVD, ISC-Bench, 53 scenarios across 8 disciplines, and 95.3% worst-case failure across representative scenarios; press/community incident narratives are not used for this score.
 
 ---
 
@@ -69,15 +69,15 @@ Risk = Likelihood × Impact. This matrix rates each threat category on both axes
 |---|---|---|---|---|---|---|---|
 | **Direct Prompt Injection** | 5 | 3 | **15** | N/A | **15** | Developer + Operator | EU AI Act Art. 13, Art. 15 |
 | **Purchased PI Template Attack** | 5 | 3 | **15** | N/A | **15** | Developer + Operator | EU AI Act Art. 13, Art. 15 |
-| **RAG Context Poisoning** (standalone) | 3 | 4 | **12** | Data-heavy RAG where poisoned documents can influence decisions/actions (Impact 4→5) | **15** | Operator | EU AI Act Art. 9, Art. 15 |
+| **RAG Context Poisoning** (standalone; DATA-DEF-1) | 3 | 4 | **12** | Data-heavy RAG where poisoned documents can influence decisions/actions (Impact 4→5) | **15** | Operator | EU AI Act Art. 9, Art. 15 |
 | **LoRA/PEFT Adapter Swap** | 2 | 5 | **10** | Fine-tuning-heavy or adapter-heavy organization with weak registry controls (Likelihood 2→3) | **15** | Operator (registry) | EU AI Act Art. 15, Art. 17; GDPR Art. 32 |
-| **Training Data Poisoning** | 2 | 5 | **10** | High-stakes AI application or continuous-learning/feedback-loop deployment (Likelihood 2→3) | **15** | Provider (primary), Operator | EU AI Act Art. 10, Art. 15 |
+| **Training Data Poisoning** (DATA-DEF-1) | 2 | 5 | **10** | High-stakes AI application or continuous-learning/feedback-loop deployment (Likelihood 2→3) | **15** | Provider (primary), Operator | EU AI Act Art. 10, Art. 15 |
 | **Excessive Agency (standalone)** | 4 | 3 | **12** | Agentic systems with state-changing tools or weak HITL (Impact 3→4) | **16** | Developer | EU AI Act Art. 14 |
 | **API Quota Exhaustion (DoS)** — Standard API | 4 | 3 | **12** | N/A | **12** | Operator | SLA obligations |
-| **API Quota Exhaustion (DoS)** — Metered Enterprise API (e.g., $10K+/month budget) | 4 | 4 | **16** | Business-critical metered API with material budget/service impact | **16** | Operator | SLA obligations; financial controls |
+| **API Quota Exhaustion (DoS)** — Metered Enterprise API (DOS-DEF-1; e.g., $10K+/month budget) | 4 | 4 | **16** | Business-critical metered API with material budget/service impact | **16** | Operator | SLA obligations; financial controls |
 | **Embedding Inversion / Training Data Extraction** | 2 | 5 | **10** | Personal-data-bearing training/embedding stores (Likelihood 2→3) | **15** | Provider + Operator | GDPR Art. 17, Art. 32; EU AI Act Art. 10 |
 
-**Direct PI rationale:** Likelihood 5 because literally any user input field is a potential vector and standard LLMs will process injected instructions. However, impact is mitigated to 3 because without agency, PI primarily generates misleading content rather than causing system-wide harm.
+**Direct PI rationale:** Likelihood 5 because literally any user input field is a potential vector and standard LLMs will process injected instructions. Impact 3 is a text-only, non-sensitive baseline. Sensitive context disclosure or downstream execution requires deployment-specific impact reassessment even without model tools.
 
 **Quota exhaustion rationale:** Likelihood 4 because it requires only volume, not sophistication. Impact 3 for standard APIs (recoverable, contained to API costs). For metered enterprise APIs with significant monthly budgets, impact escalates to 4 — the attacker cost advantage (attacker pays for API calls; victim loses service AND pays for those calls) plus secondary operational harm during business-critical operations makes this financially destructive, not merely recoverable. The defense-playbook correctly characterizes quota exhaustion as "financially destructive to the victim."
 
@@ -121,6 +121,10 @@ Risk = Likelihood × Impact. This matrix rates each threat category on both axes
 
 ### EU AI Act (Regulation 2024/1689)
 
+**Applicability gate:** Record jurisdiction, intended use and entity role first. Articles 9–15 below concern high-risk systems classified under Article 6 and Annexes I/III; provider and deployer duties differ (including Articles 16 and 26). GPAI-provider duties follow Articles 53–54, with additional Article 55 duties for systemic-risk GPAI. Article 50 transparency is a separate check. Neither EU market access nor supplier nationality automatically establishes these classifications. Record applicable dates/exemptions and the legal/compliance owner; unresolved classification remains an open action. Source: `research/sources/Review-Corrections-2026-09-19.md`.
+
+The article labels in risk rows are potential mappings, not unconditional obligations or automatic evidence of compliance.
+
 | Threat / control area | EU AI Act Article | Obligation |
 |---|---|---|
 | All high-risk AI threat assessment | Article 9 (Risk Management System) | Identify, estimate, evaluate, mitigate, and review known and reasonably foreseeable risks across the lifecycle |
@@ -130,7 +134,7 @@ Risk = Likelihood × Impact. This matrix rates each threat category on both axes
 | Prompt injection, poisoning/evasion, confidentiality attacks, model flaws, robustness/cybersecurity | Article 15 (Accuracy, Robustness and Cybersecurity) | Design for appropriate accuracy, robustness, cybersecurity, resilience to manipulation, and AI-specific vulnerabilities |
 | Provider release process, validation procedures, post-market monitoring linkage | Article 17 (Quality Management System) | Maintain documented quality processes, validation procedures, compliance strategy, and accountability framework |
 
-**Non-compliance fines:** Up to 3% of global turnover or €15M for documentation failures; up to 6% or €30M for fundamental violations.
+**Article 99 penalties:** Prohibited practices: up to €35M / 7%; listed other obligations: €15M / 3%; specified incorrect, incomplete or misleading information: €7.5M / 1%. The higher amount applies to undertakings, with the lower amount rule for SMEs; separate GPAI-provider provisions also apply. Determine role, scope and applicable article first. See `research/sources/Review-Corrections-2026-09.md` and the enacted text linked there.
 
 ### US FTC AI Guidance
 
@@ -146,7 +150,7 @@ Risk = Likelihood × Impact. This matrix rates each threat category on both axes
 |---|---|---|
 | Embedding inversion | Article 17 (Right to Erasure) | If personal data in training data, must support erasure requests |
 | Training data poisoning | Article 25 (Privacy by Design) | Technical measures preventing unauthorized processing |
-| Cross-tenant leakage | Article 32 (Security) | Technical measures ensuring separation; breach notification within 72 hours |
+| Cross-tenant leakage | Articles 32 (Security), 33 (Notification), 34 (Communication) | Enforce separation. Controllers notify the authority without undue delay and, where feasible, within 72 hours of awareness unless unlikely to risk individuals; processors notify controllers without undue delay. Assess data-subject communication separately. |
 | Model outputs containing personal data | Article 13/14 | Data subjects informed when AI processes their data |
 
 ---
@@ -158,7 +162,7 @@ These annotations reflect real-world engineering tradeoffs — not abstract reco
 | Defense | Latency Cost | UX Impact | Expertise Required | Notes |
 |---|---|---|---|---|
 | Input filtering (prompt) | 50–200ms per call | False positives may block legitimate inputs | Low-Medium | Tune carefully for domain-specific terminology |
-| RAG context labeling | 5–20ms per retrieval | None | Low | Mark retrieved content as untrusted at index time |
+| RAG context labeling | 5–20ms per retrieval | None | Low | Preserve provenance and enforce access at retrieval/output boundaries |
 | Agency restrictions (tool allowlist) | None | Limits legitimate multi-step workflows | Medium | Requires upfront design work to define minimal permissions |
 | Per-call human authorization | N/A (blocks automation) | Major UX degradation for automated use cases | Low | Only viable for low-frequency, high-stakes operations |
 | Custom inference code review | Adds 1–5 days to model deployment cycle | None | HIGH (ML security specialist) | Most organizations lack this expertise; use sandboxing instead |
@@ -221,21 +225,31 @@ Key zones:
 
 ## Agentic Trust-Boundary Risk Overlays — July 2026
 
-These deployment-specific overlays are MEDIUM or lower because current evidence is limited to controlled research and vendor red-team reporting. Surface presence establishes applicability, not maximum impact. Elevation requires a named axis change and remains below HIGH until Wild_vs_Theory reaches at least 3/5.
+The table gives baseline planning scores, not ceilings. Evidence confidence is separate from likelihood and impact for a concrete deployment. Record the attacker-controlled entry, reachable asset and loss, then use the greater of the overlay score and any established chain it completes. For example, a skill update executing malicious code can inherit Chain B (15/20), and poisoned memory feeding a sensitive-data disclosure path can inherit Chain A (20). Document local likelihood/impact changes and uncertainty; avoid double-counting one loss across categories.
 
 | Threat overlay | Wild_vs_Theory | Likelihood | Impact | Base Score | Elevation Condition | Elevated Score | Owner | Regulatory | Primary controls |
 |---|---:|---:|---:|---:|---|---:|---|---|---|
-| Persistent memory poisoning | 2/5 | 2 | 4 | **8** | Poisoned memory is retrieved into a higher-privilege workflow (Impact 4→5) | **10** | Developer + Operator | EU AI Act Art. 9, 15 | MEM-DEF-1, PI-DEF-2, DET-DEF-3 |
-| Skill lifecycle compromise | 2/5 | 2 | 4 | **8** | Unreviewed skill update gains high-impact tool access (Impact 4→5) | **10** | Developer + Operator | EU AI Act Art. 15, 17 | SKILL-DEF-1, AGENCY-DEF-1, SC-DEF-1 |
+| Persistent memory poisoning | 3/5 | 2 | 4 | **8** | Poisoned memory is retrieved into a higher-privilege workflow (Impact 4→5) | **10** | Developer + Operator | EU AI Act Art. 9, 15 | MEM-DEF-1, PI-DEF-2, DET-DEF-3 |
+| Skill lifecycle compromise | 4/5 | 2 | 4 | **8** | Unreviewed skill update gains high-impact tool access (Impact 4→5) | **10** | Developer + Operator | EU AI Act Art. 15, 17 | SKILL-DEF-1, AGENCY-DEF-1, SC-DEF-1 |
 | Inter-agent trust escalation | 2/5 | 2 | 4 | **8** | Self-asserted identity can authorize irreversible or sensitive action (Impact 4→5) | **10** | Developer + Operator | EU AI Act Art. 14, 15 | MA-DEF-1, MA-DEF-3, AGENCY-DEF-2 |
 | Computer-use visual attack | 2/5 | 2 | 4 | **8** | Visual state can trigger irreversible external action (Impact 4→5) | **10** | Developer | EU AI Act Art. 14, 15 | CUA-DEF-1, AGENCY-DEF-2 |
 | Session contamination / incremental escalation | 2/5 | 2 | 4 | **8** | Accumulated influence reaches a higher-privilege action path (Impact 4→5) | **10** | Developer + Operator | EU AI Act Art. 14, 15 | PI-DEF-1, DET-DEF-3, AGENCY-DEF-3 |
 | Response-path relay tampering *(provisional)* | 1/5 | 1 | 4 | **4** | Independent replication in the assessed relay path establishes practical exploitability (Likelihood 1→2) | **8** | Developer + Operator + Provider | EU AI Act Art. 15 | RELAY-DEF-1, schema validation, direct provider path |
 | Representation confusion *(monitor)* | 1/5 | 1 | 4 | **4** | Independent reproduction in the assessed representation pipeline (Likelihood 1→2) | **8** | Developer | EU AI Act Art. 15 | REP-DEF-1, PI-DEF-4 |
 
-Do not promote any overlay to HIGH/CRITICAL until evidence meets the Wild_vs_Theory ≥3 gate and the assessed deployment has the required blast radius.
+HIGH/CRITICAL deployment scores do not require an in-wild incident. They require a documented applicable attack path and impact; low Wild_vs_Theory means greater uncertainty, not permission to ignore a demonstrated local failure.
 
 ---
 
-**Last updated:** 2026-07-20 (v1.9 — calibrated provisional relay impact and retained machine-checkable elevation semantics)
-**Next review:** 2026-09-17
+## September interpretation
+
+Updated field and demonstration evidence is recorded in `research/sources/Landscape-Update-2026-09.md`. Skill and memory confidence changes do not automatically change likelihood or impact: the overlay's 8/10 baseline/elevated scores remain planning defaults, subject to the higher reachable-chain rule. Malicious distribution is confirmed; successful exploitation of every skill subtype is not.
+
+Route version-dependent MCP authorization, cache scope and continuation binding to MA-DEF-1/MA-DEF-3; runtime/build compromise and writable enforcement artifacts to SC-DEF-1/SC-DEF-2; incomplete or agent-writable evidence to DET-DEF-1/DET-DEF-3. Score the reachable action or disclosure, not the presence of a protocol alone.
+
+## Research integration scoring guidance
+
+Map monitor/approval and compaction/resume variants to their reachable existing Chain A/C or output/agency loss; map failed-request resource retention to Category 8. If an existing row does not represent the deployment, record likelihood, impact and prerequisites explicitly as a deployment score. Do not translate lab success rates or configuration sensitivity into production likelihood. A generation-setting change triggers revalidation, not automatic score inflation. Retain only independently supported infrastructure credit and record uncertainty in model-level controls. New hypothetical examples SCN-36 through SCN-39 illustrate these decisions; they do not change the base-risk rows or Wild_vs_Theory ratings. Source: `research/sources/Latest-Development-Integration-2026-09-19.md`.
+
+**Last updated:** 2026-09-19 (v1.12 — research integration)
+**Next review:** 2026-10-15 or after a material deployment change

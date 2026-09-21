@@ -1,7 +1,7 @@
 # LLM Threat Assessment — Engineering Worksheet
 
-**Version:** 1.9 (agentic trust-boundary controls integrated into scoring and residual-risk workflow)
-**Date:** 2026-07-20
+**Version:** 1.12 (September research integration)
+**Date:** 2026-09-19
 **Purpose:** Enable a 3-person engineering team (no ML security expertise required) to complete a valid threat model for their LLM deployment in under 4 hours.
 **How to use:** Work through Sections 1–5 in order. Use the Scoring Rubric Appendix (Appendices A–F) at the end when you need decision guidance for specific ratings. First pick a concrete deployment profile (for example: customer-support RAG assistant with CRM tools; internal code agent with repo write tools; self-hosted open-weight model with LoRA adapter; multi-agent research workflow). Score that deployment, not the abstract product roadmap.
 
@@ -50,6 +50,12 @@ _____________________________________________
 _____________________________________________
 
 ---
+
+### 1.5 Regulatory Applicability
+
+Record jurisdiction and territorial scope, intended use, the organization's role (system provider/deployer, GPAI provider, importer/distributor), high-risk classification under Article 6/Annexes I/III, GPAI systemic-risk status where relevant, and applicable dates/exemptions. Attach the classification rationale and responsible legal/compliance owner; unresolved classification is an open action, not evidence of compliance.
+
+EU-market access alone does not trigger all high-risk obligations. Route applicable high-risk system requirements to Articles 9–15 and role-specific duties (including Articles 16/26); GPAI-provider duties to Articles 53–54, plus Article 55 for systemic risk. Assess Article 50 transparency independently. For personal data, establish GDPR scope and controller/processor role. See `risk-matrix.md` Regulatory Mapping.
 
 ## Section 2: Threat Surface Assessment
 
@@ -105,12 +111,13 @@ _____________________________________________
 
 | Threat Category | Applies? | Priority (if YES) |
 |-----------------|----------|-------------------|
+| Data / Model Poisoning (RAG facts, training/fine-tuning data, feedback and embedding ingestion) | [ ] YES  [ ] NO | If YES, complete DATA-DEF-1 even when no instruction injection exists. |
 | System Prompt Leakage | [ ] YES  [ ] NO | |
 | Model Extraction | [ ] YES  [ ] NO | |
 | Embedding Inversion (if personal data) | [ ] YES  [ ] NO | |
-| Denial of Service | [ ] YES  [ ] NO | |
+| Denial of Service | [ ] YES  [ ] NO | If YES, complete DOS-DEF-1 even if no tools exist. |
 | Non-Text Injection (image/audio/structured data) | [ ] YES  [ ] NO | |
-| Output Validation Failures | [ ] YES  [ ] NO | |
+| Output Validation Failures (browser/Markdown/stream, SQL, shell/code, files, HTTP, answers) | [ ] YES  [ ] NO | Inventory each consumer and complete PI-DEF-4. |
 | HITL Failures | [ ] YES  [ ] NO | |
 | Defense Control Type Confusion | [ ] YES  [ ] NO | |
 
@@ -129,12 +136,12 @@ _____________________________________________
 
 ### 2.7 Agentic Trust-Boundary Surfaces
 
-Complete this section when the deployment uses durable memory, reusable skills, computer-use interfaces, inter-agent delegation, representation conversion, or an LLM relay/router.
+Complete this section when the deployment uses durable memory, ephemeral context compaction, blocking monitors, reusable skills, computer-use interfaces, inter-agent delegation, representation conversion, or an LLM relay/router.
 
 | Threat / surface | Applies? | Notes |
 |---|---|---|
-| Durable memory, summaries, preferences, or memory retrieval store | [ ] YES  [ ] NO | If YES, complete MEM-DEF-1. |
-| Model-derived or retrieved content can write durable memory | [ ] YES  [ ] NO | Record the independent write authorization. |
+| Durable memory, ephemeral compaction/resume summaries, preferences, or memory retrieval store | [ ] YES  [ ] NO | If YES, complete MEM-DEF-1. |
+| Model-derived or retrieved content can write memory or a compaction/resume summary | [ ] YES  [ ] NO | Record the independent write authorization. |
 | Skills are selected through semantic retrieval or planner ranking | [ ] YES  [ ] NO | If YES, complete SKILL-DEF-1. |
 | Skills, tool descriptions, permissions, or dependencies can change after installation | [ ] YES  [ ] NO | Record version pinning and change monitoring. |
 | Inter-agent messages carry identity, delegation, or privilege claims | [ ] YES  [ ] NO | If YES, complete MA-DEF-3. |
@@ -142,7 +149,7 @@ Complete this section when the deployment uses durable memory, reusable skills, 
 | Computer-use agent receives screenshots, rendered pages, DOM, or accessibility data | [ ] YES  [ ] NO | If YES, complete CUA-DEF-1. |
 | BYOK relay, model router, gateway, or response-transforming middleware is in path | [ ] YES  [ ] NO | If YES, complete RELAY-DEF-1 and record any upstream-assurance gap. |
 | Trajectory-level monitoring tracks cumulative influence across turns and handoffs | [ ] YES  [ ] NO | Per-message filtering alone is NO. |
-| Representation changes can occur before model or validator consumption | [ ] YES  [ ] NO | If YES, complete REP-DEF-1. |
+| Representation changes can occur before model, live blocking monitor or validator consumption | [ ] YES  [ ] NO | If YES, complete REP-DEF-1. |
 
 ---
 
@@ -156,20 +163,23 @@ Use this table after completing Section 2 so teams do not skip required controls
 
 | If Section 2 says... | Then complete these Section 3 controls | Notes |
 |---|---|---|
+| Changeable/external RAG, training, fine-tuning, feedback or embedding source = YES | DATA-DEF-1, SC-GAP-1 where learned behavior is affected | Check factual integrity independently of instruction filtering. |
+| DoS / metered requests / shared quotas = YES | DOS-DEF-1, DET-DEF-2 | Enforce request, token, concurrency, retry and spend limits even without tools. |
+| Sensitive context or read-only retrieval = YES | PI-DEF-2, PI-DEF-4 | Check recipient authorisation, outbound queries, and renderer egress; tool absence does not prevent disclosure. |
 | Any prompt injection surface = YES | PI-DEF-1, PI-DEF-3, PI-DEF-4 | Direct PI always requires basic prompt and output controls. |
 | RAG / retrieval = YES | PI-DEF-2 | Must check load-time sanitization and infrastructure-enforced RAG/tool privilege separation. |
 | Tools or actions = YES | AGENCY-DEF-1, AGENCY-DEF-2, AGENCY-DEF-3 | Tool access is the force multiplier for prompt injection. |
 | Hosted API provider = YES | SC-DEF-1, SC-DEF-3, SC-GAP-1 | Use the hosted-provider checklist in Section 2.4 and Appendix A. |
 | HuggingFace / model hub / self-hosted weights = YES | SC-DEF-1, SC-DEF-2, SC-DEF-3, SC-GAP-1 | Custom inference code and adapters require explicit review/sandbox decisions. |
-| Multi-agent / MCP / A2A / LangGraph = YES | MA-DEF-1, MA-DEF-2, DET-DEF-1 | Record whether context isolation is infrastructure-enforced or just prompted. |
+| Multi-agent / MCP / A2A / LangGraph = YES | MA-DEF-1, MA-DEF-2, MA-DEF-3, DET-DEF-1 | Record actual protocol/SDK versions, authenticated principal, execution authorization, cache scope and approval binding; context isolation must be infrastructure-enforced. |
 | Attacker-shaped task/validator/data harness = YES | ISC-DEF-1, ISC-DEF-2, ISC-DEF-3 | ISC is harness-bound, not role-bound. Plain inference without harness is N/A/LOW. |
 | Any state-changing action or customer-visible output = YES | AGENCY-DEF-2, PI-DEF-4, DET-DEF-1 | HITL must show context provenance, not just proposed action. |
-| Durable memory or model-influenced memory writes = YES | MEM-DEF-1, DET-DEF-3 | Cross-session tests and rollback evidence are required. |
+| Memory writes or ephemeral compaction/resume = YES | MEM-DEF-1, DET-DEF-3 | Test write/resume authority, genuine approvals/denials and rollback; include ephemeral contexts. |
 | Dynamic skill retrieval, installation, or update = YES | SKILL-DEF-1, SC-DEF-1, AGENCY-DEF-1 | Review admission, retrieval, planner selection, execution, and evolution. |
 | Inter-agent identity/delegation claims = YES | MA-DEF-3, MA-DEF-1, AGENCY-DEF-2 | Verify workload identity and delegation scope outside model text. |
 | Computer-use visual interface = YES | CUA-DEF-1, AGENCY-DEF-2 | Reconcile pixel, DOM, accessibility, viewport, and semantic action. |
 | Relay/router/gateway in response path = YES | RELAY-DEF-1, PI-DEF-4 | Prefer a direct path or provider-authenticated response; document unresolved assurance. |
-| Representation conversion = YES | REP-DEF-1, PI-DEF-4 | Preserve origin and representation metadata; test the actual conversion pipeline. |
+| Representation conversion or blocking-monitor transcript adapter = YES | REP-DEF-1, PI-DEF-4 | Preserve origin and representation metadata; test the actual conversion pipeline. |
 
 ### 3.1 Prompt Injection Defenses
 
@@ -178,12 +188,15 @@ Use this table after completing Section 2 so teams do not skip required controls
 | PI-DEF-1 | Instruction hierarchy hardening | [ ] YES  [ ] PARTIAL  [ ] NO  [ ] N/A | |
 | PI-DEF-2 | RAG context labeling + load-time sanitization | [ ] YES  [ ] PARTIAL  [ ] NO  [ ] N/A | N/A only if no retrieval/external context enters the model. |
 | PI-DEF-3 | Input filtering (pattern + ML) | [ ] YES  [ ] PARTIAL  [ ] NO  [ ] N/A | |
-| PI-DEF-4 | Output validation | [ ] YES  [ ] PARTIAL  [ ] NO  [ ] N/A | |
+| PI-DEF-4 | Output validation at each downstream consumer | [ ] YES  [ ] PARTIAL  [ ] NO  [ ] N/A | Record consumer, enforcement, rejected case, legitimate case and owner; schema checks alone are insufficient. |
+| DATA-DEF-1 | Data source and dataset integrity | [ ] YES  [ ] PARTIAL  [ ] NO  [ ] N/A | Include factual tampering without injected instructions and cleanup of derived data/checkpoints. |
 
 **PARTIAL definitions:**
 - PI-DEF-1 PARTIAL if privilege labels present OR hierarchy rejection present, but not both; OR prompt is extractable
 - PI-DEF-2 PARTIAL if content labeled at retrieval time BUT sanitization is at index time (not load time); OR privilege separation via prompt instruction only
 - PI-DEF-3 PARTIAL if pattern-based only (bypassed by purchased PI variants); OR ML-based only without pattern layer
+- PI-DEF-4 YES requires tested encoding/sanitization for browser outputs, parameterized database values, constrained commands/paths and independent destination/recipient authorization for every applicable consumer, before streaming or execution, with approvals bound to actual executable content/dependencies where relevant. PARTIAL if any consumer or delayed-execution mutation path is uncovered/untested; NO for directly trusted outputs or semantic-only checks.
+- DATA-DEF-1 YES requires demonstrated write/promotion authorization, independent content validation, version/change tracking and recovery across the applicable pipeline. PARTIAL for provenance alone or incomplete/untested validation/recovery; NO when attacker-shaped facts/data enter the authoritative pipeline without effective checks. Source labels do not prove truth. See the playbook for trained-model rollback limitations.
 
 ### 3.2 Excessive Agency Defenses
 
@@ -195,7 +208,7 @@ Use this table after completing Section 2 so teams do not skip required controls
 
 **PARTIAL definitions:**
 - AGENCY-DEF-1 PARTIAL if allowlist exists but includes more tools than strictly necessary; OR permissions scoped but not user-separated
-- AGENCY-DEF-2 PARTIAL if HITL exists but confirmation dialog shows only proposed action — no provenance; OR HITL covers some but not all HIGH-risk actions
+- AGENCY-DEF-2 PARTIAL if HITL exists but confirmation dialog shows only proposed action — no provenance; OR HITL covers some but not all HIGH-risk actions; OR delayed execution can run changed code/dependencies under an old approval
 
 **HITL provenance checklist:** A YES for AGENCY-DEF-2 requires the confirmation UI/log to show: triggering user request, retrieved document/tool output that influenced the action, source or owner of influencing content, model rationale, affected object/data, destination/action result, and a default-deny timeout or equivalent abandoned-review behavior.
 
@@ -247,9 +260,11 @@ Detection controls support response and accountability. They do **not** reduce p
 | Control ID | Control Name | Rating | Evidence / owner / notes |
 |------------|-------------|--------|-------|
 | DET-DEF-1 | Audit logging for AI actions | [ ] YES  [ ] PARTIAL  [ ] NO  [ ] N/A | |
+| DOS-DEF-1 | Request, token, concurrency, retry and spend limits | [ ] YES  [ ] PARTIAL  [ ] NO  [ ] N/A | Includes rejection/cancellation/abort cleanup; required for metered or exhaustible inference; N/A only with documented absence of such exposure. |
 | DET-DEF-2 | Anomaly detection | [ ] YES  [ ] PARTIAL  [ ] NO  [ ] N/A | |
 
 **PARTIAL definitions:**
+- DOS-DEF-1 YES requires independently enforced per-principal and aggregate request/token/concurrency/spend ceilings, bounded retries, rejection/cancellation/abort/timeout cleanup, and a tested fail-closed cutoff before material budget/service loss. PARTIAL means some bounds, tenants or applicable cleanup paths are uncovered or untested; alerts without enforcement are NO. Record budget, cutoff latency, owner, and a boundary test.
 - DET-DEF-1 PARTIAL if logs record tool calls but omit prompt/context provenance, actor identity, model version, or downstream action result.
 - DET-DEF-2 PARTIAL if anomaly detection exists but does not cover AI-specific behaviors such as unexpected tool chains, unusual token/cost spikes, abnormal egress, or repeated validator-loop failures.
 
@@ -257,7 +272,7 @@ Detection controls support response and accountability. They do **not** reduce p
 
 | Control ID | Control Name | Rating | Evidence / owner / notes |
 |------------|-------------|--------|-------|
-| MEM-DEF-1 | Durable memory write authorization, provenance, expiry, and rollback | [ ] YES  [ ] PARTIAL  [ ] NO  [ ] N/A | N/A only if no durable or cross-session memory exists. |
+| MEM-DEF-1 | Memory/compaction authorization, authoritative resume state, provenance and recovery | [ ] YES  [ ] PARTIAL  [ ] NO  [ ] N/A | N/A only if no durable/cross-session memory or ephemeral compaction/resume exists. |
 | SKILL-DEF-1 | Skill lifecycle admission, retrieval, planner, execution, and update control | [ ] YES  [ ] PARTIAL  [ ] NO  [ ] N/A | N/A only if no reusable/dynamic skills or equivalent bundles exist. |
 | MA-DEF-3 | Authenticated agent identity, delegation scope, and privilege ceiling | [ ] YES  [ ] PARTIAL  [ ] NO  [ ] N/A | N/A only if no inter-agent delegation or identity claims exist. |
 | CUA-DEF-1 | Pixel/DOM/accessibility reconciliation and semantic action validation | [ ] YES  [ ] PARTIAL  [ ] NO  [ ] N/A | N/A only if the agent cannot perceive or act through a visual interface. |
@@ -266,13 +281,13 @@ Detection controls support response and accountability. They do **not** reduce p
 | REP-DEF-1 | Representation-boundary origin and semantic validation | [ ] YES  [ ] PARTIAL  [ ] NO  [ ] N/A | N/A only if no relevant representation conversion occurs. |
 
 **PARTIAL definitions:**
-- MEM-DEF-1 PARTIAL if writes are logged but lack independent authorization, expiry, rollback, or cross-session regression tests.
-- SKILL-DEF-1 PARTIAL if admission is reviewed but semantic retrieval/planner selection or later updates are not continuously controlled.
+- MEM-DEF-1 PARTIAL if applicable write/resume paths lack independent authorization, provenance, rollback or poisoning tests. Include ephemeral compaction, omitted denials, false approvals, ordinary-input ingestion, topic triggers and derived-summary cleanup. Summary text that grants authority without checking the real approval record is NO; absence of a durable store alone is not N/A.
+- SKILL-DEF-1 PARTIAL if admission is reviewed but semantic retrieval/planner selection, later updates, remote payloads or scheduled persistence are not controlled.
 - MA-DEF-3 PARTIAL if transport endpoints are authenticated but workload identity, delegation scope, or privilege ceilings are not independently verified.
 - CUA-DEF-1 PARTIAL if only one representation is checked, or semantic validation covers only some state-changing actions.
 - RELAY-DEF-1 PARTIAL if the relay is authenticated and transcripts are bound but provider output is not independently verifiable; record this as an unresolved assurance gap.
-- DET-DEF-3 PARTIAL if monitoring is per-message or per-agent but cannot reconstruct cumulative influence across handoffs and sessions.
-- REP-DEF-1 PARTIAL if origin metadata is preserved but semantic validation is not run against the deployed conversion pipeline.
+- DET-DEF-3 PARTIAL if monitoring cannot reconstruct cumulative influence across handoffs and sessions, lacks complete worker/channel coverage, or relies solely on agent-writable transcripts.
+- REP-DEF-1 PARTIAL if origin metadata is preserved but the deployed conversion or blocking-monitor adapter lacks role/turn integrity tests. Agent-controlled text able to forge trusted monitor records is NO. Probabilistic semantic checks remain alignment/mixed controls.
 
 ---
 
@@ -283,9 +298,9 @@ Detection controls support response and accountability. They do **not** reduce p
 ### 4.1 Prompt Injection Surface Rating
 Use Appendix A, Risk Rating 1.1 to determine: [ ] NONE  [ ] LOW  [ ] MEDIUM  [ ] HIGH
 
-Record both values when tools are present:
+Record both values whenever sensitive data or a downstream consumer is reachable, with or without tools:
 - PI surface severity: _________________________________
-- Chain A impact after agency/tool exposure: _________________________________
+- Chain A impact across answer, renderer, query and tool disclosure paths: _________________________________
 
 ### 4.2 Excessive Agency Surface Rating
 Use Appendix A, Risk Rating 1.2 to determine: [ ] NONE  [ ] LOW  [ ] MEDIUM  [ ] HIGH  [ ] CRITICAL
@@ -303,13 +318,13 @@ Use Appendix A, Risk Rating 1.6 to determine: [ ] NONE  [ ] LOW  [ ] MEDIUM  [ ]
 
 | Threat | Risk Rating | Wild_vs_Theory | Confidence |
 |--------|-------------|----------------|------------|
-| Prompt Injection (Chain A) | | 4/5 | HIGH |
-| Excessive Agency | | 4/5 | HIGH |
+| Prompt Injection (Chain A) | | 3/5 | MEDIUM |
+| Excessive Agency | | 3/5 | MEDIUM |
 | Supply Chain (Chain B) | | 4/5 | HIGH |
 | Multi-Agent Propagation (Chain C) | | 3/5 | MEDIUM |
-| Internal Safety Collapse / Validator Harness | | 4/5 | HIGH |
-| Persistent memory poisoning (T09-MEMORY) | | 2/5 | LOW-MEDIUM |
-| Skill lifecycle compromise (T03-SKILL) | | 2/5 | LOW-MEDIUM |
+| Internal Safety Collapse / Validator Harness | | 2/5 | Lab evidence; local severity assessed separately |
+| Persistent memory poisoning (T09-MEMORY) | | 3/5 | LOW-MEDIUM |
+| Skill lifecycle compromise (T03-SKILL) | | 4/5 | LOW-MEDIUM |
 | Inter-agent trust escalation (T09-IDENTITY) | | 2/5 | LOW-MEDIUM |
 | Computer-use visual attack (T10-CUA) | | 2/5 | LOW-MEDIUM |
 | Session contamination / goal hijacking (T01-SESSION) | | 2/5 | LOW-MEDIUM |
@@ -332,6 +347,8 @@ Use Appendix A, Risk Rating 1.6 to determine: [ ] NONE  [ ] LOW  [ ] MEDIUM  [ ]
 | | | | |
 
 Use the Section 5 Decision Framework (Appendix E) to calculate residual risk scores.
+
+A completed assessment must record actual control ratings and reasons, the selected base/deployment score and source, mitigation/agency factors and their reasons, rounded residual score/tier, and a concrete decision/action with an owner. A statement that scoring was performed is not an assessment result. State assumptions separately from observed deployment evidence. Unknown control implementation earns no assumed preventive credit.
 
 ### 5.2 Risk Acceptance Decisions
 
@@ -383,15 +400,16 @@ For any CRITICAL or HIGH residual risks that cannot be immediately remediated:
 ```
 START: Does the system accept user text input?
 │
-├─ NO → PI Surface = NONE (1/5)
-│        Assessment: No direct input vector. Check indirect vectors (RAG, tool returns).
+├─ NO → Direct PI absent. Continue with the external-content question below;
+│        email, scheduled retrieval, file ingestion and tool returns remain inputs.
+│        NONE only if no attacker-influenced input or context is consumed.
 │
 └─ YES → Continue
 
     Does the system retrieve content from external sources (RAG, search, APIs)?
     │
     ├─ NO → Direct PI only. Check: Is instruction hierarchy enforced?
-    │        ├─ YES (hierarchy enforced) → PI Surface = LOW (2/5)
+    │        ├─ YES (hierarchy enforced) → Alignment control only; evaluate disclosure and downstream paths below
     │        └─ NO → PI Surface = MEDIUM (3/5)
     │
     └─ YES → RAG/retrieval present. Continue.
@@ -408,7 +426,12 @@ START: Does the system accept user text input?
             (Ask: "Is there infrastructure enforcement blocking RAG → tool calls,
              or just a prompt instruction?")
             │
-            ├─ Infrastructure enforced (pipeline blocks) → PI Surface = LOW (2/5)
+            ├─ Infrastructure enforced (pipeline blocks) → Tool path constrained; continue.
+            │   Check answer recipients, renderer/streamed resources, outbound queries
+            │   and downstream execution using PI-DEF-4. Any reachable unapproved
+            │   disclosure/execution path → PI Surface = HIGH (4/5); score its chain.
+            │   LOW (2/5) requires tested boundaries on ALL applicable paths;
+            │   untested paths remain unresolved and cannot receive LOW.
             │
             ├─ Prompt instruction only ("LLM is told not to") → PI Surface = MEDIUM (3/5)
             │        Note: This is an ALIGNMENT control — less reliable
@@ -417,8 +440,11 @@ START: Does the system accept user text input?
 
     Note: Underground PI template marketplaces (v1.1 update) mean pattern-based
     input filtering (PI-DEF-3) is BYPASSED by purchased variants.
-    ML-based detection + infrastructure controls remain effective.
+    Detector effectiveness is deployment-specific; neither filtering nor hierarchy
+    labels establish that disclosure or downstream execution is constrained.
 ```
+
+**Final gate for every branch:** A trusted user, no write tools, or instruction hierarchy does not reduce indirect-input reachability. Apply the same PI-DEF-4 disclosure/execution checks even on the direct-only branch. Record uncovered paths; LOW is unavailable until all applicable boundaries are demonstrated. This surface rating is not the Section 5 residual score.
 
 **Evidence required for each YES/PARTIAL/NO answer:**
 - YES: Document which specific controls are implemented, with method description
@@ -435,7 +461,8 @@ START: Does the system accept user text input?
 START: Does the system have tool/use permissions?
 │
 ├─ NO → Agency Surface = NONE (1/5)
-│        Note: Without agency, prompt injection impact is LIMITED TO MISINFORMATION.
+│        Still assess confidential context, answer recipients, and renderer egress.
+│        No model tools does not mean no disclosure path (Chain A nodes 2a/2b).
 │        This is the most important single risk-reduction step.
 │
 └─ YES → Agency Surface present. Continue.
@@ -449,8 +476,10 @@ START: Does the system have tool/use permissions?
 
         Can tools modify external state (email, file write, database, external API)?
         │
-        ├─ NO → Agency Surface = LOW (2/5)
-        │        Read-only tools limit exfiltration potential.
+        ├─ NO → No write agency; assess read permissions and outbound destinations.
+        │        LOW only if reads are user-scoped and no unauthorised disclosure
+        │        path exists. Otherwise assess Chain A nodes 2a/2b and PI-DEF-4;
+        │        read-only search queries can exfiltrate sensitive context.
         │
         └─ YES → Continue.
 
@@ -604,14 +633,17 @@ START: Is the model from a verified publisher on the model hub?
         └─ "pgp" → Supply Chain Risk = HIGH (4/5)
                  Note: No documented HF workflow. Deprecated in practice.
 
-        For sigstore: Has the publisher actually signed the model weights?
-        (Check: signature artifact present on model repository + Rekor log entry)
+        For sigstore: Does verification succeed for the exact artifact digest,
+        expected publisher identity/issuer, signature and transparency proof?
+        A signature artifact or Rekor entry alone is not verification.
         │
         ├─ NO (no signature found) → Supply Chain Risk = HIGH (4/5)
         │        "Most viable path" still leads to dead end. Publisher has not adopted.
         │
-        └─ YES → Supply Chain Risk = LOW (2/5)
-                 Sigstore v1.0 + publisher adoption + Rekor log = strongest available path.
+        └─ YES → Provenance verification satisfied, not an overall LOW verdict.
+                 Separately assess supplier/build/signing compromise, artifact loading
+                 and behavioral backdoors (SC-GAP-1). Record remaining likelihood
+                 and impact before assigning overall supply-chain risk.
 
     Is custom inference code present? (check model repository for custom classes)
     │
@@ -655,43 +687,18 @@ be trusted. Do not let retrieved context invoke tools or access user data."
 
 ### Team B: Infrastructure Enforcement (TECHNICAL control)
 
-**Implementation:**
-```
-Pipeline design: RAG-retrieved content is processed in a SEPARATE
-inference context from user-composed messages. Tool call permissions
-are set at the PIPELINE LEVEL to block RAG context from any tool invocation.
+**Implementation:** A retrieval worker runs in a separate inference context without tool credentials. Its outputs remain untrusted. A separate action broker receives a capability bound to the authenticated user's authorised task; the worker or model cannot mint or expand it. The broker checks each proposed operation's tool, arguments, recipient/destination and data scope against that capability and fails closed. Merely adding a `context` role beside a `user` role does not create this boundary.
 
-Example implementation:
-- RAG context injected as a separate message role ("context") with no tool permissions
-- Tool call permissions only enabled for "user" role messages
-- Pipeline-level enforcement: LLM cannot grant itself tool access from context role
-```
+**Validation:** Feed malicious retrieved text through the real workflow, then submit the resulting proposed action directly to the broker. Unauthorised arguments, destinations and cross-user reads must still fail with the model bypassed. Test legitimate actions too. If the broker simply trusts a model-generated rationale or accepts any call from a nominal user message, rate PI-DEF-2 PARTIAL, not YES.
 
-**Assessment:**
-- Does it reduce risk? YES — pipeline enforces the boundary independent of model
-- Is it a TECHNICAL control? YES — enforcement is in the infrastructure, not the model
-- Effectiveness against purchased PI templates? HIGH — templates cannot override pipeline
-- PARTIAL definition: This control is PARTIAL because:
-  - It does not prevent PI from manipulating what content is retrieved
-  - It does not prevent PI from influencing user-message content
-  - It ONLY addresses the specific path: RAG → tool invocation
-- **Rate as YES in Section 3.1, PI-DEF-2 row IF infrastructure enforcement is confirmed**
+**Assessment:** Infrastructure credit applies only to the tested action/data boundary. Also test PI-DEF-4 for answer recipients, external queries and renderer requests. Separate processes and credentials do not by themselves make intermediate text safe or establish statistical independence.
 
 ### How to Tell Which You Have
 
-Ask these questions in order:
-
-1. **"Can the LLM grant itself tool permissions?"**
-   - If YES (LLM can override the restriction): ALIGNMENT control → rate as PARTIAL
-   - If NO (pipeline blocks regardless): TECHNICAL control → rate as YES
-
-2. **"Is the restriction enforced by code/pipeline configuration or by a prompt instruction?"**
-   - Prompt instruction: ALIGNMENT
-   - Pipeline code, role-based access control, separate inference contexts: TECHNICAL
-
-3. **"If we bypass the LLM entirely and call the inference API directly, can we still invoke tools from RAG context?"**
-   - YES (allowed): ALIGNMENT control
-   - NO (blocked): TECHNICAL control
+1. Identify the enforcement component and the independently issued authority it checks.
+2. Show that a compromised model cannot create or broaden that authority.
+3. Demonstrate rejection at execution for unapproved arguments/destinations/data, regardless of labels or rationale.
+4. Map remaining disclosure channels and shared failure dependencies. Record gaps rather than inferring overall safety from one blocked path.
 
 ---
 
@@ -736,7 +743,7 @@ For each defense in Sections 3.1–3.4, the following definitions apply:
 | Rating | Definition |
 |--------|------------|
 | **YES** | HIGH-risk tool calls (email, file write, external API, DB) require explicit human confirmation AND confirmation dialog shows context provenance (trigger source, influencing content, LLM rationale) |
-| **PARTIAL** | HITL exists but confirmation dialog shows only the proposed action — no provenance; OR HITL covers some but not all HIGH-risk actions; OR reviewers not trained on provenance evaluation |
+| **PARTIAL** | HITL exists but confirmation dialog shows only the proposed action — no provenance; OR HITL covers some but not all HIGH-risk actions; OR delayed execution can run changed code/dependencies under an old approval; OR reviewers not trained on provenance evaluation |
 | **NO** | No HITL for HIGH-risk actions; HIGH-risk actions execute without human review |
 
 ### SC-DEF-1 (AIBOM Maintenance)
@@ -752,7 +759,7 @@ For each defense in Sections 3.1–3.4, the following definitions apply:
 | Rating | Definition |
 |--------|------------|
 | **YES** | Explicit context boundaries between agents; inter-agent communication requires pass-through with sanitization; origin metadata tagged; privilege ceiling enforced |
-| **PARTIAL** | Some isolation present but agents share implicit context; OR sanitization present but not applied to all inter-agent messages; OR no privilege ceiling |
+| **PARTIAL** | Some isolation present but agents share implicit context/artifact stores; OR incomplete message coverage; OR no enforced privilege ceiling; OR applicable MCP principal, cache or continuation checks are untested |
 | **NO** | Multi-agent system exists and agents share full conversation history without enforced context isolation |
 | **N/A** | Single-agent system with no inter-agent communication path; record reason in Section 3.4 notes |
 
@@ -820,10 +827,11 @@ For each threat in Section 2, list:
 For each threat with residual concern:
 
 ```
-Residual Risk = min(25, BASE_RISK × MITIGATION_FACTOR × AGENCY_FACTOR)
+Residual Risk = max(1, ceil(min(25, BASE_RISK × MITIGATION_FACTOR × AGENCY_FACTOR)))
 
 Where:
-- BASE_RISK = Base or elevated risk score from risk-matrix.md after applying the relevant elevation condition
+- BASE_RISK = Base/elevated score or higher documented deployment/chain score from risk-matrix.md
+- ceil = round upward to the next whole number AFTER multiplying (6.3 → 7; 12.6 → 13)
 - MITIGATION_FACTOR = 0.3 (all primary controls YES and infrastructure-enforced)
                       0.7 (primary controls PARTIAL or one primary gap remains)
                       1.0 (primary controls NO or not implemented)
@@ -832,6 +840,8 @@ Where:
                   1.5 (AGENCY-DEF-1 PARTIAL)
                   2.0 (AGENCY-DEF-1 NO AND tool permissions exist)
 ```
+
+**Scoring status:** These multipliers are conservative planning heuristics, not measured probabilities or validated control-effectiveness percentages. Choose one applicable factor and record the reason; if multiple descriptions fit, use the largest. A control cannot earn credit for an attack path it does not constrain. Reassess likelihood/impact for the actual deployment and record the reachable chain before applying mitigation.
 
 **AGENCY_FACTOR scope:** Apply AGENCY_FACTOR > 1.0 only to threats with a tool/action path (Chain A, Chain C, Excessive Agency, agentic ISC). For threats with no agency/tool path (e.g., embedding inversion, system prompt extraction, quota exhaustion, output validation), use AGENCY_FACTOR = 1.0 regardless of AGENCY-DEF-1 rating.
 
@@ -847,8 +857,9 @@ Where:
 | Internal Safety Collapse / attacker-shaped harness executed downstream | 20 |
 | Direct Prompt Injection | 15 |
 | Purchased PI Template Attack | 15 |
-| RAG Context Poisoning standalone | 12 |
+| RAG Context Poisoning standalone (including factual tampering; DATA-DEF-1) | 12 |
 | RAG Context Poisoning in data-heavy action/decision deployment | 15 |
+| Training data poisoning | 10 (15 for high-stakes/continuous-learning deployment) |
 | Excessive Agency standalone | 12 |
 | Excessive Agency with state-changing tools or weak HITL | 16 |
 | Metered Enterprise API Quota Exhaustion | 16 |
@@ -860,7 +871,7 @@ Where:
 | Inter-agent trust escalation | 8 (10 when elevated) |
 | Computer-use visual attack | 8 (10 when elevated) |
 | Session contamination / incremental escalation | 8 (10 when elevated) |
-| Response-path relay tampering *(provisional)* | 5 (10 only after independent replication) |
+| Response-path relay tampering *(provisional)* | 4 (8 after replication; use higher reachable-chain score where applicable) |
 | Representation confusion *(monitor)* | 4 (8 after pipeline-specific reproduction) |
 
 **Example:**
@@ -919,10 +930,10 @@ For each accepted risk:
 
 Do not let memorable incident stories carry the rating unless they are backed by primary or corroborated incident evidence. Separate “source-backed finding” from “incident narrative” in every threat section.
 
-**Rule:** Minimum Wild_vs_Theory score of **3** required to assign a HIGH or CRITICAL risk rating in this framework.
+**Rule:** Evidence confidence does not cap deployment risk. Low-evidence threats can be HIGH or CRITICAL when assessed exposure, exploitability and impact justify it. Document uncertainty separately. For an overlay that completes an established chain, use the greater of its overlay score and the applicable chain score; do not count the same loss twice.
 
 **For assessors:** When reviewing threat ratings in this framework, you can query the Wild_vs_Theory score to assess your confidence:
-- Chain A (Indirect PI → Exfil): Wild_vs_Theory = 4 → HIGH confidence rating is accurate
+- Chain A (Indirect PI → Exfil): Wild_vs_Theory = 4 → field AI-wrapper disclosure reporting; EchoLeak individually remains 3. Score the actual path independently.
 - Chain B (Supply Chain): Wild_vs_Theory = 4 → HIGH confidence
 - Chain C (Multi-Agent): Wild_vs_Theory = 3 → Structurally confirmed via LangGraph source code (Round 8); no published LangGraph-specific CVE yet. Rate conservatively.
 
@@ -934,8 +945,35 @@ Some threats carry a Wild_vs_Theory 3/5 rating based on **structural vulnerabili
 
 Chain C is the canonical example: no published CVE exists for LangGraph-specific context propagation, but the LangGraph source code confirms the architectural vulnerability exists, and LangGraph is widely used in enterprise agentic AI deployments. This is sufficient for 3/5 (not 2/5), but teams should note it when prioritizing defensive investment — structural vulnerabilities without in-wild incidents carry more uncertainty than confirmed exploits.
 
-**Note on regulatory claims:** Wild_vs_Theory does NOT apply to regulatory compliance exposure. EU AI Act Article 55(2) EU representative absence is a binary legal fact (either present or not), not an empirical threat scale. Regulatory exposure ratings use separate evidence standards documented in `risk-matrix.md`.
+**Note on regulatory claims:** Wild_vs_Theory does NOT apply to regulatory compliance exposure. EU AI Act Article 54 governs third-country GPAI provider representatives, subject to its scope and paragraph 6 exemption/systemic-risk exception. Determine applicability before checking appointment; it is not an empirical threat scale. Regulatory exposure ratings use separate evidence standards documented in `risk-matrix.md`.
 
-**Last updated:** 2026-07-20 (v1.9 — July scan addendum: memory, skills, inter-agent identity, computer use, response integrity, trajectory monitoring, representation boundaries)
-**Next review:** 2026-09-24
-**Part of:** LLM Threat Modeling Framework v1.9
+## September deployment checks
+
+Complete these under the existing controls above (source rationale: `research/sources/Landscape-Update-2026-09.md`):
+
+| Trigger | Required assessment evidence | Rating consequence |
+|---|---|---|
+| MCP present | MA-DEF-1/MA-DEF-3: protocol/SDK inventory; wrong issuer, header/body disagreement, cross-principal cache and changed/replayed approval tests | Untested applicable boundaries cannot receive YES |
+| Runtime/build dependencies or agent code execution | SC-DEF-1/SC-DEF-2: package/startup inventory, resolved-path protection of sandbox/policy, actual egress test, secret scope | Provenance alone cannot receive containment credit |
+| Shared artifacts or multiple workers | MA-DEF-1 and DET-DEF-3: cross-worker store permissions, independent execution logs and coverage reconciliation | Agent-authored logs alone cannot prove no incident |
+| Confirmed key or skill compromise | Rebuild/quarantine, revoke keys/sessions, inspect downstream grants and scheduled persistence, retest | Patch-only recovery remains incomplete |
+
+These tests assess the system as deployed. The framework's tabletop PASS does not substitute for running them.
+
+## Research integration assessment gates
+
+Source and limitations: `research/sources/Latest-Development-Integration-2026-09-19.md`. Apply these under the existing control IDs; record evidence, owner and residual decision for every applicable row.
+
+| Trigger | Assessment requirement | Do not infer |
+|---|---|---|
+| Blocking monitor consumes agent text | REP-DEF-1 and DET-DEF-3: forged-role versus legitimate transcript; trusted record framing and complete relevant history | Protected log storage alone proves the live monitor saw trustworthy records |
+| Approval precedes queued/delayed code execution | PI-DEF-4, SC-DEF-2 and AGENCY-DEF-2: changed executable/dependency/resolved-target fixture must invalidate approval or remain outside the immutable execution snapshot | Approval of a command string approves later file contents |
+| Context compaction or task resume, with or without durable memory | MEM-DEF-1 and MA-DEF-3: user instructions, approvals and denials recovered from an independent record for worker and monitor; test invented approval and omitted denial | A model-authored summary authenticates the user |
+| Requests allocate serving/worker state | DOS-DEF-1: repeated rejected, cancelled, aborted and timed-out requests release reservations and remain bounded; verify subsequent successful traffic | A rejection response means all resources were released |
+| Model, watermark/key, logit processor, sampling, monitor or compactor configuration changes materially | Inventory version/settings and provider-controlled unknowns; rerun paired denied and legitimate cases through actual action/output boundaries; record test results and owner before carrying forward YES | Previous model-level safety results transfer to changed settings, or configuration change by itself proves compromise |
+
+Use PARTIAL for implemented boundaries with incomplete applicable validation, NO for demonstrated failure or absent enforcement, and N/A only for an absent surface with a recorded reason. Unknown implementation earns no assumed preventive credit. Preserve independently demonstrated infrastructure controls; distinguish their effect from changed model behavior. These are deployment verification requirements, not results from the tabletop suite.
+
+**Last updated:** 2026-09-19 (v1.12 — research integration)
+**Next review:** 2026-10-15 or after a material deployment change
+**Part of:** LLM Threat Modeling Framework v1.12 (see release-manifest.md)

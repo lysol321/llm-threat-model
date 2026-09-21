@@ -1,14 +1,15 @@
 {
   "_meta": {
     "description": "Source of truth for llm-threat-model.html. Edit here, run scripts/build-html.py to regenerate the HTML.",
-    "version": "1.9",
-    "date": "2026-07-20",
-    "next_review": "2026-09-24",
+    "version": "1.12",
+    "date": "2026-09-19",
+    "next_review": "2026-10-15",
     "workflow": [
       "1. python scripts/export-data.py   -- seeds threats + dtree from current HTML (run once)",
       "2. Edit this file                  -- update threats, dtree, sidebar, or docs",
       "3. python scripts/build-html.py   -- regenerates the DATA_START..DATA_END block in the HTML"
-    ]
+    ],
+    "presentation": "Defender and leadership briefing; evidence-first presentation, 2026-09-15"
   },
   "threats": [
     {
@@ -16,7 +17,7 @@
       "title": "Prompt Injection",
       "owasp": "LLM01",
       "prio": "CRITICAL",
-      "wild": "4/5 — EchoLeak/CVE-2025-32711 confirmed in wild",
+      "wild": "4/5 — provider-confirmed field AI-wrapper key theft; EchoLeak individually 3/5",
       "desc": "Manipulation of LLM behavior through crafted inputs that override system-level instructions. Attack surface extends to any content the model parses — not just text input fields.",
       "subtypes": [
         "Direct PI — user input explicitly overrides system prompt",
@@ -27,15 +28,21 @@
         "T01-SESSION — Session contamination, goal hijacking, and incremental escalation across a trajectory"
       ],
       "surface": "Text input, RAG pipeline, document ingestion, API messages field, tool outputs",
-      "update": "v1.5: Standard per-event detectors fail against slow-burn multi-turn attacks. Temporal accumulation detection required. v1.9: T01-SESSION — Session contamination, goal hijacking, and incremental escalation across a trajectory"
+      "update": "v1.5: Standard per-event detectors fail against slow-burn multi-turn attacks. Temporal accumulation detection required. v1.9: T01-SESSION — Session contamination, goal hijacking, and incremental escalation across a trajectory",
+      "plain_title": "Attacker content redirects the assistant",
+      "applies_when": "Untrusted emails, documents or web pages are treated as instructions.",
+      "business_impact": "Sensitive data may be disclosed or an authorized workflow redirected.",
+      "defender_action": "Restrict data access and outbound destinations; authorize actions outside the model. Test answers and remote-image requests as well as tools.",
+      "evidence_summary": "Field incidents support this category. EchoLeak was a production-system demonstration, with no customer impact reported by its discoverer.",
+      "evidence_score": 4
     },
     {
       "num": "02",
       "title": "Excessive Agency",
       "owasp": "LLM06",
       "prio": "CRITICAL",
-      "wild": "4/5 — EchoLeak, Copilot CRM leak confirmed in production",
-      "desc": "LLM granted more tool/action permissions than necessary. Force multiplier for prompt injection: without agency, PI manipulates outputs; with agency, PI becomes remote code execution equivalent.",
+      "wild": "4/5 — provider-confirmed field AI-wrapper key theft; EchoLeak individually 3/5",
+      "desc": "Excess permissions amplify prompt injection into unauthorised actions. Sensitive context can also leave through answers, read-only queries or renderer requests without model write tools.",
       "subtypes": [
         "Unbounded tool access — model calls any registered tool without confirmation",
         "Privilege escalation via PI",
@@ -43,7 +50,13 @@
         "Cross-system action — email, file write, payment outside AI boundary"
       ],
       "surface": "Tool registration, function calling API, MCP servers",
-      "update": ""
+      "update": "",
+      "plain_title": "The assistant has more access than it needs",
+      "applies_when": "The assistant can read, send, change or execute beyond the user’s intended task.",
+      "business_impact": "A manipulated assistant can turn a small mistake into a data leak or unauthorized transaction.",
+      "defender_action": "Use per-user permissions and narrow tool access. Bind approvals to the exact recipient, data and action.",
+      "evidence_summary": "Field key theft supports this risk. The impact depends on the actual permissions and reachable data.",
+      "evidence_score": 4
     },
     {
       "num": "03",
@@ -51,7 +64,7 @@
       "owasp": "LLM03",
       "prio": "HIGH",
       "wild": "4/5 — JFrog/ReversingLabs confirmed malicious models on HuggingFace",
-      "desc": "Malicious or backdoored models, adapters, dependencies, MCP servers, or skills from third parties. Attack is entirely silent — no behavioral deviation during normal operation.",
+      "desc": "Compromised models, adapters, dependencies, servers or skills can execute malicious code or alter behavior. Normal-looking answers do not establish safety.",
       "subtypes": [
         "Malicious model on public registry",
         "Backdoored LoRA/PEFT adapter",
@@ -60,23 +73,36 @@
         "T03-SKILL — Skill lifecycle compromise across admission, retrieval, planner selection, execution, and updates"
       ],
       "surface": "Model registry, adapter repository, dependency install, MCP marketplace",
-      "update": "v1.9: T03-SKILL — Skill lifecycle compromise across admission, retrieval, planner selection, execution, and updates"
+      "update": "v1.9: T03-SKILL — Skill lifecycle compromise across admission, retrieval, planner selection, execution, and updates September: T03-SKILL 4/5 for observed malicious distribution; include mutable dependencies, startup code and persistence.",
+      "plain_title": "A component you install is compromised",
+      "applies_when": "Models, skills, adapters or software dependencies come from a compromised supplier or distribution path.",
+      "business_impact": "Installed code may steal credentials or compromise the systems running the assistant.",
+      "defender_action": "Inventory and pin components, verify provenance, isolate execution and restrict secrets. A valid signature does not prove the component is safe.",
+      "evidence_summary": "Malicious model and skill distribution is documented. This does not establish that every behavioral-backdoor or skill-selection technique has field victims.",
+      "evidence_score": 4
     },
     {
       "num": "04",
       "title": "Data / Model Poisoning",
       "owasp": "LLM04",
       "prio": "HIGH",
-      "wild": "2/5 — Theoretical; academic demonstrations exist",
-      "desc": "Compromising training data, fine-tuning datasets, or RAG document stores to influence model behavior at a systemic level.",
+      "wild": "3/5 — mixed subtype evidence; training research and retrieval injection are distinct",
+      "desc": "Training, fine-tuning, feedback or RAG facts can be tampered with. A model can faithfully repeat poisoned facts without following an injected instruction.",
       "subtypes": [
         "Training data poisoning — corrupted data influences model weights",
         "Fine-tuning dataset poisoning",
         "RAG context poisoning — injecting adversarial documents at index time",
-        "Feedback loop poisoning — RLHF reward hacking via manipulated ratings"
+        "Feedback loop poisoning — RLHF reward hacking via manipulated ratings",
+        "Factual RAG poisoning without instruction override — DATA-DEF-1"
       ],
       "surface": "Training pipeline, fine-tuning datasets, RAG document stores, feedback/rating systems",
-      "update": ""
+      "update": "",
+      "plain_title": "Poisoned data changes answers or behavior",
+      "applies_when": "An attacker can influence retrieved documents, training data or fine-tuning datasets.",
+      "business_impact": "Decisions can be biased, answers corrupted or later behavior redirected.",
+      "defender_action": "Apply DATA-DEF-1: authorize data changes, corroborate consequential facts, track dataset versions and test derived-data/model rollback.",
+      "evidence_summary": "Evidence differs by subtype: training/fine-tuning attacks are heavily research-based; poisoned retrieval overlaps with prompt injection. The category score is 3/5 in the taxonomy.",
+      "evidence_score": 3
     },
     {
       "num": "05",
@@ -92,7 +118,13 @@
         "T05-CAPABILITY — Capability and architecture disclosure that enables a separately scored follow-on attack"
       ],
       "surface": "System prompt, developer message, any context containing secrets",
-      "update": "v1.9: T05-CAPABILITY — Capability and architecture disclosure that enables a separately scored follow-on attack"
+      "update": "v1.9: T05-CAPABILITY — Capability and architecture disclosure that enables a separately scored follow-on attack",
+      "plain_title": "Hidden instructions or secrets are disclosed",
+      "applies_when": "Internal prompts, credentials or sensitive architecture details enter model context.",
+      "business_impact": "Secrets can leak; disclosed tool or approval details may help a follow-on attack.",
+      "defender_action": "Keep credentials out of prompts. Enforce authorization in the application and assess what a disclosure would actually enable.",
+      "evidence_summary": "Extraction techniques are documented. Revealing ordinary prompt wording is not automatically a serious breach.",
+      "evidence_score": 3
     },
     {
       "num": "06",
@@ -106,7 +138,13 @@
         "Distillation from API outputs"
       ],
       "surface": "Public API endpoints with high query volume access",
-      "update": ""
+      "update": "",
+      "plain_title": "Queries help copy a proprietary model",
+      "applies_when": "A valuable specialized model exposes enough query access to an attacker.",
+      "business_impact": "The organization may lose some value in proprietary model behavior or training investment.",
+      "defender_action": "Assess the model’s business value, restrict abusive query volume and monitor extraction patterns.",
+      "evidence_summary": "Research demonstrations support the technique; the corpus does not establish widespread theft of general-purpose frontier models by this route.",
+      "evidence_score": 2
     },
     {
       "num": "07",
@@ -121,7 +159,13 @@
         "Query-pattern side channel — inferring other users' data from search patterns"
       ],
       "surface": "Embedding APIs, vector stores/databases, similarity search endpoints",
-      "update": ""
+      "update": "",
+      "plain_title": "Search storage reveals private data",
+      "applies_when": "Sensitive information is stored in vectors or shared retrieval infrastructure.",
+      "business_impact": "Private records may be reconstructed or returned to the wrong tenant.",
+      "defender_action": "Enforce tenant separation and retrieval authorization. Test what information vectors and search responses disclose.",
+      "evidence_summary": "Specialized extraction techniques are research-based. Cross-tenant access failures are a separate boundary to test; the aggregate score does not prove every subtype has occurred.",
+      "evidence_score": 2
     },
     {
       "num": "08",
@@ -137,7 +181,13 @@
         "Rate limit abuse"
       ],
       "surface": "Any LLM API endpoint; metered enterprise deployments especially",
-      "update": ""
+      "update": "",
+      "plain_title": "Requests exhaust the service or its budget",
+      "applies_when": "A public or shared assistant consumes metered inference, context or retry capacity.",
+      "business_impact": "Users lose service and the organization can incur unexpected usage costs.",
+      "defender_action": "Enforce per-user and aggregate request, token, concurrency, retry and spend ceilings. Test the cutoff; a cost alert is not a spending limit.",
+      "evidence_summary": "The framework rates resource exhaustion 4/5. This is an established service-abuse pattern; its business impact depends on quotas, billing and enforced limits.",
+      "evidence_score": 4
     },
     {
       "num": "09",
@@ -156,14 +206,20 @@
         "T09-IDENTITY — Inter-agent identity, delegation, and privilege escalation"
       ],
       "surface": "Multi-agent pipelines, MCP servers, A2A communication, LangChain/AutoGen deployments",
-      "update": "Source: LangGraph ToolNode.invoke() returns unsanitized ToolMessage to shared messages state — structurally confirmed Jun 2026. MA-DEF-1 effectiveness is MEDIUM in default LangGraph; requires explicit ToolCallWrapper enforcement for HIGH. v1.9: T09-MEMORY — Persistent cross-session memory poisoning; T09-IDENTITY — Inter-agent identity, delegation, and privilege escalation"
+      "update": "Source: LangGraph ToolNode.invoke() returns unsanitized ToolMessage to shared messages state — structurally confirmed Jun 2026. MA-DEF-1 effectiveness is MEDIUM in default LangGraph; requires explicit ToolCallWrapper enforcement for HIGH. v1.9: T09-MEMORY — Persistent cross-session memory poisoning; T09-IDENTITY — Inter-agent identity, delegation, and privilege escalation September: T09-MEMORY 3/5 overall; InjecMEM controlled method 2/5. Include normal-input ingestion, shared artifacts and version-aware MCP authorization.",
+      "plain_title": "One agent passes poisoned instructions to another",
+      "applies_when": "Agents share messages, summaries, memory or artifact stores across different permission levels.",
+      "business_impact": "Untrusted content may reach a more privileged worker and trigger an unauthorized action.",
+      "defender_action": "Authenticate delegation, isolate shared state and re-authorize at execution. A tool-free intermediary does not stop the chain.",
+      "evidence_summary": "3/5 reflects demonstrated or source-confirmed paths, not a confirmed widespread multi-agent attack campaign. Memory demonstrations are 3/5; the specific InjecMEM study is 2/5.",
+      "evidence_score": 3
     },
     {
       "num": "10",
       "title": "Non-Text Injection",
       "owasp": "—",
       "prio": "MEDIUM",
-      "wild": "2/5 — Multi-modal LLMs not yet universal",
+      "wild": "2/5 — controlled non-text injection demonstrations",
       "desc": "Image, audio, or structured data injection bypassing text-focused input filters. Impact 4 because it circumvents most standard detection.",
       "subtypes": [
         "Image-embedded PI (vision models)",
@@ -174,7 +230,13 @@
         "T10-REPRESENTATION — Representation confusion (monitored; pipeline-specific evidence required)"
       ],
       "surface": "Multi-modal endpoints, vision models, ASR pipelines, document ingestion",
-      "update": "v1.9: T10-CUA — Computer-use visual-state disagreement and deceptive UI actions; T10-REPRESENTATION — Representation confusion (monitored; pipeline-specific evidence required)"
+      "update": "v1.9: T10-CUA — Computer-use visual-state disagreement and deceptive UI actions; T10-REPRESENTATION — Representation confusion (monitored; pipeline-specific evidence required)",
+      "plain_title": "Instructions arrive through images or other formats",
+      "applies_when": "The assistant interprets images, audio, documents, structured data or computer interfaces.",
+      "business_impact": "A deceptive input may influence answers or cause an incorrect interface action.",
+      "defender_action": "Test each supported format and verify the final action and destination. Text-only screening does not cover every input channel.",
+      "evidence_summary": "The category is research-backed at 2/5. Representation confusion remains a 1/5 monitored subtype; reproduce it in the actual conversion pipeline.",
+      "evidence_score": 2
     },
     {
       "num": "11",
@@ -188,10 +250,18 @@
         "Generated code execution without safety check",
         "Structured output (JSON/SQL) used directly in downstream systems",
         "Hallucinated facts presented as authoritative",
-        "T11-RELAY — Response-path relay tampering (provisional; Wild_vs_Theory 1/5)"
+        "T11-RELAY — Response-path relay tampering (provisional; Wild_vs_Theory 1/5)",
+        "Browser XSS and streamed/Markdown resource disclosure",
+        "SQL, command and path injection; server-side request forgery"
       ],
       "surface": "Any LLM output path; critical for code generation, instruction generation, structured output",
-      "update": "v1.9: T11-RELAY — Response-path relay tampering (provisional; Wild_vs_Theory 1/5)"
+      "update": "v1.9: T11-RELAY — Response-path relay tampering (provisional; Wild_vs_Theory 1/5)",
+      "plain_title": "Model output is trusted without checking it",
+      "applies_when": "Generated text, code or structured output is passed to people or systems as authoritative.",
+      "business_impact": "Unsafe code, incorrect decisions or data disclosure can reach downstream systems.",
+      "defender_action": "Apply PI-DEF-4 at each receiving component: encode/sanitize browser output, parameterize SQL values, constrain commands/paths, authorize destinations and test before streaming or execution.",
+      "evidence_summary": "Output failures have limited/demonstrated evidence at 3/5. Specific relay response-forgery remains provisional at 1/5; it must not inherit the parent category’s evidence rating.",
+      "evidence_score": 3
     },
     {
       "num": "12",
@@ -207,30 +277,42 @@
         "Time pressure override — SLA pressure defeats safety review"
       ],
       "surface": "Any HITL checkpoint; approval workflows; human review queues",
-      "update": ""
+      "update": "",
+      "plain_title": "Human approval misses the manipulation",
+      "applies_when": "Reviewers approve actions without the source context or time needed to judge them.",
+      "business_impact": "A confirmation button can approve an attacker-influenced action.",
+      "defender_action": "Show the exact action, recipient and influencing source. Test reviewer decisions and prevent approval replay or argument changes.",
+      "evidence_summary": "Review failures are documented at 3/5. This is evidence of a procedural weakness, not a measured probability that every reviewer will fail.",
+      "evidence_score": 3
     },
     {
       "num": "13",
       "title": "Defense Control Type Confusion",
       "owasp": "—",
       "prio": "MEDIUM",
-      "wild": "3/5 — Architectural design failure; very common",
-      "desc": "Alignment controls (model instructions) are mistaken for infrastructure-enforced controls. Most common security mistake in LLM deployments — creates false confidence in defenses that fail under attack.",
+      "wild": "3/5 — documented security-review failure pattern",
+      "desc": "The design relies on the model obeying a rule instead of enforcing that rule in software.",
       "subtypes": [
         "Treating system prompt instructions as hard security boundaries",
         "Using alignment-only controls for compliance requirements",
         "Assuming model refusals are reliable under adversarial conditions"
       ],
       "surface": "Architectural design phase; security review; compliance mapping",
-      "update": "Addendum: Capability Withholding is a taxonomic note — accidental RLHF reward hacking is an operational concern, not a documented external attack path."
+      "update": "Addendum: Capability Withholding is a taxonomic note — accidental RLHF reward hacking is an operational concern, not a documented external attack path. September: protect sandbox/policy artifacts against agent writes and preserve independent execution evidence.",
+      "plain_title": "A model instruction is mistaken for a security boundary",
+      "applies_when": "The design relies on the model obeying a rule instead of enforcing that rule in software.",
+      "business_impact": "The team may believe data or actions are protected when the boundary can be bypassed.",
+      "defender_action": "Identify the enforcing component and test the denial. Protect its policy, sandbox executable and audit records from agent writes.",
+      "evidence_summary": "Security reviews support the 3/5 rating. Intentional capability withholding is a separate 1/5 hypothesis requiring provider-side access; it is not a documented external attack path.",
+      "evidence_score": 3
     },
     {
       "num": "14",
       "title": "Internal Safety Collapse / Validator Harness Attack",
       "owasp": "—",
       "prio": "CRITICAL",
-      "wild": "5/5 for research pattern — ISC-Bench: 53 scenarios, 95.3% worst-case failure",
-      "desc": "A benign-looking task + format validator + incomplete data harness causes harmful generation as the only valid task completion. Standard PI detectors miss it entirely — no injection present; harmful content IS the task-correct output.",
+      "wild": "2/5 — controlled TVD/ISC research; incident analogy is not mechanism attribution",
+      "desc": "An attacker-shaped task, validator and data can reward harmful completion in controlled research. Applicability requires access to that workflow; detector performance must be tested.",
       "subtypes": [
         "Task/Validator/Data (TVD) harness attack",
         "Coding harness with harmful completion required",
@@ -239,19 +321,25 @@
         "Autonomous workflow bundle injection"
       ],
       "surface": "Any system where attacker can shape task + validator + data: coding assistants, eval frameworks, data-labeling tools, fine-tuning pipelines, autonomous agents",
-      "update": "arXiv:2603.23509 — ISC-Bench primary research; 8 disciplines; provider-side AND deployer-side controls both required."
+      "update": "September review: separate controlled ISC evidence from the adjacent OpenAI/Hugging Face containment incident. Deployment severity depends on reachable harm.",
+      "plain_title": "An attacker-shaped task rewards unsafe completion",
+      "applies_when": "An external party can shape the task, validator and data that the target system executes.",
+      "business_impact": "A manipulated evaluation or workflow may accept harmful output as a successful result.",
+      "defender_action": "Test the task and validator together; reject unsafe accepted outputs. Prioritize this when an attacker can reach that specific workflow.",
+      "evidence_summary": "2/5 — controlled research. The corpus does not establish this mechanism as a confirmed malicious field incident. A worst-case benchmark result is not a production incident rate.",
+      "evidence_score": 2
     }
   ],
   "dtree": [
     {
       "id": "q1",
       "label": "Q1",
-      "question": "Is there a prompt injection surface? (Any user-controlled input reaches the LLM)",
+      "question": "Can untrusted input reach the model? Include users, documents, web pages and tool responses.",
       "result": null,
       "subs": [
         {
           "id": "q1a",
-          "question": "Is RAG / retrieval used?",
+          "question": "Does the assistant retrieve documents or search results (RAG)?",
           "result": "PI-DEF-2 REQUIRED — RAG context labeling + load-time sanitization"
         },
         {
@@ -271,107 +359,85 @@
     {
       "id": "q2",
       "label": "Q2",
-      "question": "Is this multi-agent, MCP, or A2A? (More than one LLM agent in the call chain)",
-      "result": "MA-DEF-1 REQUIRED — context isolation + inter-agent provenance tagging"
+      "question": "Does the system use multiple agents, an MCP tool server or an agent-to-agent connection?",
+      "result": "MA-DEF-1 + MA-DEF-3 REQUIRED — isolate context, authenticate delegation and authorize execution; check protocol versions, caches and approvals"
     },
     {
       "id": "q3",
       "label": "Q3",
-      "question": "Can an attacker control or shape: task definition · validator/schema · incomplete data · uploaded documents · tool results · marketplace skills · workflow bundles?",
-      "result": "ISC-DEF-1 REQUIRED — validate the harness itself (task + validator + data), not just model output"
+      "question": "Does the system execute a task/validator/data workflow that an attacker can meaningfully shape? Ordinary untrusted text alone does not establish this ISC path.",
+      "result": "ISC-DEF-1 REQUIRED for this exposed workflow — validate task, acceptance rules and data together. ISC evidence remains controlled research at 2/5."
     },
     {
       "id": "q4",
       "label": "Q4",
       "question": "Is any model, adapter, skill, MCP server, or dependency third-party?",
-      "result": "SC-DEF-1 + SC-DEF-2 REQUIRED — AIBOM + inference sandboxing + network egress monitoring"
+      "result": "SC-DEF-1 + SC-DEF-2 REQUIRED — inventory and verify components; isolate execution, protect secrets and control outbound traffic"
+    },
+    {
+      "id": "q5",
+      "label": "Q5",
+      "question": "Is sensitive context available through prompts or read-only retrieval?",
+      "result": "PI-DEF-2 + PI-DEF-4 — check recipient access, external queries and renderer egress even without write tools"
+    },
+    {
+      "id": "q6",
+      "label": "Q6",
+      "question": "Can requests consume a shared service limit or generate usage charges?",
+      "result": "DOS-DEF-1 — bound admitted work and retained state after rejection, cancellation, abort and timeout; verify cleanup and successful traffic"
+    },
+    {
+      "id": "q7",
+      "label": "Q7",
+      "question": "Can external or changeable facts enter RAG, training, fine-tuning or feedback?",
+      "result": "DATA-DEF-1 REQUIRED — validate source integrity and authorized changes; false facts need no instruction override"
+    },
+    {
+      "id": "q8",
+      "label": "Q8",
+      "question": "Does output reach a browser, database, command runner, file writer or HTTP client?",
+      "result": "PI-DEF-4 REQUIRED — test the receiving boundary before rendering, streaming or execution; LOW requires every applicable path to be constrained"
+    },
+    {
+      "id": "q9",
+      "label": "Q9",
+      "question": "Does the system store memory or compact context to resume a task, even without durable storage?",
+      "result": "MEM-DEF-1 — recover genuine instructions, approvals, denials and source/version evidence independently; a model summary cannot grant authority"
+    },
+    {
+      "id": "q10",
+      "label": "Q10",
+      "question": "Does agent text enter a blocking monitor, or can approved code/dependencies change before execution?",
+      "result": "REP-DEF-1 + PI-DEF-4 + SC-DEF-2 — test trusted role/turn framing and bind approval to immutable executable content or reauthorize after mutation"
+    },
+    {
+      "id": "q11",
+      "label": "Q11",
+      "question": "Have generation settings, watermark/key, logit/sampling configuration, monitor or compactor changed materially?",
+      "result": "Revalidate paired denied and legitimate action/output cases; record provider-controlled unknowns and keep independently supported infrastructure enforcement"
     }
   ],
   "sidebar": {
     "citations": [
       {
-        "name": "EchoLeak / CVE-2025-32711",
-        "desc": "Indirect PI exfiltration via AI copilot confirmed in production. No zero-days — exploits instruction-following behavior.",
-        "tags": [
-          {
-            "label": "T01",
-            "tab": "threats"
-          },
-          {
-            "label": "Chain A",
-            "tab": "chains"
-          }
-        ]
+        "name": "Evidence standard",
+        "desc": "Primary findings and corroborated reports carry ratings. Press, analogies and future scenarios do not establish field exploitation.",
+        "tags": []
       },
       {
-        "name": "JFrog / ReversingLabs",
-        "desc": "Malicious models on HuggingFace confirmed. Exfiltrate API keys + conversation data at load time. No behavioral deviation during normal operation.",
-        "tags": [
-          {
-            "label": "T03",
-            "tab": "threats"
-          },
-          {
-            "label": "Chain B",
-            "tab": "chains"
-          }
-        ]
+        "name": "EchoLeak: demonstration, not a field victim count",
+        "desc": "3/5 for this incident. The discoverer reported no customer impact; the broader prompt-injection category has separate field evidence.",
+        "tags": []
       },
       {
-        "name": "Sysdig (May 2026)",
-        "desc": "LLM agent drove post-exploitation autonomously in the wild. Confirms multi-agent propagation as an active threat.",
-        "tags": [
-          {
-            "label": "T09",
-            "tab": "threats"
-          },
-          {
-            "label": "Chain C",
-            "tab": "chains"
-          }
-        ]
+        "name": "ISC: controlled research",
+        "desc": "2/5. A selected benchmark failure rate is not production prevalence or proof of a real-world incident.",
+        "tags": []
       },
       {
-        "name": "arXiv:2603.23509 — ISC-Bench",
-        "desc": "Primary research: 53 scenarios, 8 disciplines, 95.3% worst-case failure rate. Standard PI detectors miss ISC entirely — no injection present.",
-        "tags": [
-          {
-            "label": "T14",
-            "tab": "threats"
-          },
-          {
-            "label": "Chain ISC",
-            "tab": "chains"
-          },
-          {
-            "label": "ISC-DEF-1",
-            "tab": "defenses"
-          }
-        ]
-      },
-      {
-        "name": "Output-Filtering-Evaluation (2026)",
-        "desc": "Zero leaks across 20K adaptive attacks when output filtering applied. Architecture controls alone insufficient against adaptive adversaries.",
-        "tags": [
-          {
-            "label": "MA-DEF-1",
-            "tab": "defenses"
-          }
-        ]
-      },
-      {
-        "name": "LangGraph ToolNode Disclosure (Jun 2026)",
-        "desc": "ToolNode.invoke() returns unsanitized ToolMessage to shared messages state. MA-DEF-1 is MEDIUM without ToolCallWrapper enforced.",
-        "tags": [
-          {
-            "label": "T09",
-            "tab": "threats"
-          },
-          {
-            "label": "MA-DEF-1",
-            "tab": "defenses"
-          }
-        ]
+        "name": "Subtype ratings matter",
+        "desc": "Relay response-forgery and representation confusion remain 1/5 even though their parent categories have stronger evidence.",
+        "tags": []
       }
     ],
     "frameworks": [
@@ -465,43 +531,31 @@
     "regulatory": [
       {
         "name": "EU AI Act",
-        "desc": "Art. 9 (risk mgmt) · Art. 10 (data governance) · Art. 13 (transparency) · Art. 14 (human oversight) · Art. 15 (robustness) · Art. 17 (quality mgmt). GPAI: Aug 2, 2026. High-risk: ~Dec 2027.",
+        "desc": "Determine the system classification, legal role and applicable obligation before using the regulatory mapping. A threat label does not establish legal scope.",
         "tags": [
           {
-            "label": "7% turnover / €35M",
-            "cls": "tag-warn"
-          },
-          {
-            "label": "Regulatory tab",
+            "label": "Scoped mapping",
             "tab": "owasp"
           }
         ]
       },
       {
         "name": "GDPR",
-        "desc": "Art. 17 (erasure — embedding inversion) · Art. 25 (privacy by design) · Art. 32 (security — cross-tenant leakage).",
+        "desc": "For personal data, assess security, privacy and breach-response duties under the applicable role and risk thresholds.",
         "tags": [
           {
-            "label": "4% turnover / €20M",
-            "cls": "tag-warn"
-          },
-          {
-            "label": "T07",
-            "tab": "threats"
+            "label": "Scoped mapping",
+            "tab": "owasp"
           }
         ]
       },
       {
-        "name": "US FTC AI Principles (2024)",
-        "desc": "Unfair/deceptive security practices. Output validation failures. Supply chain key theft. Civil penalty exposure.",
+        "name": "US consumer protection",
+        "desc": "Assess the specific security representations and practices. Do not infer a penalty from the presence of an LLM threat.",
         "tags": [
           {
-            "label": "T03",
-            "tab": "threats"
-          },
-          {
-            "label": "T11",
-            "tab": "threats"
+            "label": "Scoped mapping",
+            "tab": "owasp"
           }
         ]
       }
@@ -510,67 +564,67 @@
   "synthesis": [
     {
       "title": "Framework",
-      "version": "1.9",
+      "version": "1.12",
       "file": "synthesis/framework.md",
       "desc": "Umbrella framework: deployment model, trust boundaries, regulatory baseline, comparable-framework positioning."
     },
     {
       "title": "Threat Taxonomy",
-      "version": "1.8",
+      "version": "1.11",
       "file": "synthesis/threat-taxonomy.md",
       "desc": "Master taxonomy of 14 threat categories with evidence, OWASP mapping, and update history."
     },
     {
       "title": "Risk Matrix",
-      "version": "1.8",
+      "version": "1.12",
       "file": "synthesis/risk-matrix.md",
       "desc": "Likelihood × impact scores (1–25), base/elevated risk tiers, and elevation conditions."
     },
     {
       "title": "Defense Playbook",
-      "version": "1.8",
+      "version": "1.11",
       "file": "synthesis/defense-playbook.md",
       "desc": "Full defense catalog: control IDs, types, effectiveness, cost annotations, and tier ordering."
     },
     {
       "title": "Attack Trees",
-      "version": "1.4",
+      "version": "1.8",
       "file": "synthesis/attack-trees.md",
-      "desc": "Structured attack decomposition for all 4 chains with qualitative likelihood descriptors."
+      "desc": "Three canonical attack chains plus scoped agentic branches and deployment-specific path variants."
     },
     {
       "title": "Attack Surface Catalog",
-      "version": "1.4",
+      "version": "1.7",
       "file": "synthesis/attack-surface-catalog.md",
       "desc": "All attack surfaces mapped to threat categories; surface verification checklist."
     },
     {
       "title": "Asset Inventory",
-      "version": "1.1",
+      "version": "1.3",
       "file": "synthesis/asset-inventory.md",
       "desc": "Every protected asset with classification, trust tier, and threat applicability."
     },
     {
       "title": "Assumptions",
-      "version": "1.1",
+      "version": "1.4",
       "file": "synthesis/assumptions.md",
       "desc": "Explicit assumptions the framework makes about LLM behavior, attacker capabilities, and deployment topology."
     },
     {
       "title": "Assessment Template",
-      "version": "1.9",
+      "version": "1.12",
       "file": "synthesis/assessment-template.md",
       "desc": "Engineering worksheet for a 3-person team; completes a valid threat model in under 4 hours."
     },
     {
       "title": "Quick Reference",
-      "version": "1.8",
+      "version": "1.11",
       "file": "synthesis/quick-reference.md",
       "desc": "One-page summary: all 14 threats, 4 chains, primary defenses, decision tree, OWASP mapping."
     },
     {
       "title": "Release Manifest",
-      "version": "1.9",
+      "version": "1.12",
       "file": "synthesis/release-manifest.md",
       "desc": "Coherent corpus state pointer for the v1.8 release."
     }
@@ -979,6 +1033,45 @@
           "tab": "threats"
         }
       ]
+    },
+    {
+      "title": "September review: primary evidence corrections",
+      "file": "research/sources/Review-Corrections-2026-09.md",
+      "desc": "EchoLeak status and renderer channel; legal references; inference resource controls."
+    },
+    {
+      "title": "Landscape update — July 21 to September 15",
+      "file": "research/sources/Landscape-Update-2026-09.md",
+      "desc": "Primary reporting, protocol changes and separately labeled earlier incidents."
+    },
+    {
+      "id": "review-corrections-2026-09-19",
+      "title": "September 19 Review Corrections",
+      "file": "research/sources/Review-Corrections-2026-09-19.md",
+      "tags": [
+        {
+          "label": "Output / Data integrity",
+          "tab": "defenses"
+        }
+      ]
+    },
+    {
+      "title": "September 19 Research Integration",
+      "file": "research/sources/Latest-Development-Integration-2026-09-19.md",
+      "tags": [
+        {
+          "label": "MEM-DEF-1",
+          "tab": "defenses"
+        },
+        {
+          "label": "DOS-DEF-1",
+          "tab": "defenses"
+        },
+        {
+          "label": "REP-DEF-1",
+          "tab": "defenses"
+        }
+      ]
     }
   ],
   "evaluation": [
@@ -990,12 +1083,12 @@
     {
       "title": "Scenario Suite Results",
       "file": "evaluation/scenario-suite-results.md",
-      "desc": "Results from running all 16 scenarios against v1.7 corpus."
+      "desc": "39-scenario v1.12 tabletop assessment with nine criteria per scenario; deployment verification plans are not executed tests."
     },
     {
       "title": "Scenario Suite (JSON)",
       "file": "evaluation/scenario-suite.json",
-      "desc": "25-scenario v1.9 tabletop suite, including nine agentic trust-boundary scenarios."
+      "desc": "39-scenario v1.12 tabletop assessment with nine criteria per scenario; deployment verification plans are not executed tests."
     }
   ],
   "analysis": [
@@ -1028,14 +1121,14 @@
   "controls": [
     {
       "id": "MEM-DEF-1",
-      "name": "Durable Memory Write Authorization",
-      "status": "primary",
+      "name": "Memory and Compaction Authorization",
+      "status": "Include ephemeral resume; genuine authority and evidence remain outside model-authored summaries.",
       "wild": "2/5"
     },
     {
       "id": "SKILL-DEF-1",
       "name": "Skill Lifecycle Security",
-      "status": "primary",
+      "status": "See September playbook requirements and deployment tests; effectiveness is path-specific.",
       "wild": "2/5"
     },
     {
@@ -1059,14 +1152,29 @@
     {
       "id": "DET-DEF-3",
       "name": "Trajectory and Influence Monitoring",
-      "status": "secondary detection control",
+      "status": "See September playbook requirements and deployment tests; effectiveness is path-specific.",
       "wild": "2/5"
     },
     {
       "id": "REP-DEF-1",
       "name": "Representation Boundary Validation",
-      "status": "monitored; pipeline-specific",
+      "status": "Test trusted role/turn framing at live monitor adapters; semantic monitors remain probabilistic.",
       "wild": "1/5"
+    },
+    {
+      "id": "DOS-DEF-1",
+      "name": "Inference Resource and Spend Limits",
+      "status": "Bound admitted work and retained state after rejection, cancellation, abort and timeout."
+    },
+    {
+      "id": "DATA-DEF-1",
+      "name": "Data Source and Dataset Integrity",
+      "status": "Authorize writes, independently validate facts, version datasets and test recovery; provenance alone is insufficient."
+    },
+    {
+      "id": "PI-DEF-4",
+      "name": "Output Consumer Enforcement",
+      "status": "Validate consumers and bind delayed execution approval to immutable code/dependencies; revalidate material generation changes."
     }
   ]
 }

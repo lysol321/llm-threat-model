@@ -1,6 +1,6 @@
 # LLM Threat Modeling Framework
 
-**Release v1.9** · Pilot candidate · Updated 2026-07-20
+**Release v1.12** · Pilot candidate · Updated 2026-09-19
 
 This threat model is for engineering teams assessing LLM deployments. It assumes no ML security expertise. The framework covers 14 threat categories, 3 canonical attack chains plus scoped agentic trust-boundary branches, a layered defense playbook, a risk matrix with regulatory mapping, and an engineering worksheet that a 3-person team can complete in under 4 hours.
 
@@ -12,9 +12,9 @@ This threat model is for engineering teams assessing LLM deployments. It assumes
 
 Most LLM threat guidance is either a flat vulnerability list or an academic kill-chain diagram. This framework connects the two: every threat maps to a complete attack sequence, a risk score grounded in evidence (not speculation), layered defenses with explicit ownership, and a worksheet that teams can apply to their own deployments today.
 
-The framework went through 18 foundational adversarial-review rounds plus a focused July 2026 red-team review. Release v1.9 is validated against 25 deployment scenarios, including nine agentic cases covering memory, skills, agent identity, computer use, session contamination, response relays, representation confusion, and capability disclosure.
+The framework went through 18 foundational adversarial-review rounds plus a focused July 2026 red-team review. Release v1.12 contains 39 documented tabletop scenarios, including nine July agentic cases, eight September 15 regressions, two September 19 correction cases, and four September 19 research-integration cases for monitor integrity, compaction authority, failure-path cleanup, and configuration revalidation. Control states are explicitly hypothetical; records include ratings, calculations, decisions and owners.
 
-Release v1.9 is a **pilot candidate**, not a deployment certification. Teams must complete the worksheet against their own architecture, evidence, and trust boundaries before accepting residual risk. See the canonical [`release-manifest.md`](synthesis/release-manifest.md) for component versions and evidence caveats.
+Release v1.12 is a **pilot candidate**, not a deployment certification. Teams must complete the worksheet against their own architecture, evidence, and trust boundaries before accepting residual risk. See the canonical [`release-manifest.md`](synthesis/release-manifest.md) for component versions and evidence caveats.
 
 ---
 
@@ -41,6 +41,8 @@ The HTML viewer gives you a tabbed interface — Overview, 14 Threats, Attack Ch
 | **Tier 1** | Minimal permission scoping · RAG context labeling · AIBOM maintenance |
 | **Tier 2** | Instruction hierarchy hardening · Human-in-the-loop for high-risk actions · Tool call audit logging |
 | **Tier 3** | Custom inference sandboxing · Inter-agent context isolation · Anomaly detection |
+
+Deployment gates take precedence over investment tiers: PI-DEF-4 is required at output consumers, DATA-DEF-1 for consequential external/changeable data, and execution or inter-agent boundaries must be enforced whenever those paths exist.
 
 **Validate the scenario suite:**
 ```bash
@@ -108,17 +110,17 @@ risk-matrix.md  (regulatory mapping and residual risk math)
 | 1 | **Prompt Injection** — manipulating model instructions through crafted inputs | CRITICAL | 4/5 |
 | 2 | **Excessive Agency** — granting more tool/action permissions than necessary | CRITICAL | 4/5 |
 | 3 | **Supply Chain Compromise** — malicious models, adapters, MCP servers from third parties | HIGH | 4/5 |
-| 4 | **Data/Model Poisoning** — compromising training data, fine-tuning sets, RAG stores | HIGH | 4/5 |
-| 5 | **System Prompt Leakage** — extracting prompts, API keys, proprietary instructions | MEDIUM | 4/5 |
-| 6 | **Model Extraction** — query-based replication of proprietary models | LOW-MEDIUM | 3/5 |
-| 7 | **Embedding/Vector Weaknesses** — reconstructing sensitive data from embeddings | MEDIUM | 3/5 |
-| 8 | **Denial of Service / Unbounded Consumption** — context/quota exhaustion | MEDIUM-HIGH | 5/5 |
+| 4 | **Data/Model Poisoning** — compromising training data, fine-tuning sets, RAG stores | HIGH | 3/5 |
+| 5 | **System Prompt Leakage** — extracting prompts, API keys, proprietary instructions | MEDIUM | 3/5 |
+| 6 | **Model Extraction** — query-based replication of proprietary models | LOW-MEDIUM | 2/5 |
+| 7 | **Embedding/Vector Weaknesses** — reconstructing sensitive data from embeddings | MEDIUM | 2/5 |
+| 8 | **Denial of Service / Unbounded Consumption** — context/quota exhaustion | MEDIUM-HIGH | 4/5 |
 | 9 | **Multi-Agent Context Propagation** — PI propagating between chained agents | HIGH | 3/5 |
-| 10 | **Non-Text Injection** — image, audio, or structured data injection | MEDIUM | 3/5 |
+| 10 | **Non-Text Injection** — image, audio, or structured data injection | MEDIUM | 2/5 |
 | 11 | **Output Validation Failures** — unsafe outputs passed unchecked to users/systems | MEDIUM | 3/5 |
-| 12 | **HITL Failures** — human reviewers miss adversarial manipulation due to missing provenance | MEDIUM | 2/5 |
+| 12 | **HITL Failures** — human reviewers miss adversarial manipulation due to missing provenance | MEDIUM | 3/5 |
 | 13 | **Defense Control Type Confusion** — alignment controls mistaken for infrastructure controls | MEDIUM-HIGH | 3/5 |
-| 14 | **Internal Safety Collapse / Validator Harness** — benign-looking task causes harmful generation | CRITICAL | 4/5 |
+| 14 | **Internal Safety Collapse / Validator Harness** — benign-looking task causes harmful generation | CRITICAL | 2/5 |
 
 **Category 13 Addendum:** Capability Withholding (intentional knowledge suppression) — Wild_vs_Theory 1/5, primarily theoretical; accidental RLHF reward hacking — Wild_vs_Theory 3/5.
 
@@ -133,14 +135,14 @@ See [`threat-taxonomy.md`](synthesis/threat-taxonomy.md) for full threat entries
 ```
 [Indirect PI via RAG / documents / external data]
          ↓
-[Excessive Agency: tool permissions + no human-in-the-loop]
+[Sensitive data + reachable disclosure channel]
          ↓
-[Tool call exfiltrates data (email, webhook, file write)]
+[Answer, renderer request, search query or tool exports data]
          ↓
 [Attacker receives data — logged as legitimate user action]
 ```
 
-**Wild_vs_Theory: 4/5** — EchoLeak / CVE-2025-32711 confirmed zero-click in-wild exploitation.
+**Wild_vs_Theory: 4/5** for the aggregate category; EchoLeak individually is **3/5**, a production-system demonstration with no affected customers reported. See `research/sources/Review-Corrections-2026-09-19.md`.
 
 ### Chain B: Supply Chain → Model Replacement → Silent Exfiltration
 
@@ -197,14 +199,14 @@ See [`defense-playbook.md`](synthesis/defense-playbook.md) for the full defense 
 
 ## Evidence Provenance
 
-Every risk claim in this framework is grounded in a primary or corroborating source. It uses two source classes:
+Incident/evidence claims require primary or corroborating sources. Risk scores and mitigation factors are planning judgments, not measured probabilities or prevention rates. It uses two source classes:
 
 | Source type | Carries risk ratings | Examples |
 |-------------|---------------------|----------|
 | **Primary / corroborated** | ✅ Yes | Academic papers with empirical results, CVE disclosures, confirmed incident post-mortems |
 | **Press / community narrative** | ❌ Context only | News articles, blog posts, conference talks — used for background, not for risk scores |
 
-The 25-scenario evaluation suite validates the framework: every major conclusion in every scenario must cite a `synthesis/` file and line range. Scenarios that use unsupported incident narratives fail the suite. The validator uses an extensible minimum count plus mandatory capability and named-scenario coverage, so adding valid scenarios does not break the contract.
+The 39-scenario evaluation suite checks documented tabletop assessments: every major conclusion in every scenario must cite a `synthesis/` file and line range. Each scenario records actual control ratings, scoring inputs, residual scores and an action/owner for its scoped risks. Checks verify completeness, arithmetic and citation location; they do not prove semantic correctness or deployed control effectiveness. The validator uses an extensible minimum count plus mandatory capability and named-scenario coverage, so adding valid scenarios does not break the contract.
 
 ---
 
@@ -234,7 +236,7 @@ llm-threat-model/
 │   └── sources/             — Primary and corroborating sources with annotations
 │
 ├── evaluation/              ← Framework validation
-│   ├── scenario-suite.json — 25 deployment scenarios with 9 pass/fail criteria each
+│   ├── scenario-suite.json — 39 deployment scenarios with 9 pass/fail criteria each
 │   ├── scenario-suite-results.md
 │   └── assessment-walkthrough-example.md
 │
@@ -265,7 +267,7 @@ The framework maps to three regulatory regimes:
 | **GDPR** (Art. 17, 25, 32) | Right to erasure; privacy by design; security of processing; breach notification | Embedding inversion, training data poisoning, cross-tenant leakage |
 | **FTC AI Guidance** | Unfair/deceptive security practices; reasonable security measures | PI → exfiltration, output validation failures |
 
-The EU AI Act carries the highest compliance stakes for EU-market deployments. See [`risk-matrix.md`](synthesis/risk-matrix.md) for the full regulatory mapping table.
+Classify jurisdiction, intended use and entity role before applying obligations. High-risk system requirements and GPAI-provider duties differ; EU-market access alone does not establish either classification. See [`risk-matrix.md`](synthesis/risk-matrix.md) for applicability gates and sources.
 
 ---
 
@@ -290,7 +292,9 @@ Framework docs are versioned independently. Check the version header in each fil
 
 | Version | Date | Key Change |
 |---------|------|-----------|
-| 1.9 (+ 2026-07-22 addendum) | 2026-07-22 | Category 14 in-wild corroboration: OpenAI/Hugging Face model-evaluation incident (first-party post-mortem) logged as a second confirmed validator-harness datapoint; evidence basis strengthened, Wild_vs_Theory unchanged at 4/5. Narrative-only addendum — pinned component versions unchanged |
+| 1.11 | 2026-09-19 | Output/data integrity boundaries, complete tabletop assessments, legal applicability gates and README evidence synchronization |
+| 1.10 | 2026-09-15 | Evidence corrections: ISC 2/5 controlled research; EchoLeak 3/5 demonstration; read-only disclosure and deployment scoring corrections |
+| 1.9 (+ 2026-07-22 addendum, superseded by v1.10) | 2026-07-22 | Historical attribution withdrawn: the adjacent containment incident does not establish the ISC mechanism. Current ISC evidence is 2/5 controlled research; see the v1.10 corrections. |
 | 1.9 | 2026-07-20 | Agentic trust-boundary integration: canonical subtypes, seven assessable controls, nine new scenarios, calibrated overlays, and synchronized HTML |
 | 1.8 | 2026-06-24 | Comparable framework positioning (OWASP, MITRE, NIST, MAESTRO, Microsoft, OWASP Agentic/MCP) |
 | 1.7 | 2026-06-24 | Correction pass: residual-risk math, EU AI Act mappings, base/elevated score split |
@@ -305,7 +309,7 @@ Framework docs are versioned independently. Check the version header in each fil
 - New attack technique published (adversarial suffix, injection method)
 - Regulatory change (EU AI Act implementing guidance, FTC enforcement action)
 
-**Next planned review:** 2026-09-17 (quarterly cycle)
+**Next planned review:** 2026-10-15 or after a material deployment change
 
 ---
 
@@ -314,3 +318,7 @@ Framework docs are versioned independently. Check the version header in each fil
 This framework addresses **LLM-as-target** threats: attacks that target the LLM system itself (prompt injection, supply chain compromise, data exfiltration, model extraction). These are threats *to* the organization deploying the LLM.
 
 **Out of scope:** This framework does not fully cover **LLM-as-attack-vector** misuse — using an LLM to harm third parties through phishing, disinformation, or generated content. OWASP LLM09 Misinformation and organization-specific content safety policies should be assessed separately for customer-facing generation and decision-support deployments.
+
+## September 19 research integration
+
+Release v1.12 extends monitor/approval integrity, compaction/resume authority, rejected-request cleanup and generation-configuration revalidation under existing controls. The 39 scenarios are documented tabletop assessments; their deployment verification plans are not executed security tests. See [research/sources/Latest-Development-Integration-2026-09-19.md](research/sources/Latest-Development-Integration-2026-09-19.md) for primary sources and evidence limits, and [verification](review/research-integration-2026-09-19.md). Existing threat evidence ratings are unchanged.

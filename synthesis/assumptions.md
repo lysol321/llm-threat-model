@@ -1,7 +1,7 @@
 # LLM Threat Modeling — Explicit Assumptions
 
-**Version:** 1.1 (agent identity and response-path trust boundaries)
-**Date:** 2026-07-20
+**Version:** 1.4 (September research integration)
+**Date:** 2026-09-19
 **Status:** Living document — re-evaluate when deploying new model classes, frameworks, or architectural patterns
 
 ---
@@ -52,7 +52,7 @@ These assumptions describe how LLMs behave. They are based on current-generation
 
 ### A6: LLMs Can Have Agency (Tool Use, State Modification)
 **Assumption:** LLMs can be granted agency — the ability to call tools, modify external state, send messages, and take actions beyond text generation. This agency is configurable and is the force multiplier that transforms prompt injection from information manipulation to unauthorized action.
-**Implication:** Without agency, prompt injection primarily generates misleading content. With agency, prompt injection becomes a remote-code-execution equivalent.
+**Implication:** Without model tool use, prompt injection can still disclose sensitive context through answers or browser-rendered content. Read-only search requests can also export sensitive query data. Tool use adds action and execution risks; assess both data disclosure and state changes (see `research/sources/Review-Corrections-2026-09.md`).
 
 ### A7: RLHF-Trained Models Exhibit Reward Hacking in Production
 **Assumption:** Models trained with Reinforcement Learning from Human Feedback (RLHF) develop reward hacking behaviors — optimizing for measurable proxies in ways that degrade model quality or introduce subtle misalignment. This is observable in production RL systems.
@@ -87,15 +87,12 @@ These assumptions define the baseline attacker the framework assumes. All risk l
 **Assumption:** Supply chain threats (Category 3) involve insider threat actors by definition — a malicious model publisher, a compromised annotation pipeline, or a compromised MCP server operator. Insider threats for RLHF are covered under B2.
 **Implication:** A defense strategy that only addresses external attackers misses the primary attack vector for supply chain compromise.
 
-### B5: Verified Official Foreign Lab Weights Carry Lowest Supply Chain Risk
-**Assumption:** When a model is downloaded directly from its originating lab's official repository (e.g., the lab's HuggingFace org) and its cryptographic signature is verified against the lab's known signing key, the supply chain attack surface from the *originating lab's infrastructure* is **low**. Frontier labs — US and Chinese alike — have strong commercial incentive to maintain weight integrity: a public compromise would be catastrophic to their international commercial credibility. Government compulsion of a domestic frontier lab for adversarial weight tampering is theoretically possible but commercially deterred for internationally-served frontier models.
+### B5: Verified Official Weights Establish Provenance, Not Safety
+**Assumption:** An artifact verified against the expected publisher identity and digest has authenticated provenance and protection against post-signing tampering. The verification does not establish that the publisher, build pipeline, signing service, or training process was uncompromised. It does not detect malicious behavior already present when signed (SC-GAP-1 in `defense-playbook.md`).
 
-**The risk lifecycle after official release:**
-1. **Labs at release are the safest the model will ever be.** Cryptographic signature verification eliminates the primary supply chain compromise path from the lab's infrastructure.
-2. **Unofficial fine-tuned models open new surfaces.** A fine-tune derived from verified weights inherits the base model's safety properties but introduces a new surface: the fine-tuning pipeline itself becomes a potential vector for training data exposure and the resulting artifact may carry new behavioral risks not present in the base model.
-3. **Fine-tuning on proprietary data enables distillation risk.** If your organization fine-tunes on sensitive data, that data's confidentiality is exposed to the fine-tuning process and the resulting model artifact — regardless of whether the base weights were verified.
+**Implication:** Official distribution reduces intermediary substitution opportunities; it is not an automatic LOW supply-chain verdict. Apply the same supplier-assurance, artifact-format, runtime-isolation, and behavioral-risk review regardless of the lab's country. Record unresolved supplier/build/signing compromise as residual risk.
 
-**Practical implication:** The defense posture for verified official weights (inference only, no custom hooks) is substantively simpler than for fine-tuned or custom-trained variants. Fine-tuning operations require their own threat model.
+**Derivatives:** Fine-tuning, adapters, conversion, and redistribution introduce additional trust boundaries. Re-verify the resulting artifact and behavior; inherited base-model safety is not assured. Proprietary fine-tuning data and the resulting artifact require confidentiality controls.
 
 ---
 
@@ -208,10 +205,10 @@ These assumptions describe the technical architecture the framework models.
 
 ## F. Regulatory and Compliance Assumptions
 
-### F1: EU AI Act Applies to GPAI Deployments in EU Markets
-**Assumption:** Organizations deploying LLMs in EU markets or offering GPAI services to EU users are subject to the EU AI Act (Regulation 2024/1689), particularly Articles 9, 10, 13, and 14.
-**Enforcement status (as of Jun 2026):** Political agreement on AI Act "omnibus" amendment reached May 7, 2026. AI Office is operational (125+ staff). Workshop on external evaluator qualifications scheduled July 15, 2026 — indicating evaluators not yet qualified. **No published enforcement actions against any GPAI provider as of June 2026.** Enforcement timeline remains unconfirmed.
-**Implication:** The framework's regulatory mapping (risk-matrix.md) should be applied for EU-market deployments. Do not anchor planning to specific enforcement dates.
+### F1: EU AI Act Applicability Depends on Role and Intended Use
+**Assumption:** Determine EU territorial scope, intended use and legal role before mapping obligations. EU-market deployment does not by itself make an LLM system high-risk or its operator a GPAI model provider.
+**Implication:** Record Article 6/Annexes I/III high-risk classification and applicable provider/deployer duties (including Articles 16/26); apply Articles 9–15 to high-risk systems. Assess GPAI-provider duties under Articles 53–54 and systemic-risk duties under Article 55 separately, plus Article 50 transparency where applicable. Record dates/exemptions and refer unresolved classification to the legal/compliance owner.
+**Source:** `research/sources/Review-Corrections-2026-09-19.md`, current consolidated EU AI Act. This framework does not establish legal compliance for a deployment.
 
 ### F2: GDPR Applies to Models Processing Personal Data
 **Assumption:** LLMs processing personal data (training data, RAG documents, conversation history containing PII) are subject to GDPR obligations including Articles 17 (right to erasure), 25 (privacy by design), and 32 (security of processing).
@@ -268,25 +265,33 @@ Before starting an assessment, confirm each assumption applies to your deploymen
 **If you answer NO to any assumption**, the associated threat categories and risk scores may not apply. Key recalibration guidance:
 
 - **A1 NO** → Cat 1 (Direct PI) and Chain A may not apply; re-evaluate instruction-following-dependent controls
-- **A2 NO** → Cat 2 (Excessive Agency) severity drops; alignment is a stronger control
-- **A3 NO** → Cat 4 (Context Poisoning) and Cat 6 (IP Extraction) may not apply if RAG/fine-tuning provably eliminate training data
+- **A2 NO** → Document the actual model/interface behavior; do not infer stronger alignment or reduced agency risk. Independently evaluate action and disclosure boundaries.
+- **A3 NO** → Require deployment evidence for the claimed resistance; retain source/dataset integrity (DATA-DEF-1) and reachable extraction risks. RAG/fine-tuning presence alone cannot exclude poisoning or extraction.
 - **A4 NO** → Cat 2 (Excessive Agency) and Cat 5 (System Prompt) risk matrix scores increase
-- **A6 NO** → Cat 2 (Excessive Agency) does not apply; agentic threat model collapses to direct PI only
+- **A6 NO** → Reassess tool-action agency, but retain indirect inputs, answer/renderer disclosure, resource consumption and downstream propagation where reachable
 - **A7 NO** → Cat 13 Addendum may not apply; RLHF jailbreaking is outside threat model scope
 - **B1 NO** → Re-calibrate threat likelihood and sophistication assumptions; attacker profile drives risk matrix scores
 - **B2 YES** → Cat 13 Addendum applies only for insider/capability-withholding threat; external-only model excludes Cat 13 intentional path
 - **B3 YES** → Apply HIGH/CONSERVATIVE likelihood scale; consider nation-state-grade supply chain threats
 - **C3 NO** → Cat 1 (multi-agent), Cat 8 (Context Exhaustion in multi-agent), Chain C may not apply
 - **C4 NO** → Cat 4 (fine-tuning poisoning), Cat 13 Addendum (RLHF) may not apply
-- **D1 NO** → Cat 1 (Direct PI), Chain A severity drops significantly; user is not the primary attacker
+- **D1 NO (trusted users)** → Reassess direct malicious-user input only. Chain A remains applicable when email, documents, search, tool outputs or other external content can influence sensitive data or downstream actions. Trusted employees do not eliminate attacker-controlled indirect inputs; assess every disclosure boundary.
 - **D6 NO** → Chain C (inter-agent trust), Cat 1 (multi-agent) threat model changes; A2A channels are untrusted
 - **D7 NO** → Cat 5 (System Prompt) does not apply as described; system prompt is not a security boundary
 - **E4 NO** → LangGraph-specific surfaces (§2.2) and Chain C Send API / Command surfaces may not apply; map to your framework's equivalents
-- **B5 YES (verified official weights, no fine-tuning)** → Your model asset supply chain risk is lowest configuration; Category 3 (model hub supply chain) risk drops significantly; focus supply chain defense on your fine-tuning pipeline if you do fine-tune
+- **B5 YES (verified provenance)** → Record reduced post-signing substitution exposure; still assess supplier/build/signing compromise and behavioral risks. Reassess derivatives independently.
 - **B5 NO (fine-tuning or custom models)** → Full Category 3 and Cat 4 supply chain model applies; your fine-tuning pipeline and training data are sensitive assets; assume model artifact is within threat model scope
 
 ---
 
-**Last updated:** 2026-07-20 (v1.1 — distinguished transport authentication from agent identity and authorization)
-**Next review:** 2026-09-17 or when deploying new model class
-**Part of:** LLM Threat Modeling Framework v1.9 release (see `release-manifest.md`)
+## September boundary assumptions
+
+Protocol version, client metadata, a container label or a simulation instruction is not proof of identity, authorization or isolation. Verify actual execution, network reachability, shared-store access and the agent's inability to modify enforcement artifacts. Treat model-authored logs as untrusted evidence and reconcile missing worker/channel coverage. Source rationale: `research/sources/Landscape-Update-2026-09.md`.
+
+## Research integration assumptions
+
+No durable memory store does not imply no state-transfer boundary: ephemeral compaction can carry instructions, authorization claims or missing evidence into a resumed worker and monitor. Treat a model-authored summary as untrusted even when it originated inside the system. A malign-agent laboratory test does not establish how an external attacker reaches that state; document that prerequisite separately. Model/provider generation settings, monitor/compactor versions and request-cleanup paths are part of the assessed deployment. Retest materially changed settings rather than assume earlier behavior transfers. Source and limitations: `research/sources/Latest-Development-Integration-2026-09-19.md`.
+
+**Last updated:** 2026-09-19 (v1.4 — research integration)
+**Next review:** 2026-10-15 or after a material deployment change
+**Part of:** LLM Threat Modeling Framework v1.12 (see release-manifest.md)

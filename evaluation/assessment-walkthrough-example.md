@@ -1,7 +1,7 @@
 # Worked Assessment Walkthrough — Acme Support Copilot
 
-**Template used:** `synthesis/assessment-template.md` v1.9
-**Assessment date:** 2026-07-20
+**Template used:** `synthesis/assessment-template.md` v1.12
+**Assessment date:** 2026-09-19 (hypothetical walkthrough updated)
 **Scenario type:** Realistic example assessment, not a certification of an actual vendor deployment
 **System assessed:** Acme Support Copilot v0.9 production pilot
 
@@ -151,6 +151,10 @@ Key design facts assumed for this walkthrough:
 
 ---
 
+### Regulatory classification record
+
+Jurisdiction, intended-use high-risk classification and provider/deployer role remain unspecified in this hypothetical example. Compliance owner must resolve them, including applicable dates/exemptions, before asserting AI Act compliance. Customer support alone does not establish high-risk status. Separately determine GDPR scope and controller/processor role for ticket data. See `synthesis/risk-matrix.md` applicability gate.
+
 ## Section 3: Defense Control Evaluation
 
 ### 3.1 Prompt Injection Defenses
@@ -160,7 +164,8 @@ Key design facts assumed for this walkthrough:
 | PI-DEF-1 | Instruction hierarchy hardening | PARTIAL | System prompt labels roles and says retrieved content is untrusted, but extraction resistance has not been tested. |
 | PI-DEF-2 | RAG context labeling + load-time sanitization | PARTIAL | Provenance metadata exists, but sanitization mostly happens at ingestion/index time. Tool separation from RAG is prompt-based, not infrastructure-enforced. |
 | PI-DEF-3 | Input filtering | PARTIAL | Pattern-based filters exist. No tuned ML-based detector; purchased variants may bypass. |
-| PI-DEF-4 | Output validation | PARTIAL | Structured outputs are schema-checked for tool calls, but free-text customer replies are reviewed only in some flows. |
+| PI-DEF-4 | Output consumer enforcement | NO | Schema checks and occasional semantic review do not establish browser encoding, safe SQL/commands or recipient/destination authorization. Applicable receiving boundaries remain unverified. |
+| DATA-DEF-1 | Source and dataset integrity | PARTIAL | Some KB sources receive manual review, but contributor promotions lack independent fact checks, versioned recovery and derived-data cleanup tests. |
 
 ### 3.2 Excessive Agency Defenses
 
@@ -261,11 +266,11 @@ Decision-tree path:
 
 | Threat | Risk Rating | Wild_vs_Theory | Confidence |
 |---|---:|---:|---|
-| Prompt Injection / Chain A | HIGH / CRITICAL when paired with tools | 4/5 | HIGH |
+| Prompt Injection / Chain A | HIGH / CRITICAL when sensitive disclosure is reachable | 4/5 | HIGH |
 | Excessive Agency | HIGH | 4/5 | HIGH |
 | Supply Chain / Chain B | LOW-MEDIUM for this deployment path | 4/5 for hub/custom-code path; lower applicability here | MEDIUM |
 | Multi-Agent Propagation / Chain C | N/A | 3/5 | N/A |
-| Internal Safety Collapse / Validator Harness | N/A / LOW | 5/5 for research pattern; not applicable to this system path | HIGH applicability confidence |
+| Internal Safety Collapse / Validator Harness | N/A / LOW | 2/5 for controlled research; not applicable to this system path | HIGH applicability confidence |
 | RAG Context Poisoning | HIGH | 4/5 | HIGH |
 | HITL Failure | MEDIUM | 3/5 | MEDIUM |
 | Unbounded Consumption | MEDIUM | 4/5 | HIGH |
@@ -277,35 +282,38 @@ Decision-tree path:
 
 ### 5.1 Residual Risk Summary
 
-Residual-risk calculations use Appendix E:
+Residual-risk calculations use the September Appendix E: one conservative heuristic factor per threat, rounded upward after multiplication; no credit for controls that do not constrain the path. Quota controls are PARTIAL only because some throttling is enforced; alerts alone would be NO. Agency standalone uses the state-changing-tool baseline 16. Do not double-count its loss with Chain A.
 
-`Residual Risk = min(25, BASE_RISK × MITIGATION_FACTOR × AGENCY_FACTOR)`
+Rule citations: `synthesis/assessment-template.md` Appendix E and `synthesis/risk-matrix.md` Tier 2. This worked example was recalibrated on 2026-09-19; original deployment facts remain hypothetical.
+
+
+`Residual Risk = max(1, ceil(min(25, BASE_RISK × MITIGATION_FACTOR × AGENCY_FACTOR)))`
 
 | Threat | Control Gaps | Residual Risk Score | Recommended Action |
 |---|---|---:|---|
 | Chain A: indirect PI → excessive agency → data exposure/state change | PI-DEF-2 PARTIAL; AGENCY-DEF-1 PARTIAL; AGENCY-DEF-2 PARTIAL; DET-DEF-1 PARTIAL | `20 × 0.7 × 1.5 = 21` → CRITICAL | Do not expand beyond pilot until RAG privilege separation is infrastructure-enforced and tool permissions are user-scoped. |
-| Excessive agency standalone | Tool allowlist too broad; shared service account; HITL incomplete | `14 × 0.7 × 1.5 = 14.7` → HIGH | Narrow tool set, enforce user-scoped authorization, require HITL with provenance for all state-changing tools. |
-| RAG context poisoning | Index-time sanitization; no load-time instruction-density quarantine; prompt-based RAG/tool separation | `15 × 0.7 × 1.5 = 15.75` → HIGH | Move sanitization to load time; add instruction-density scoring; enforce retrieved-context no-tool boundary in code. |
-| HITL failure | Confirmation lacks provenance and reviewer context | `9 × 0.7 = 6.3` → LOW-MEDIUM, but coupled to Chain A | Treat as Chain A compensating-control blocker; redesign confirmation UI before production expansion. |
-| Unbounded consumption / quota DoS | Cost alerts exist; weak per-customer throttles and no prompt-complexity budget | `12 × 0.7 = 8.4` → MEDIUM | Add per-tenant budgets, context-size caps, and abuse throttling. |
-| Output validation failure | Free-text customer replies not consistently semantically checked | `9 × 0.7 = 6.3` → LOW-MEDIUM | Add semantic review or policy check before customer-visible outputs in high-risk categories. |
+| Excessive agency standalone | Tool allowlist too broad; shared service account; HITL incomplete | `16 × 0.7 × 1.5 = 16.8 → 17` → HIGH | Narrow tool set, enforce user-scoped authorization, require HITL with provenance for all state-changing tools. |
+| Factual RAG poisoning (distinct integrity loss) | DATA-DEF-1 PARTIAL: manual source review only; incomplete independent validation and recovery | `15 × 0.7 × 1 = 10.5 → 11` → MEDIUM | Independently validate consequential facts, authorize/version source changes and test rollback of chunks/embeddings/caches. Instruction injection completing Chain A is scored in that row, without double-counting. |
+| HITL failure | Confirmation lacks provenance and reviewer context | `9 × 0.7 = 6.3 → 7` → MEDIUM, but coupled to Chain A | Treat as Chain A compensating-control blocker; redesign confirmation UI before production expansion. |
+| Unbounded consumption / quota DoS | Cost alerts exist; weak per-customer throttles and no prompt-complexity budget | `16 × 0.7 = 11.2 → 12` → MEDIUM | Add per-tenant budgets, context-size caps, and abuse throttling. |
+| Output validation failure (bounded baseline; reassess higher reachable losses) | PI-DEF-4 NO: actual consumers have no demonstrated execution/disclosure enforcement | `9 × 1.2 × 1 = 10.8 → 11` → MEDIUM | Inventory and test each browser/stream, SQL, command/path and network consumer; enforce encoding, parameterization and authorization. Use Chain A score for the shared disclosure loss. |
 | Supply chain / hosted provider dependency | AIBOM partial; provider model/version change procedure incomplete | MEDIUM qualitative | Formalize AIBOM, model pinning, supplier assurance, and emergency model-change review. |
 
 ### 5.2 Risk Acceptance Decisions
 
 | Threat | Business Justification | Compensating Controls | Acceptance Signatories | Target Date |
 |---|---|---|---|---|
-| Chain A during limited pilot only | Pilot limited to 20 trained support agents; no autonomous outbound reply without human review | Tool-call logs, refund HITL, cost alerts, manual review of pilot incidents | System Owner + Security Lead required | 30 days |
-| RAG context poisoning during pilot only | KB quality is high, but public docs and tickets still create injection surface | Manual doc-source review for top KB articles; pattern filters; retrieval logging | System Owner + Security Lead required | 30 days |
+| Chain A | No acceptance of the current CRITICAL protected-data path; any demonstration uses synthetic/public data with side effects disabled | Reassess all disclosure/action paths before any production approval | System Owner + Security Lead; Executive Sponsor for any CRITICAL exception process | Before protected-data use |
+| RAG context poisoning during pilot only | Public docs and tickets can contain plausible false facts as well as injected instructions | Manual source review provides limited integrity assurance; complete DATA-DEF-1 before relying on consequential facts | System Owner + Security Lead required | 30 days |
 
-**Walkthrough decision:** These risks are not acceptable for broad production. They may be conditionally accepted for the limited pilot only with sign-off and a short remediation window.
+**Walkthrough decision:** Do not deploy the stipulated CRITICAL disclosure path. Restrict any demonstration to synthetic/public data and disabled side effects until the path is constrained and rescored. HIGH risk acceptance requires System Owner and Security Lead; this walkthrough grants no deployment approval.
 
 ### 5.3 Remediation Items
 
 | Item | Owner | Target Date | Status |
 |---|---|---|---|
 | Implement infrastructure-enforced RAG context privilege separation so retrieved content cannot cause tool calls | App engineering | 30 days | Required before rollout |
-| Move RAG sanitization to load time before chunking; add instruction-density scoring and quarantine path | Search/RAG owner | 30 days | Required before rollout |
+| Add DATA-DEF-1 source authorization, independent fact validation, versions and tested derived-data rollback; retain PI sanitization separately | Search/RAG owner | 30 days | Required before rollout |
 | Replace service-account tool execution with user-scoped authorization and per-tool permission manifests | Platform engineering | 45 days | Required before rollout |
 | Require HITL with context provenance for all state-changing actions, including ticket notes | Product + app engineering | 30 days | Required before rollout |
 | Add AI-specific anomaly detection for unusual tool chains, repeated prompt-injection attempts, token spikes, and abnormal egress | Security operations | 45 days | High priority |
@@ -314,17 +322,30 @@ Residual-risk calculations use Appendix E:
 
 ---
 
+## Research integration follow-up
+
+The existing hypothetical facts do not establish whether this hosted assistant uses ephemeral compaction, a blocking monitor, delayed executable artifacts or provider-side failure cleanup. These are unresolved applicability/assurance questions, not N/A findings. The CRITICAL protected-data block remains in force; no new control credit or production incident claim is inferred.
+
+| Required follow-up | Owner | Decision before protected-data use |
+|---|---|---|
+| Inventory monitor inputs and delayed execution; if present, test trusted role/turn framing and approval invalidation after code/dependency mutation | App engineering | Demonstrate the applicable REP-DEF-1/PI-DEF-4/SC-DEF-2 boundary or constrain the capability |
+| Determine whether context is compacted/resumed; if present, recover actual approvals/denials independently for worker and monitor | App engineering + provider owner | Apply MEM-DEF-1 even without durable memory; no summary-derived authority |
+| Verify local request reservations and obtain relevant provider evidence for rejected/cancelled/aborted request cleanup | Platform engineering + provider owner | Complete DOS-DEF-1; document provider-controlled unknowns and enforce local bounds |
+| Inventory generation configuration and material changes, including watermark/key, logit and sampling settings | App engineering + provider owner | Rerun paired denied and legitimate action/output cases before reusing model-level validation |
+
+These are **NOT_RUN** deployment checks. Source: `synthesis/assessment-template.md`, Research integration assessment gates; `synthesis/defense-playbook.md`, September research integration validation requirements. The new tabletop scenarios illustrate assessment decisions and do not close these actions.
+
 ## Section 6: Assessment Metadata
 
 - Lead assessor: Example assessor
-- Assessment date: 2026-06-24
+- Assessment date: 2026-09-19 (hypothetical walkthrough revision)
 - Assessors involved: App engineering, support operations, security reviewer
 - Documents reviewed: `synthesis/assessment-template.md`, `synthesis/quick-reference.md`, `synthesis/risk-matrix.md`, `synthesis/defense-playbook.md`
 - System version assessed: Acme Support Copilot v0.9 production pilot
-- Next scheduled review: 2026-09-24, or sooner if tool permissions, provider model, RAG ingestion, or HITL workflow changes
+- Next scheduled review: 2026-09-24, or sooner if tool permissions, provider model/generation settings, compactor/monitor, RAG ingestion, or HITL workflow changes
 
 ---
 
 ## Final walkthrough conclusion
 
-The example system is viable only as a constrained pilot. The highest-risk finding is not “uses an LLM”; it is the combination of RAG, partial prompt-injection controls, state-changing tools, shared service-account permissions, and HITL without provenance. The main remediation path is straightforward: enforce RAG/tool boundaries in infrastructure, narrow tools to user-scoped permissions, move sanitization to load time, and make HITL provenance-rich for every state-changing action.
+The current CRITICAL disclosure path remains blocked for protected-data use. A synthetic/public-data demonstration with disabled side effects needs its own bounded assessment. Remediation must cover source integrity, every output consumer and disclosure channel, task-scoped tool authorization, and action-bound approvals. Passing this worked assessment is not deployment approval.

@@ -1,7 +1,7 @@
 # LLM Threat Modeling — Asset Inventory
 
-**Version:** 1.1 (agentic memory, skill, identity, relay, and provenance assets)
-**Date:** 2026-07-20
+**Version:** 1.3 (September research integration)
+**Date:** 2026-09-19
 **Status:** Living document — re-evaluate when system architecture changes
 
 ---
@@ -209,7 +209,8 @@ These are the assets whose compromise causes the most severe impact. Every deplo
 | 9 | **Embedding vectors / vector database** | Training data extraction; GDPR exposure | Cat 7 |
 | 10 | **AIBOM / Sigstore signing keys** | Root-of-trust compromise; all model provenance false | Cat 3 |
 
-**On foreign frontier lab weights (verified official):** Models downloaded from the originating lab's official repository with cryptographically verified signatures represent the **lowest supply chain risk** configuration for model assets — see assumption B5. The Crown Jewel list above applies to your organization's own model artifacts, fine-tuned derivatives, and training data. A verified official base model used for inference-only (no custom hooks) with your RAG, tool, and agent surfaces is the baseline low-risk starting point.
+**On verified official weights:** Expected-publisher signature and digest verification establish provenance and post-signing integrity, not uncompromised training/build/signing systems or safe behavior. Country of origin alone does not set the risk score. Protect official artifacts, derivatives, training data, and runtime credentials; apply B5 and SC-GAP-1 before acceptance.
+
 
 ---
 
@@ -351,6 +352,14 @@ harness is executed, mark Cat 14 N/A and skip.
 
 ---
 
-**Last updated:** 2026-07-20 (v1.1 — added durable memory, skill registry, agent identity, relay, and representation-provenance assets)
-**Next review:** 2026-09-17 or when system architecture changes
-**Part of:** LLM Threat Modeling Framework v1.9 release (see `release-manifest.md`)
+## September enforcement and recovery assets
+
+Inventory sandbox executables, broker policies, approval configuration, resolved filesystem targets, build credentials, runtime package/startup manifests, shared artifact stores and authoritative execution logs. Record who can write each asset and which workers can read it. Include downstream tokens/grants and scheduled persistence in recovery scope. Map to SC-DEF-1/SC-DEF-2, MA-DEF-1 and DET-DEF-3; source rationale: `research/sources/Landscape-Update-2026-09.md`.
+
+## Research integration assets
+
+Inventory trusted monitor record envelopes (role/turn/author), authoritative approvals and denials, ephemeral compaction/resume state, and immutable approved code/dependency snapshots. Record who can alter each between approval and execution. Treat request reservations, pending receives and worker metadata as availability assets through rejection and abort, not only while requests are active. Record watermark/key identifiers, logit/sampling configuration and provider-controlled unknowns alongside serving configuration. Map to REP-DEF-1, MEM-DEF-1, PI-DEF-4, SC-DEF-2 and DOS-DEF-1. Source: `research/sources/Latest-Development-Integration-2026-09-19.md`.
+
+**Last updated:** 2026-09-19 (v1.3 — research integration)
+**Next review:** 2026-10-15 or after a material deployment change
+**Part of:** LLM Threat Modeling Framework v1.10 (see release-manifest.md)

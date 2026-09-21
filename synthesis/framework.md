@@ -1,10 +1,42 @@
 # LLM Threat Modeling Framework
 
-**Version:** 1.9 (agentic trust-boundary integration)
-**Date:** 2026-07-20
-**Status:** Living document — pilot candidate after v1.9 coherence validation
+**Version:** 1.12 (September research integration)
+**Date:** 2026-09-19
+**Status:** Living document — v1.12 reviewed corpus; deployment-specific assessment required
 **Framework target:** Pilot-ready: 3-person engineering team, no ML security expertise, completes assessment in under 4 hours
 
+
+## v1.12 Revision Notes (Latest Research Integration — 2026-09-19)
+
+- Extended existing controls to blocking-monitor record framing and approval binding to mutable executable dependencies.
+- Made MEM-DEF-1 apply to ephemeral compaction/resume with authoritative user instructions, approvals and denials outside model-authored summaries.
+- Extended DOS-DEF-1 through rejection/cancellation/abort cleanup and added revalidation for changed watermark/logit/sampling settings.
+- Added four scored hypothetical scenarios (39 total), with unexecuted deployment verification plans clearly separated from corpus PASS.
+- Preserved research limitations and existing evidence ratings; older MCP advisories remain backfill and CaMeLoT remains a watch item.
+- Source/claim ledger: `research/sources/Latest-Development-Evidence-2026-09-19.json`; rationale: `research/sources/Latest-Development-Integration-2026-09-19.md`; verification: `review/research-integration-2026-09-19.md`.
+
+## v1.11 Revision Notes (Assessment Corrections — 2026-09-19)
+
+- Made PI-DEF-4 assessable at browser, SQL, command/code, filesystem and network consumers, including streaming and legitimate-case tests.
+- Removed LOW shortcuts based on absent tools or trusted users; every reachable disclosure/execution path must be assessed.
+- Separated factual data poisoning from instruction injection and added DATA-DEF-1 with dataset/source validation and recovery.
+- Recorded explicit tabletop control ratings, selected risk scores, factors, residuals, decisions and owners; checks reject incomplete or inconsistent records.
+- Added EU AI Act role/classification gates and synchronized README evidence, release metadata and generated HTML.
+- See `review/corrections-2026-09-19.md` for verification scope and deliberate failing cases. These corrections do not certify deployed controls or introduce new incident evidence.
+
+## v1.10 Revision Notes (Review and Landscape Update — 2026-09-15)
+
+- Extended Chain A to sensitive reads, generated answers, outbound queries and renderer egress without model write tools.
+- Separated evidence confidence from deployment risk; overlays inherit higher reachable-chain scores.
+- Limited signing assurance to provenance/post-signing integrity; retained upstream and behavioral compromise risks.
+- Corrected EchoLeak's evidence status, relay lookup drift, residual rounding and legal references.
+- Added DOS-DEF-1 to the playbook, worksheet, matrix and operator triage.
+- Scenario checks remain tabletop/corpus checks, not demonstrations of deployed control effectiveness.
+
+- Integrated post-July primary reporting, MCP version-aware checks, normal-input memory poisoning, runtime/build dependencies, protected enforcement artifacts and independent execution evidence.
+- Updated skill distribution confidence to 4/5 and broad memory demonstrations to 3/5; separated publication dates from older incidents. See `research/sources/Landscape-Update-2026-09.md`.
+
+Historical revision notes below describe earlier releases; current scoring rules supersede their evidence gates.
 
 ## v1.9 Revision Notes (Agentic Trust-Boundary Integration — 2026-07-20)
 
@@ -275,7 +307,7 @@ Every threat requires a reachable attack surface. The `attack-surface-catalog.md
 For organizations with limited resources, defense investment should follow this priority order:
 
 **Tier 1 (start here — highest priority):**
-1. **Minimal permission scoping** — if the LLM can't call tools, PI impact is noise
+1. **Minimal permission scoping** — limits action authority; separately restrict sensitive reads, outbound queries, answers and renderer egress
 2. **RAG context labeling** — distinguishes retrieved content from trusted instructions
 3. **AIBOM maintenance** — enables supply chain accountability
 
@@ -292,6 +324,8 @@ For organizations with limited resources, defense investment should follow this 
 **Conditional Tier 1 — Internal Safety Collapse (deployment-gated):**
 If external parties can submit or shape any task/validator/data harness the LLM or agent executes (eval, fine-tuning, data-generation, code-repair, or autonomous-tool workflows), **ISC-DEF-1 (validator harness validation) is Tier 1 before pilot** — it ranks alongside minimal permission scoping for these deployments. ISC-DEF-2 (agentic loop visibility and rate limiting) is Tier 2 monitoring. ISC-DEF-3 (deployment-level ISC scanning) is provider-side / model-owner work; deployers on a third-party API mark it N/A. Plain inference consumers with no attacker-shaped harness execution skip ISC controls (N/A). See `threat-taxonomy.md` Category 14 applicability boundary.
 
+**Other deployment gates:** PI-DEF-4 is required before exposing outputs to executable or disclosure-capable consumers. DATA-DEF-1 is required before consequential use of changeable/external facts or training data. Sandboxing/egress and inter-agent authorization are prerequisites when the corresponding execution/propagation paths exist; the investment tiers do not defer a required boundary until a later maturity stage.
+
 ---
 
 ## Regulatory Landscape
@@ -302,7 +336,7 @@ If external parties can submit or shape any task/validator/data harness the LLM 
 | **GDPR (Article 17, 25, 32)** | Right to erasure for personal data; privacy by design; security of processing; breach notification | Embedding inversion, training data poisoning, cross-tenant leakage |
 | **FTC AI Guidance** | Unfair or deceptive security practices; reasonable security measures | PI → exfiltration, output validation failures |
 
-Among these frameworks, the EU AI Act carries the highest compliance stakes. Organizations deploying LLMs in EU markets should prioritize Article 9 lifecycle risk management, Article 14 human oversight, and Article 15 robustness/cybersecurity as the security baseline; use Article 13 for deployer-facing transparency and instructions, Article 10 for dataset governance, and Article 17 for provider quality-management processes.
+Map obligations only after determining jurisdiction, intended use, high-risk classification and entity role. Articles 9–15 concern high-risk system requirements; Articles 16/26 distinguish provider/deployer duties. GPAI-provider duties follow Articles 53–54, plus Article 55 for systemic risk; Article 50 transparency is separate. Record applicable dates/exemptions and unresolved classification with a legal/compliance owner. See `research/sources/Review-Corrections-2026-09-19.md`.
 
 ---
 
@@ -319,6 +353,7 @@ Among these frameworks, the EU AI Act carries the highest compliance stakes. Org
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 1.11 | 2026-09-19 | Output/data boundaries, complete tabletop records, legal scope gates and entry-point coherence. |
 | 1.9 | 2026-07-20 | Integrated evidence-calibrated agentic trust-boundary subtypes, controls, worksheet routing, nine scenarios, structured/HTML synchronization, and one release manifest. |
 | 1.8 | 2026-06-24 | Added comparable-framework positioning for OWASP LLM/GenAI, MITRE ATLAS, NIST AI RMF GenAI Profile, MAESTRO, Microsoft agentic failure taxonomy, OWASP Agentic/MCP guidance, and classic threat-modeling methods. |
 | 1.7 | 2026-06-24 | Correction pass: residual-risk math fixed; EU AI Act mappings normalized; risk matrix base/elevated scores split; detection/operational-gap controls added to worksheet; defense tables normalized; release manifest added. |
@@ -331,7 +366,7 @@ Among these frameworks, the EU AI Act carries the highest compliance stakes. Org
 | 1.0 | 2026-06-17 | Initial framework — addresses Reviewer Round 1 critiques |
 
 ### Next planned update
-2026-09-17 (quarterly review cycle)
+2026-10-15 or after a material deployment change
 
 ---
 
@@ -355,5 +390,5 @@ Among these frameworks, the EU AI Act carries the highest compliance stakes. Org
 ---
 
 **Framework prepared by:** Synthesizer (LLM Threat Modeling project)
-**Date:** 2026-07-20
-**Status:** Version 1.9 — agentic trust-boundary integration validated; pilot candidate pending team-specific assessment and sign-off
+**Date:** 2026-09-19
+**Status:** Version 1.11 reviewed corpus; team-specific assessment and sign-off required

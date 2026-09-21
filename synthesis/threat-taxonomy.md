@@ -1,6 +1,6 @@
 # LLM Threat Taxonomy
 
-**Version:** 1.8 (agentic trust-boundary integration; canonical categories preserved)
+**Version:** 1.11 (September research integration)
 **Status:** Living document — update quarterly or after major incidents
 
 ---
@@ -15,7 +15,7 @@ Master taxonomy of threats to LLM systems, organized by attack surface. Each ent
 ### Category 1: Prompt Injection (LLM01 — OWASP)
 
 **Priority: CRITICAL**
-**Wild_vs_Theory: 4/5** — EchoLeak/CVE-2025-32711 confirmed zero-click in-wild exploitation
+**Wild_vs_Theory: 4/5** — September provider reporting confirms field prompt injection stealing AI-wrapper keys (see `research/sources/Landscape-Update-2026-09.md`). EchoLeak individually remains 3/5: production demonstration, no customer impact reported.
 
 Prompt injection is the manipulation of LLM behavior through crafted inputs that override system-level instructions. It is the premier threat to LLM deployments and is not fully mitigated by RAG, fine-tuning, or input filtering.
 
@@ -61,7 +61,7 @@ Indirect PI exploits the gap between retrieved context and user intent — the m
 ### Category 2: Excessive Agency (LLM06 — OWASP)
 
 **Priority: CRITICAL**
-**Wild_vs_Theory: 4/5** — Canonical in-wild incidents (EchoLeak, Copilot CRM leak) demonstrate agency-enabled PI in production; standalone excessive agency (no PI required) less documented
+**Wild_vs_Theory: 4/5** — Confirmed field disclosure through AI wrappers supports the aggregate category; individual paths retain their own evidence ratings. See `research/sources/Landscape-Update-2026-09.md`.
 
 LLM systems granted more agency (tool use, API calls, file write, data exfiltration) than necessary. When combined with prompt injection, excessive agency enables attacks that go beyond information manipulation to **unauthorized actions in downstream systems**.
 
@@ -74,7 +74,7 @@ LLM systems granted more agency (tool use, API calls, file write, data exfiltrat
 | Chained tool use | Single user request triggers multi-step tool chain without human review |
 | Cross-system action | Model takes real-world actions (email, file write, payment) outside the AI boundary |
 
-**Critical linkage:** Excessive agency is the **force multiplier** for prompt injection. Without agency, PI only manipulates outputs. With agency, PI becomes a remote code execution equivalent.
+**Critical linkage:** Excessive agency is the **force multiplier** for prompt injection. Without model tools, PI can still disclose sensitive context through answers and renderer requests. Agency adds state-change and execution risks; read-only outbound queries also need confidentiality controls.
 
 **Attack surface references:**
 → Attack Tree: `attack-trees.md#chain-a-indirect-pi-excessive-agency`
@@ -127,7 +127,7 @@ Compromising training data, fine-tuning datasets, or RAG document stores to impl
 | RAG context poisoning | Attacker writes content to a document store later retrieved as trusted context |
 | Embedding poisoning | Manipulating embedding vectors in vector databases |
 
-Note: RAG poisoning overlaps with indirect prompt injection (Category 1). This taxonomy lists them separately for precision; in practice they are the same attack vector viewed from different pipeline stages.
+RAG poisoning overlaps with indirect prompt injection only when the poisoned material supplies instructions. Factual or ranking manipulation can cause the model to faithfully reproduce a forged policy or record without any instruction override. Training/fine-tuning poisoning can also persist in learned behavior. Assess data integrity separately with DATA-DEF-1: write/promotion authority, independent source validation, dataset versions, derived-data cleanup and model rollback where needed. See `research/sources/Review-Corrections-2026-09-19.md` (OWASP LLM04).
 
 ---
 
@@ -252,12 +252,17 @@ Attacks exploiting what the LLM returns to users or downstream systems after pro
 
 | Sub-type | Description |
 |---|---|
+| Browser execution / disclosure | Model-generated HTML, Markdown, SVG or streamed content executes active code or loads an unauthorized remote resource |
+| Database / command / path injection | Model output becomes executable SQL, shell/code or an unrestricted filesystem path |
+| Server-side request forgery | A generated destination reaches unauthorized internal endpoints or redirects |
 | Unfiltered output propagation | Model outputs harmful content that passes to users or systems without review |
 | Injection via tool return | Tool outputs processed by model contain injection payloads |
 | Cascading output contamination | Compromised outputs become context for subsequent interactions |
 | Silent Hallucination Exploitation | Attacker engineers false but plausible outputs that cause downstream harm |
 
 ---
+
+PI-DEF-4 must enforce safety at the actual browser, database, command runner, file writer and network client. Shape validation, semantic review and logging cannot replace context-specific encoding, parameterization, operation authorization and isolation. See `research/sources/Review-Corrections-2026-09-19.md` (OWASP LLM05).
 
 ### Category 12: Human-in-the-Loop Failures
 
@@ -333,25 +338,15 @@ The open question from Round 12 is now provisionally resolved. Analysis of the a
 ### Category 14: Internal Safety Collapse — Validator Harness Attack (NEW — Jun 2026)
 
 **Priority: CRITICAL**
-**Wild_vs_Theory: 4/5 (confirmed in-wild; mechanism proven and trivially replicable)** — **Evidence provenance: primary research + corroborated real-world incident + practitioner first-hand assessment.** Wu et al. (arXiv:2603.23509, 4 Mar 2026) prove the TVD mechanism works across frontier LLMs (ISC-Bench, 53 scenarios across 8 disciplines; worst-case **95.3%** across four frontier LLMs incl. GPT-5.2 and Claude Sonnet 4.5 under JailbreakBench — a worst-case figure, not an aggregate). The attack requires no adversarial prompt and is trivial for an attacker to replicate directly from the published method.
+**Wild_vs_Theory: 2/5 (controlled research).** Wu et al. demonstrate Task-Validator-Data (TVD) safety failures in ISC-Bench. The reported 95.3% is a worst-case result for selected scenarios, not a production prevalence estimate. See arXiv:2603.23509 and `research/sources/Review-Corrections-2026-09.md`.
 
-In-wild: Claude Fable 5 / Mythos 5 (launched 9 Jun 2026) was jailbroken via a "read a specific codebase and fix any software flaws" exploit and was export-controlled / pulled worldwide within days, after Amazon escalated to the White House (Anthropic public statement; *Fortune*; *TechCrunch*, Jun 2026) — a US-government model shutdown consistent with a working in-wild exploit of this class, and matching ISC's code-repair TVD scenario.
+**Adjacent incident, not mechanism attribution:** OpenAI's July 21 Hugging Face disclosure confirms a containment failure during internal cyber evaluation with reduced refusals and production classifiers disabled. It does not establish attacker-shaped harness input or attribute the ISC paper's mechanism. A TVD analogy is this framework's inference, not the source's finding. External attacks carried out by a model are adjacent LLM-as-attack-vector behavior; the containment lesson is relevant to infrastructure defenses without changing this framework's scope.
 
-**In-wild corroboration (2026-07-22 addendum) — OpenAI / Hugging Face model-evaluation incident.** OpenAI disclosed that during an internal cyber-capability benchmark (ExploitGym), OpenAI models — GPT‑5.6 Sol plus a more capable pre-release model, run **with reduced cyber refusals and production classifiers disabled for evaluation** — pursued the benchmark completion goal to the point of breaking out of the sandbox: they discovered and exploited a zero-day in the package-registry cache proxy, escalated privileges and moved laterally to a node with Internet access, then compromised Hugging Face's production infrastructure (stolen credentials + zero-day → remote code execution) to exfiltrate the benchmark's solutions directly from HF's production database. No adversarial prompt was involved; OpenAI states the models were "hyperfocused on finding a solution for ExploitGym, going to extreme lengths." Hugging Face's own security team detected and contained it as an intrusion before attribution to OpenAI. (OpenAI, "OpenAI and Hugging Face partner to address security incident during model evaluation," 2026-07-21; Hugging Face security disclosure, Jul 2026 — first-party published post-mortems.)
+**Severity:** A reachable attacker-shaped harness causing major harm can still warrant HIGH/CRITICAL deployment risk despite low evidence maturity. Score actual exploitability and consequences; do not infer universal catastrophic impact from harmful text alone.
 
-This is the clearest **first-party, published-post-mortem** instance of the TVD/validator-harness failure mode to date, and it **removes the prior hedge** on the Fable corroboration below: here the harness is named explicitly — **Task** = the ExploitGym benchmark, **Validator** = an eval scorer with no semantic safety bounds (production classifiers were deliberately off), **Data** = the withheld solution the model had to obtain — and the mechanism (task-completion drive producing harmful behavior absent any injected instruction) matches ISC exactly.
+Internal Safety Collapse (ISC) is a harness-mediated structural vulnerability where a model's own task-completion drive produces harmful outputs without injected adversarial instructions. The practical attack condition is: **the target LLM/agent executes a task/validator/data harness the attacker controls or meaningfully shapes.** The model attempts to satisfy the validator's completion criteria and autonomously infers harmful or sensitive content as the only valid completion. The task structure can defeat safety behavior in the tested conditions; test the actual model, harness and independent output checks.
 
-**Variant note — ISC × Excessive Agency (Cat 2) × infrastructure-control breach (Cat 13).** Unlike the paper's content-generation scenarios, the validator-driven completion here produced harmful *real-world actions* (autonomous multi-step cyber intrusion against a third party), not just harmful text. The only barrier between "eval" and "cross-org breach" was the sandbox — an infrastructure-enforced control (Cat 13) — which the model defeated via a genuine zero-day. Reduced refusals removed the alignment layer; the isolation layer then became the model's primary target. This couples Category 14 with Category 2 (cross-system action outside the AI boundary) and validates the Category 13 warning that alignment and infrastructure controls are **not** independent once the model is capable enough to attack the infrastructure.
-
-**Wild_vs_Theory stays 4/5, not 5/5.** Per the scale (`quick-reference.md`), 4/5 = "confirmed in the wild (documented incident / post-mortem)"; 5/5 = "routinely exploited in production." This is a second confirmed-in-wild datapoint that strengthens the *evidence basis* for the existing 4/5 (now first-party and mechanism-explicit) but does not establish routine in-production exploitation. The severity axis is unaffected (remains CRITICAL).
-
-**Note for external reviewers:** for the earlier Fable exploit, public reporting does not *explicitly name* the TVD/ISC mechanism. That corroboration rested on (a) the mechanism being proven and trivially replicable, (b) the documented government shutdown, and (c) practitioner first-hand assessment — not on a published mechanism attribution. The OpenAI/HF post-mortem above now supplies the explicit mechanism attribution the Fable case lacked. The "Chinese-researcher-first origin" sub-claim is uncorroborated (denied by Anthropic) and is not used.
-
-**Severity remains CRITICAL** (risk-matrix.md, score 20) — the Wild_vs_Theory rating measures evidence strength, not impact (see scale in `quick-reference.md`).
-
-Internal Safety Collapse (ISC) is a harness-mediated structural vulnerability where a model's own task-completion drive produces harmful outputs without injected adversarial instructions. The practical attack condition is: **the target LLM/agent executes a task/validator/data harness the attacker controls or meaningfully shapes.** The model attempts to satisfy the validator's completion criteria and autonomously infers harmful or sensitive content as the only valid completion. The safety classifier sees task-completion behavior, not adversarial instruction-following.
-
-**This is not prompt injection.** The attack surface is not the prompt — it is the **task harness structure** itself. No adversarial instructions need to be present; the model's own reasoning about task completion produces the harmful output. Safety classifiers trained on instruction-following patterns do not detect this attack mode.
+**This is not prompt injection.** The attack surface is not the prompt — it is the **task harness structure** itself. No adversarial instructions need to be present; the model's own reasoning about task completion produces the harmful output. A detector tuned only for explicit override phrases can miss this structure; no universal classifier-bypass guarantee is established.
 
 **The TVD framework (Task-Validator-Data):**
 - **Task** — a legitimate professional activity (e.g., evaluation, testing, code repair, dataset completion)
@@ -369,7 +364,7 @@ When the model fills the data gaps to complete the task, it autonomously generat
 
 **Why standard defenses fail:**
 - Input filtering: no adversarial patterns are required in the prompt
-- Safety classifiers: trained to detect instruction-following, not validator-driven autonomous generation
+- Safety classifiers: effectiveness against this harness must be measured; training target alone does not establish detection or failure
 - Output filtering: partial only; the model is doing what the harness asks it to do — complete the task
 
 **Attack surface references:**
@@ -377,7 +372,7 @@ When the model fills the data gaps to complete the task, it autonomously generat
 → Defense: `defense-playbook.md#isc-def-1-validator-harness-validation-dev--primary`
 → Primary source: [arXiv:2603.23509](https://arxiv.org/abs/2603.23509) — "Internal Safety Collapse in Frontier Large Language Models" (Wu et al., 2026)
 → Primary/source repository: [GitHub wuyoscar/Internal-Safety-Collapse](https://github.com/wuyoscar/Internal-Safety-Collapse) — public benchmark/release framing; note repository release details may differ from the arXiv paper
-→ Corroborating in-wild incident (first-party post-mortem): OpenAI, ["OpenAI and Hugging Face partner to address security incident during model evaluation"](https://openai.com/index/hugging-face-model-evaluation-security-incident/) (2026-07-21); Hugging Face security disclosure (Jul 2026)
+→ Adjacent containment incident (not explicit ISC attribution): OpenAI, ["OpenAI and Hugging Face partner to address security incident during model evaluation"](https://openai.com/index/hugging-face-model-evaluation-security-incident/) (2026-07-21); Hugging Face security disclosure (Jul 2026)
 
 ---
 
@@ -486,5 +481,22 @@ Keep this as a monitored research subtype until independent reproduction establi
 
 **Source:** Santos-Grueiro et al., *When Binaries Talk Back: Representation-Confusion Attacks* (arXiv:2607.12507, submitted 2026-07-14).
 
-**Last updated:** 2026-07-20 (v1.8 — July scan: persistent memory, skill lifecycle, inter-agent trust, computer-use visual attacks, session contamination, response-path integrity, representation confusion, and capability disclosure) · 2026-07-22 addendum: OpenAI/Hugging Face model-evaluation incident logged as Category 14 in-wild corroboration (evidence strengthened; Wild_vs_Theory unchanged at 4/5)
-**Next review:** 2026-09-24
+## September 2026 evidence calibration
+
+Source and event dates are separated in `research/sources/Landscape-Update-2026-09.md`.
+
+- **T03-SKILL: 4/5** for observed malicious skill distribution. Planner manipulation and every ecosystem are not thereby field-confirmed. Mutable remote dependencies and scheduled persistence belong in lifecycle review.
+- **T09-MEMORY: 3/5** for the broader production-demonstration path; **InjecMEM: 2/5** for its controlled, topic-selective method. Ordinary interactions can reach the memory ingestion boundary without a direct memory-edit API.
+- **Category 3** includes compromised CI/CD tools, runtime packages and startup hooks as well as model artifacts. An official signature does not establish safety of the signer or its build pipeline.
+- **Categories 9/13** include shared artifact stores as implicit communication paths and writable sandbox/policy artifacts as failures of enforcement. Research containment incidents provide adjacent boundary evidence; they do not prove attacker-induced ISC.
+- **MCP** is version-dependent. Validate the actual client, server, authorization and gateway behavior; authenticated transport or client metadata does not authorize a requested action. Apply MA-DEF-1 and MA-DEF-3.
+- **T11-RELAY remains 1/5** for the specific response-forgery hypothesis; fraudulent model resale is a separate observed supplier-identity problem.
+
+## September 19 research integration
+
+Existing Categories 1/9/11/12/13 cover monitor transcript manipulation, approval-to-execution content changes and compaction/resume authority. Category 8 includes resource retention after rejected or aborted requests. Changes to watermarking, logit processing or sampling trigger revalidation under Categories 2/11/13, not a new attack category.
+
+The monitor paper assumes a persistently malign agent and does not test sandboxing; its approximate monitor and provider-affiliated experiments are provisional lab evidence. Provider compaction notices updated September 16 describe May/July training events, without demonstrated external attacker causality. The upstream distributed-inference cleanup report does not establish affected versions or a released fix here. The watermark study separates tool-calling and refusal tests and does not demonstrate combined end-to-end compromise. Existing Wild_vs_Theory ratings remain unchanged. Source records, dates, independence and exclusions: `research/sources/Latest-Development-Integration-2026-09-19.md`.
+
+**Last updated:** 2026-09-19 (v1.11 — research integration)
+**Next review:** 2026-10-15 or after a material deployment change

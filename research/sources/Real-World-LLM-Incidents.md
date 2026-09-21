@@ -44,8 +44,9 @@ Documented real-world LLM security incidents remain sparse — most organization
 
 **Pattern:** External attacker-controlled content (emails, documents, web pages) injects instructions into LLM systems that process that content.
 
-#### Incident: Microsoft 365 Copilot EchoLeak (CVE-2025-32711, CVSS 9.3)
-- **Source:** Truesec, Varonis, Cybersecurity Dive (Jun 2025)
+#### Demonstrated vulnerability: Microsoft 365 Copilot EchoLeak (CVE-2025-32711, CVSS 9.3)
+- **Primary correction (verified 2026-09-15):** Aim Labs/Cato reports no known affected customers; this is a production-system demonstration, not confirmed malicious exploitation. See `Review-Corrections-2026-09.md`.
+- **Earlier secondary sources:** Truesec, Varonis, Cybersecurity Dive (Jun 2025)
 - **Disclosure:** CVE-2025-32711, critical-rated
 - **Vector:** Zero-click attack — attacker sends a crafted email to a target; when Microsoft 365 Copilot processes the email for AI summarization/retrieval, the injected instructions execute without user interaction
 - **Attack name:** "EchoLeak" — the attack echoes data from the Copilot context back to the attacker

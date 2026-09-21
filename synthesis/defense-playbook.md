@@ -1,7 +1,7 @@
 # LLM Defense Playbook
 
-**Version:** 1.8 (agentic trust-boundary controls integrated)
-**Date:** 2026-07-20
+**Version:** 1.11 (September research integration)
+**Date:** 2026-09-19
 **Status:** Living document — update when new defenses prove effective in adversarial testing
 
 ## Revisions from v1.0
@@ -87,10 +87,11 @@ Defense mechanism:
    - Flag documents containing phrases that resemble direct instructions
 
 4. Privilege separation for RAG context (INFRASTRUCTURE-ENFORCED):
-   - RAG-retrieved content: NO tool-call permissions (enforced by pipeline, not LLM prompt)
-   - RAG-retrieved content: NO cross-user data access
-   - Tool calls only enabled for explicitly user-composed messages
-   - This is a TECHNICAL control, independent of AGENCY-DEF-1's infrastructure allowlist
+   - Separate retrieval worker context with no action credentials
+   - Preserve user/tenant access controls on every retrieval
+   - External broker validates model-proposed tool, arguments, destination and data
+     against independently issued user-task capabilities; labels do not authorise calls
+   - Test the actual broker boundary; shared dependencies may also affect AGENCY-DEF-1
 
 IMPORTANT: If privilege separation is implemented via prompt instruction only
 (LLM is told "don't let retrieved content call tools"), it is an ALIGNMENT
@@ -129,36 +130,34 @@ Defense mechanism:
    - Doesn't prevent attack but increases cost
 ```
 
-### PI-DEF-4: Output Validation and Sanitization [DEV] — **SECONDARY**
-**Effectiveness:** MEDIUM (limits impact if PI succeeds)
-**Latency cost:** 20–100ms per output
-**UX impact:** May filter legitimate outputs
+### PI-DEF-4: Output Validation and Sanitization [DEV] — **PRIMARY for output handling; SECONDARY for PI prevention**
+**Control type:** Infrastructure-enforced at each receiving component. Semantic/model checks are supplementary and cannot replace encoding, authorization or isolation.
+**Effectiveness:** Deployment-specific; establish which execution and disclosure paths are blocked. A valid schema or plausible text alone earns no containment credit.
 
-```
-Defense mechanism:
-1. Structural validation of outputs:
-   - If output format deviates significantly from expected → flag
-   - Detect unexpected tool calls, file paths, email addresses
+Treat every model output as untrusted input to the next component, including streamed tokens, tool arguments, generated files, previews and exports.
 
-2. Semantic validation (for high-stakes outputs):
-   - If output contains instructions to external systems → require confirmation
-   - If output reveals system prompt content → redact before returning
+| Output consumer | Required enforcement | Failure case to exercise |
+|---|---|---|
+| Browser / Markdown / HTML / email preview | Render as text or use context-specific encoding and an allowlist sanitizer; prohibit active script/event handlers and unsafe URL schemes. Apply CSP as an additional layer. Block or independently authorize remote resource requests. | Script/event-handler content must remain inert; Markdown images, SVG, nested/encoded URLs and streamed fragments must not execute or export sensitive context. |
+| Database | Parameterize data values; independently authorize the operation, tables and rows. Restrict dynamic identifiers/SQL structure to approved query templates or a constrained query builder. | A quote or SQL fragment in a value remains data; unauthorized tables, writes or whole model-generated statements are rejected. |
+| Shell / code runner / file writer | Use fixed executables and argument arrays with operation-specific validation; never interpolate model text into a shell, eval or exec. Run intentionally generated code in a tested sandbox. Resolve paths and enforce permitted roots, including symlink targets. | Shell metacharacters cannot create an extra command; traversal/symlinks cannot reach outside the allowed filesystem boundary. |
+| HTTP client / tool broker / answer recipient | Check authenticated principal, task capability, data scope, method, recipient and destination outside the model. Restrict schemes, hosts and resolved network addresses; recheck redirects and changed arguments at execution. | Private/link-local endpoints, unauthorized recipients, redirected destinations and sensitive outbound search queries are denied. |
 
-3. Tool call audit logging:
-   - Every tool call logged with: full context window snapshot, user identity,
-     tool call parameters, timestamp
-   - Logs immutable; retained for forensic analysis
-```
+Validate before the first render, execution or disclosure; a later check cannot undo an unsafe streamed prefix. Bind approvals to the final operation, arguments and executable content/dependencies. A pathname alone does not identify approved code. For queued or delayed execution, use immutable approved artifacts or reauthorize when content, dependencies or resolved targets change; prevent mutation between the final check and execution. Record the receiving components, owner, policy, denied cases and legitimate-case results. Preserve protected audit evidence; logging alone is not prevention.
+
+**Rating:** YES only when every applicable consumer has demonstrated enforcement and legitimate-case behavior. PARTIAL when any consumer is untested/uncovered; NO when outputs are trusted directly or controls are only semantic/prompt checks. N/A only when no output reaches any user or downstream component. A blocked tool path cannot earn credit for an open answer, renderer or query path.
+
+**Source basis:** `research/sources/Review-Corrections-2026-09-19.md` (OWASP LLM05 and EchoLeak). Examples are required deployment tests, not reported successful exploit tests.
 
 ---
 
 ## Defense Layer 2: Excessive Agency Defenses
 
 ### AGENCY-DEF-1: Minimal Permission Scoping [DEV] — **PRIMARY**
-**Effectiveness:** CRITICAL (if no tool access, PI impact is noise)
+**Effectiveness:** Constrains tool actions; does not alone prevent answer, query or renderer disclosure
 **Latency cost:** None
 **Constraint notes:** Requires upfront design work to define minimal necessary permissions
-**Wild_vs_Theory: 4/5** — Agency escalation via PI confirmed in multiple real-world incidents (EchoLeak, Copilot CRM); standalone excessive agency (no PI) less documented but plausible
+**Wild_vs_Theory: 4/5** — Field AI-wrapper key theft supports this category; EchoLeak itself remains demonstration evidence. See `research/sources/Landscape-Update-2026-09.md`.
 
 ```
 Defense mechanism:
@@ -219,6 +218,15 @@ Defense mechanism:
    - Escalation path for suspicious patterns
 ```
 
+### DOS-DEF-1: Inference Resource and Spend Limits [OPS + DEV] — **PRIMARY**
+
+**Control type:** Infrastructure-enforced. Applies with or without model tools.
+**Mechanism:** Enforce per-principal and aggregate request rates, input/output token limits, concurrency limits, bounded retries/loops, and hard spend/quota ceilings outside the model. Reserve capacity or isolate tenants so one caller cannot consume the whole service. Set a cutoff below material loss, accounting for in-flight requests and provider billing delay. Account for and release reservations, queued receives and worker metadata on rejection, cancellation, abort and timeout, including requests rejected before scheduling in distributed inference. Test repeated failure paths for bounded retained state and recovery, with successful requests as a control; an HTTP rejection alone does not prove resource release.
+**Validation:** Test each bound and the aggregate cutoff under concurrent requests; record the enforced ceiling, maximum overshoot, owner, and denial behavior. Alerts and provider dashboards without an enforced stop are detection only.
+**Rating:** YES when all applicable bounds and fail-closed cutoff are demonstrated; PARTIAL when enforcement leaves a path/tenant uncovered; NO for alert-only or absent enforcement. N/A requires a documented absence of exhaustible/metered inference exposure.
+**Limitations:** Bounds contain cost and resource use; distributed identities and provider outages still need operational response. Availability and legitimate-user rejection tradeoffs require deployment-specific limits.
+**Source basis:** Category 8 and DoS effectiveness summary; `research/sources/Review-Corrections-2026-09.md` (OWASP LLM10 primary reference). No quantitative prevention percentage is claimed.
+
 ### AGENCY-DEF-3: Tool Call Budgeting [OPS] — **SECONDARY**
 **Effectiveness:** MEDIUM (limits cascade if agency is exploited)
 **Latency cost:** None
@@ -244,7 +252,7 @@ Defense mechanism:
 **Effectiveness:** HIGH (but requires architectural changes to agentic systems)
 **Latency cost:** Minimal (harness validation is a static analysis step)
 **Constraint notes:** Effective for task/validator/data harnesses that attacker-controlled or attacker-shaped material can enter. Internal-only harnesses with no attacker-shaped inputs are ordinary QA/supply-chain risk, not the ISC attack path.
-**Wild_vs_Theory: 4/5 (confirmed in-wild; mechanism proven and trivially replicable)** — **Evidence provenance: primary research + corroborated real-world incident + practitioner first-hand assessment.** arXiv:2603.23509 reports ISC-Bench (53 TVD scenarios, 8 disciplines; 95.3% worst-case across four frontier LLMs). The mechanism needs no adversarial prompt and is trivially replicable. The in-wild Fable 5 / Mythos 5 jailbreak and US-government shutdown (Jun 2026) corroborate exploitation; public reporting does not explicitly name the TVD mechanism — see `threat-taxonomy.md` Category 14 for the full rating basis.
+**Wild_vs_Theory: 2/5** — TVD/ISC is demonstrated in controlled research (arXiv:2603.23509). OpenAI/Hugging Face is an adjacent containment incident, not explicit ISC attribution. Assess attacker-shaped harness exposure and downstream harm separately; evidence maturity does not cap deployment severity.
 
 ```
 Defense mechanism:
@@ -263,7 +271,8 @@ Defense mechanism:
 3. Semantic output classifier:
    - Run all TVD-harness outputs through a harm classifier BEFORE returning
      to the user — independent of the model's own safety response
-   - This catches ISC output that the model itself did not flag
+    - Validate false-negative and false-positive behavior against the deployed harness;
+      an independent classifier is probabilistic, not a guaranteed safety boundary
 ```
 
 ### ISC-DEF-2: Agentic Loop Visibility and Rate Limiting [OPS] — **SECONDARY**
@@ -315,11 +324,20 @@ Defense mechanism:
    - If detected: flag the task harness pattern, not just the output
 ```
 
-**ISC Defense Note:** ISC is structural, not content-based. Input filtering and safety classifiers trained on instruction-following do not detect ISC. The primary mitigation is validator harness validation — the harness itself must have safety semantics, not just completion semantics.
+**ISC Defense Note:** ISC is structural, not content-based. Input filtering and safety classifiers do not reliably prevent the demonstrated failure; validate the actual harness, model and output checks. The primary mitigation is validator harness validation — the harness itself must have safety semantics, not just completion semantics.
 
 **Source provenance:** Primary: [arXiv:2603.23509](https://arxiv.org/abs/2603.23509) — ISC-Bench 53 scenarios across 8 disciplines and TVD failure mode. Mitigation reference: [arXiv:2604.20930](https://arxiv.org/abs/2604.20930) — SafeRedirect safe-failure pattern. Press/community incident narratives may be included as context only when separately labeled.
 
 ---
+
+### DATA-DEF-1: Data Source and Dataset Integrity [DEV + OPS] — **PRIMARY for data poisoning**
+
+**Applies to:** RAG corpora, training/fine-tuning datasets, feedback loops, embedding ingestion and derived datasets. This includes factual tampering without instruction injection.
+**Mechanism:** Inventory writers and ingestion sources; independently authorize writes/promotions and separate tenants/trust domains. Track source identity, transformations, versions and approved changes; validate content against independent authoritative records where consequential decisions rely on it. Quarantine disputed/unverifiable data and retain a known-good version. Rebuild affected chunks, embeddings, caches and derived datasets after rollback. For trained models, assess retraining or reverting the model checkpoint; editing the source dataset alone does not undo learned poisoning.
+**Validation:** Attempt an unauthorized write and an authorized-source change containing a plausible false fact with no instruction-like language. Demonstrate that unsupported consequential claims are rejected, corroborated or held for review; test legitimate updates and removal of poisoned derivatives. For training pipelines, retain held-out behavior/backdoor checks and rollback evidence. An authorized writer or valid signature proves origin, not factual truth.
+**Rating:** YES when applicable write/promotion boundaries, independent content checks, change tracking and recovery are demonstrated; PARTIAL for provenance alone, missing independent validation, incomplete pipeline coverage or untested recovery; NO when attacker-shaped data enters the authoritative corpus/training pipeline without effective validation. Record control type per mechanism: procedural or probabilistic content checks cannot earn the all-infrastructure mitigation factor. N/A requires no external or changeable data/training/feedback source.
+**Limitations:** No general check proves every fact true or absence of a behavioral backdoor. Record remaining integrity risk and retain SC-GAP-1 for model behavior. Instruction filtering (PI-DEF-2/3) and output encoding (PI-DEF-4) do not establish data truth.
+**Source basis:** `research/sources/Review-Corrections-2026-09-19.md` (OWASP LLM04); this operational control does not introduce a new evidence score.
 
 ## Defense Layer 3: Supply Chain Defenses
 
@@ -427,7 +445,7 @@ AIBOM Freshness Triggers (v1.1 addition):
 ```
 
 ### SC-DEF-2: Custom Inference Code Sandboxing [OPS] — **PRIMARY**
-**Effectiveness:** HIGH (prevents malicious code from exfiltrating data)
+**Effectiveness:** Deployment-specific; test process, filesystem, egress and returned-output disclosure paths. A container label alone establishes no boundary.
 **Expertise required:** Medium-High (but accessible to ops teams with Docker experience)
 
 ```
@@ -435,7 +453,7 @@ Defense mechanism:
 1. Run all model inference in isolated containers:
    - Minimal container image (distroless, scratch)
    - No network egress from inference container except to return output
-   - Read-only filesystem except for model weights directory
+   - Read-only code, weights, policy and sandbox binaries; narrowly scoped separate scratch storage
 
 2. Network egress controls:
    - Whitelist allowed outbound destinations (if any)
@@ -648,7 +666,7 @@ Required log events:
 6. All authentication events (new sessions, failed auth)
 7. All HITL confirmation events (action, context provenance summary, approver)
 
-Log retention: minimum 90 days (align with GDPR Article 32)
+Log retention: set a documented period from investigation needs and applicable law; GDPR Article 32 does not mandate 90 days. Minimise/redact sensitive content and restrict log access.
 Log protection: tamper-evident storage; immutable append-only
 ```
 
@@ -793,24 +811,24 @@ Layered defenses ("defense-in-depth") are a core principle of this framework. Ho
 
 | Control | Type | Independence from AGENCY-DEF-1 |
 |---------|------|--------------------------------|
-| PI-DEF-2 (RAG privilege separation) via **infrastructure enforcement** | Technical | YES — independent; pipeline enforces, not LLM |
+| PI-DEF-2 (RAG privilege separation) via **infrastructure enforcement** | Technical | Not automatic; inspect shared brokers, credentials, policy and egress paths |
 | PI-DEF-2 (RAG privilege separation) via **prompt instruction only** | Alignment | NO — depends on LLM following instructions |
 | AGENCY-DEF-1 (tool allowlist) | Technical | N/A — the primary technical control |
 
-**Conclusion:** If PI-DEF-2 is implemented at the infrastructure level, both controls are independent and multiplicative. If implemented via prompt only, PI-DEF-2 adds marginal value and the combined effectiveness is dominated by AGENCY-DEF-1.
+**Conclusion:** Infrastructure enforcement is independent of model obedience, not necessarily independent of other controls. Shared credentials, brokers, policy errors and omitted channels can defeat both controls. Do not multiply effectiveness estimates or infer LOW residual risk without deployment evidence.
 
 ### Effectiveness Summary Table
 
 | Threat | Primary Defense(s) | Effectiveness | Control Type | Residual Risk |
 |--------|-------------------|---------------|--------------|---------------|
-| Indirect PI → Agency → Exfil (Chain A) | PI-DEF-2 (infrastructure) + AGENCY-DEF-1 | HIGH (combined — both technical, independent) | Technical | LOW if both enforced |
-| Indirect PI → Agency → Exfil (Chain A) | PI-DEF-2 (prompt only) + AGENCY-DEF-1 | MEDIUM (combined — alignment + technical) | Mixed | MEDIUM |
+| Indirect PI → disclosure (Chain A) | PI-DEF-2 + AGENCY-DEF-1 + PI-DEF-4 | Boundary-specific; demonstrate each reachable path is constrained | Technical + output checks | Deployment-specific; include answer, query and renderer channels |
+| Indirect PI → disclosure (Chain A) | PI-DEF-2 (prompt only) + AGENCY-DEF-1 + PI-DEF-4 | Prompt controls remain probabilistic; test all disclosure paths | Mixed | Deployment-specific |
 | Supply Chain (Chain B) | SC-DEF-1 (AIBOM) + SC-DEF-2 (sandboxing) | MEDIUM-HIGH | Technical | MEDIUM (AIBOM alone insufficient) |
 | **Multi-Agent Propagation (Chain C) — DEFAULT LangGraph** | MA-DEF-1 | **MEDIUM** (ToolCallWrapper not default; unsanitized ToolMessage → shared state) | Technical | MEDIUM |
 | **Multi-Agent Propagation (Chain C) — LangGraph WITH ToolCallWrapper enforced** | MA-DEF-1 | **HIGH** (architecturally enforced) | Technical | LOW-MEDIUM |
 | **Multi-Agent Propagation (Chain C) — Other frameworks (AutoGen, CrewAI)** | MA-DEF-1 equivalent | **MEDIUM** (requires equivalent custom middleware; not typically default) | Technical | MEDIUM |
 | Direct PI | PI-DEF-1 (hierarchy) + PI-DEF-3 (filtering) | MEDIUM-HIGH | Mixed | MEDIUM |
-| Excessive Agency | AGENCY-DEF-1 (minimal perms) + AGENCY-DEF-2 (HITL) | HIGH | Technical + Procedural | LOW if both enforced |
+| Excessive Agency | AGENCY-DEF-1 + AGENCY-DEF-2 | Test scoped authority and approval binding | Technical + Procedural | Deployment-specific |
 | DoS | Rate limiting, quota management, context caps | MEDIUM-HIGH | Technical | MEDIUM |
 | System Prompt Extraction | PI-DEF-1 (non-extractable prompts) | MEDIUM | Alignment | MEDIUM |
 | Model Extraction | Rate limiting, query volume monitoring | LOW-MEDIUM | Technical | LOW |
@@ -830,7 +848,7 @@ The availability of jailbreak-as-a-service and PI template marketplaces **reduce
 - PI-DEF-3 pattern-based layer: LOW effectiveness against purchased variants
 - PI-DEF-3 ML-based layer: MEDIUM-HIGH effectiveness (detects novel patterns)
 - PI-DEF-2 (RAG privilege separation): HIGH effectiveness (infrastructure-level, not evadable by prompt variants)
-- AGENCY-DEF-1 (minimal permissions): CRITICAL effectiveness (if LLM can't take actions, purchased PI has no impact)
+- AGENCY-DEF-1 (minimal permissions): Constrains action authority; answer/query/renderer disclosure remains possible
 
 **Conclusion:** Against attackers with purchased PI templates, only infrastructure-level controls (PI-DEF-2 infrastructure enforcement, AGENCY-DEF-1) and ML-based detection remain effective. Pattern-based input filtering should not be relied upon as a primary defense.
 
@@ -838,9 +856,9 @@ The availability of jailbreak-as-a-service and PI template marketplaces **reduce
 
 ## Agentic Trust-Boundary Controls — July 2026
 
-### MEM-DEF-1: Durable Memory Write Authorization [DEV + OPS] — **PRIMARY**
+### MEM-DEF-1: Memory and Compaction Authorization [DEV + OPS] — **PRIMARY**
 
-Durable memory is a security-sensitive write target, not an ordinary convenience feature.
+Durable memory and ephemeral context compaction are security-sensitive state transitions. MEM-DEF-1 applies to summaries used to resume a task even when no persistent memory store exists.
 
 ```text
 Required controls:
@@ -849,9 +867,11 @@ Required controls:
 3. Separate user-confirmed facts from retrieved content and model-generated summaries.
 4. Apply TTL, rollback, quarantine, and deletion workflows.
 5. Test poisoning across sessions, including retrieval into a higher-privilege workflow.
+6. Include ordinary conversation ingestion without direct memory-write permissions, topic-selective triggers and retrieval drift. Verify quarantine/rollback removes influence from derived summaries and indexes.
+7. Keep authoritative user instructions, denials, approvals and source/version evidence outside model-authored summaries. On resume, independently recover their current state; summary text cannot grant identity, permission or user approval. Test a false approval and omitted denial alongside a faithful compaction. Apply to both the resumed worker and its monitor.
 ```
 
-**Effectiveness:** HIGH when enforced outside the model; LOW when implemented only as a prompt instruction.
+**Effectiveness:** Validate ingestion and retrieval boundaries in the actual deployment; an external policy check can still authorize poisoned content. Prompt-only rules provide no enforced isolation.
 
 ### SKILL-DEF-1: Lifecycle-Aware Skill Supply Chain [DEV + OPS] — **PRIMARY**
 
@@ -864,6 +884,7 @@ Required controls:
 3. Version pinning, signed provenance, dependency inventory, and change monitoring.
 4. Re-review when a skill, description, permission, or dependency changes.
 5. Runtime sandboxing and least privilege independent of skill claims.
+6. Pin or reject mutable remote payloads; inventory subprocesses, startup hooks and scheduled tasks. Removal includes persistence cleanup and exposed-credential rotation, not just uninstalling the skill.
 ```
 
 ### MA-DEF-3: Cryptographic Inter-Agent Identity [DEV + OPS] — **PRIMARY**
@@ -912,10 +933,41 @@ Per-message prompt-injection detection is insufficient for session contamination
 - Alert on cumulative risk, not only individual classifier scores.
 - Preserve provenance graphs showing why a tool call or memory write occurred.
 - Replay complete sessions during red-team evaluation.
+- Preserve authoritative broker/host execution logs outside agent write scope; model-authored transcripts are untrusted evidence. Reconcile worker, channel and time-window coverage before treating an empty search as evidence of no compromise.
 
 ### REP-DEF-1: Representation Boundary Validation [DEV] — **PRIMARY where conversion exists**
 
-Before model or validator consumption, preserve origin and representation metadata. Do not treat converted code, binary-derived text, generated evidence, or tool-returned records as independent trusted instructions or evidence without validation.
+Before model or validator consumption, preserve origin and representation metadata. Do not treat converted code, binary-derived text, generated evidence, or tool-returned records as independent trusted instructions or evidence without validation. Include live allow/deny monitors: preserve role, turn, tool and author boundaries in a trusted structure; agent-authored text must not forge a new trusted record or omit relevant history. Test synthetic forged-role text and an ordinary transcript through the actual monitor adapter. Valid framing does not make a probabilistic monitor an infrastructure-enforced authorization boundary.
 
-**Last updated:** 2026-07-20 (v1.8 — integrated agentic trust-boundary controls and documented response-integrity assurance gap)
-**Next review:** 2026-09-17 or after new defense validation research
+## September extensions to existing controls
+
+These engineering requirements follow the bounded evidence in `research/sources/Landscape-Update-2026-09.md`; they are not new measured effectiveness claims.
+
+### MA-DEF-1 / MA-DEF-3: Version-aware MCP boundary checks [DEV + OPS]
+
+Record protocol and SDK versions at each endpoint. Test that execution matches the authorized method, tool, arguments and principal even when routing headers disagree with the body. For the July revision, validate the authorization issuer and bind credentials to it; do not treat client metadata as authentication. Scope cached resources/catalogs to the correct principal and permission state. Bind MRTR approval/continuation to the original action and reject replay or changed arguments. Test equivalent session/approval boundaries on legacy deployments. Server output remains untrusted after authentication.
+
+### SC-DEF-1 / SC-DEF-2: Build and enforcement integrity [DEV + OPS]
+
+Inventory and pin build tools, security scanners, runtime packages and startup hooks alongside weights. Keep production secrets out of build and evaluation workers where unnecessary. Prevent the agent from modifying sandbox executables, broker policy, approval configuration or their resolved filesystem targets; test symlink/path changes and actual network reachability. Partition shared caches/artifact stores by trust domain and protect execution logs separately. A simulation instruction is not isolation.
+
+After compromise, quarantine affected artifacts, rebuild from a verified source, revoke exposed keys/sessions and inspect downstream grants and persistence. Patching or uninstalling alone does not invalidate stolen access. Record containment evidence and re-test the action boundary before restoring service.
+
+## September research integration: validation requirements
+
+**Source basis:** `research/sources/Latest-Development-Integration-2026-09-19.md`. These extend existing controls; the research does not establish new field prevalence or control-efficacy rates.
+
+| Boundary | Required deployment evidence | Rating consequence |
+|---|---|---|
+| REP-DEF-1 / DET-DEF-3: monitor inputs | Trusted role/turn framing; compare forged and legitimate transcript cases; retain relevant pre-compaction and worker history outside agent write scope | Agent-authored transcripts cannot establish monitor integrity; detection remains secondary |
+| PI-DEF-4 / SC-DEF-2 / AGENCY-DEF-2: delayed execution | Approval bound to immutable code and relevant dependencies, or invalidated on mutation before execution; test changed and unchanged fixtures | Argument-only approval is PARTIAL where mutable executable content remains reachable |
+| MEM-DEF-1 / MA-DEF-3: compaction and resume | Independent authorization record restored to worker and monitor; false approval and omitted-denial cases cannot change authority | No durable store is not N/A when compaction is used; summary-derived permission is NO |
+| DOS-DEF-1: rejected/aborted requests | Bounded retained state, released reservations and restored service under repeated rejection, cancellation, abort and timeout; include successful traffic | Rate limits alone are PARTIAL when applicable cleanup paths remain untested; unbounded retained state is NO |
+| PI-DEF-4 / AGENCY-DEF-1/2: changed generation configuration | Inventory watermarking, logit processors, sampling/key settings and provider-controlled unknowns; rerun paired denied and legitimate task/action cases after material changes | Old model-level results do not validate new settings; retain only independently supported infrastructure credit |
+
+Protect the blocking monitor's inputs separately from retrospective logs. Keep authoritative audit evidence for changes to the monitor, compactor, approval broker and serving configuration. Test the actual deployed boundary before claiming YES; record unknown provider settings and an owner for obtaining assurance or constraining reachable harm.
+
+The watermarking study reports separate tool-calling and refusal experiments, not a combined agent compromise. Revalidation is an engineering requirement, not a new attacker capability. Compaction reports concern endogenous training behavior; external summary manipulation is a deployment-specific test hypothesis, not a confirmed field incident.
+
+**Last updated:** 2026-09-19 (v1.11 — research integration)
+**Next review:** 2026-10-15 or after a material deployment change
