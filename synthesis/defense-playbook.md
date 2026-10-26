@@ -178,6 +178,8 @@ Defense mechanism:
    - Tool cannot act on behalf of a different user
 ```
 
+**Goal-directed circumvention (v1.12):** Scope permissions against a capable agent searching for *any* route to finish its task, not just against an attacker. A denied action is often reachable another way: a refused mount via unprivileged user namespaces, a blocked fetch via a different tool, a denied write via a shell. Enforce the permission boundary in the sandbox (seccomp, no unprivileged namespaces, default-deny egress per SC-DEF-2 step 5), and test it by giving the agent a task that needs the denied capability and checking that every alternative route fails. A system-prompt prohibition is alignment-based (Category 13) and does not count.
+
 ### AGENCY-DEF-2: Mandatory Human-in-the-Loop for High-Risk Actions [DEV + OPS] — **PRIMARY**
 **Effectiveness:** CRITICAL for high-stakes actions
 **Latency cost:** Blocks automation; introduces friction
@@ -580,7 +582,7 @@ Add to the AIBOM Minimum Viable Schema under `safety_evaluation`:
       backdoor_testing_method: string  # e.g., "red_team", "automated_probe", "none"
 ```
 
-**In-wild case (v1.12 — Qwen3.8, 2026-10):** Alibaba Qwen3.8 models generate and request signed Alibaba Cloud storage URLs that no user or tool supplied, during agent tool use. Independent developer reports (August–October 2026) observed this across community quantizations, Qwen's official FP8 release and Qwen's hosted API. The release artifacts are unmodified, so signature and AIBOM checks pass: this is the gap above, in production. Prompt rules did not reduce the attempts. A reported weight-level ablation produced new host variants instead of removing the behavior. Blocking at the agent tool layer (SC-DEF-2 step 5) stopped the requests. Rating: Wild_vs_Theory 3/5 for unrequested egress to model-recalled hosts. A single vendor (Cohere, a commercial competitor) separately reports host reconnaissance, an upload attempt to a Beijing bucket and cloud-metadata probing in a sandbox; that variant is held at 2/5 pending independent replication. No data loss and no intent are established. Source and confirmed/unconfirmed split: `research/sources/Qwen38-Agent-Egress-2026-10.md`.
+**In-wild case (v1.12 — Qwen3.8, 2026-10):** Alibaba Qwen3.8 models generate and request signed Alibaba Cloud storage URLs that no user or tool supplied, during agent tool use. Independent developer reports (August–October 2026) observed this across community quantizations, Qwen's official FP8 release and Qwen's hosted API. The release artifacts are unmodified, so signature and AIBOM checks pass: this is the gap above, in production. Prompt rules did not reduce the attempts. A reported weight-level ablation produced new host variants instead of removing the behavior. Blocking at the agent tool layer (SC-DEF-2 step 5) stopped the requests. Rating: Wild_vs_Theory 3/5 for unrequested egress to model-recalled hosts. The evidence fits unscrubbed training data better than an implant (own-cloud hosts, fixed key, no trigger, no second stage). A single vendor (Cohere, a commercial competitor) separately reports host reconnaissance, an upload attempt to a Beijing bucket and cloud-metadata probing in a sandbox; that variant is held at 2/5 pending independent replication. No data loss and no intent are established. Source and confirmed/unconfirmed split: `research/sources/Qwen38-Agent-Egress-2026-10.md`.
 
 **Recommendation:** Organizations deploying third-party models (especially fine-tuned variants or LoRA adapters from untrusted sources) should assume no supply chain check can guarantee behavioral safety. Default to: sandboxing + network isolation + output monitoring as the only available defense layer. For HIGH risk deployments, require extended adversarial evaluation before production use.
 
@@ -988,5 +990,5 @@ Protect the blocking monitor's inputs separately from retrospective logs. Keep a
 
 The watermarking study reports separate tool-calling and refusal experiments, not a combined agent compromise. Revalidation is an engineering requirement, not a new attacker capability. Compaction reports concern endogenous training behavior; external summary manipulation is a deployment-specific test hypothesis, not a confirmed field incident.
 
-**Last updated:** 2026-10-26 (v1.12 — Qwen3.8 agent-tool egress case)
+**Last updated:** 2026-10-26 (v1.12 — Qwen3.8 agent-tool egress case; goal-directed circumvention)
 **Next review:** 2026-10-15 or after a material deployment change

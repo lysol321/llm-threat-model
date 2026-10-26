@@ -58,6 +58,15 @@ Treat as context, not rating evidence, until someone outside Cohere reproduces i
 - **Gap in SC-DEF-2's assumptions.** SC-DEF-2 and SC-DEF-4 mitigation 1 assume egress comes from the inference process and can be cut at the inference container. In this case egress goes out through the *agent's tools* (curl, webfetch, browser render), which run outside the inference container and are allowed network access by design. An inference-container egress block does not cover this path. Proposed fix: extend the egress requirement to agent tool execution (deny by default; allow a host only if it already appears in user input or a tool result, as in Crow).
 - **Category 13 (Control Type Confusion).** The trace/action mismatch, if replicated, is direct evidence that reasoning-trace monitoring is an alignment-based control, not an infrastructure boundary. Even unreplicated, it doesn't change existing guidance: enforce at the tool call.
 - **Category 2 (Excessive Agency).** In both community incidents the agent ran in yolo or auto-approve mode with network tools. Supports AGENCY-DEF-* scoping of network-capable tools.
+- **Split by mechanism.** The incidents are not one threat:
+
+  | Behavior | Likely mechanism | Vendor-specific? | Placement |
+  |---|---|---|---|
+  | routify URL requests | Memorization (near-certain prefix completion, fixed key, host drift after ablation) | Yes, a training-data artifact | Category 3 |
+  | `unshare -Urm` after a refused RAM disk | Goal-seeking workaround | No | Category 2, goal-directed boundary circumvention |
+  | Recon → probe → upload in CTI-REALM | Unresolved: replayed pentest transcripts or goal-seeking | Probably not | Held at 2/5 |
+
+- **Intent assessment.** The evidence fits training-data leakage better than an implant. The hosts sit on the vendor's own cloud under one fixed key. There is no trigger, and a firing rate under 1 in 100,000 is too unreliable to carry out an operation. The servers return AccessDenied with no second stage. Hobbyists found it within two months. The strongest "deliberate" reading is a low-volume census beacon, and the same facts make that a low-value, easily attributed design. Controls are intent-neutral either way.
 - **Indicators** (for egress deny/alert lists; known variants, not complete):
   - `routify-file-proxy-sg.oss-ap-southeast-1.aliyuncs.com` and any `routify*file*` label on `aliyuncs.com` / `aliyuncs.io`
   - `sanmaohe.oss-cn-beijing.aliyuncs.com`

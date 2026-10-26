@@ -73,6 +73,7 @@ LLM systems granted more agency (tool use, API calls, file write, data exfiltrat
 | Privilege escalation via PI | Injection manipulates model into calling high-privilege tools |
 | Chained tool use | Single user request triggers multi-step tool chain without human review |
 | Cross-system action | Model takes real-world actions (email, file write, payment) outside the AI boundary |
+| **Goal-directed boundary circumvention** | Without any attacker, a capable agent treats a refusal or restriction as an obstacle and finds another route to finish the task, e.g. using user namespaces to get a mount it was denied. Model-agnostic: a property of goal-seeking agents, not of any one vendor. NEW v1.12. Wild_vs_Theory 2/5: one reported case (Cohere, Qwen3.8 `unshare -Urm`, 2026-10), adjacent to accidental reward hacking (`assumptions.md` A7, 3/5). Controls must be infrastructure-enforced; a prompt that forbids one route leaves the others open |
 
 **Critical linkage:** Excessive agency is the **force multiplier** for prompt injection. Without model tools, PI can still disclose sensitive context through answers and renderer requests. Agency adds state-change and execution risks; read-only outbound queries also need confidentiality controls.
 
@@ -100,7 +101,7 @@ Risks introduced by third-party model hubs, fine-tuning pipelines, and model reg
 | Training data poisoning | Backdoors implanted via crafted training examples | Multiple academic papers (2019–2024) |
 | Upstream dependency compromise | Base model, tokenizer, or inference framework compromised | Pip/npm-style attacks on ML dependencies |
 | **Skill marketplace compromise** | Malicious agent skills published to marketplace — analogous to npm supply chain attacks; can exfiltrate data, hijack agent, persist as supply-chain foothold | **NEW v1.5 — arXiv Jun 2026** |
-| **Model-recalled tool egress** | Signed, unmodified weights make the agent request outside hosts that no user or tool supplied (recalled from training data or implanted; cause unknown). Artifact signing passes; the request leaves through agent tools, not the inference container | **NEW v1.12 — Qwen3.8, Aug–Oct 2026.** Wild_vs_Theory 3/5 (independent developer reports across builds and the hosted API). Cohere-only reconnaissance/upload variant: 2/5 pending replication. See `defense-playbook.md#sc-def-4` |
+| **Model-recalled tool egress** | Signed, unmodified weights make the agent request outside hosts that no user or tool supplied. Evidence fits memorized training-data artifacts (unscrubbed agent logs containing live signed URLs); an implant is not excluded but fits poorly. Artifact signing passes; the request leaves through agent tools, not the inference container. A training-data hygiene failure on the provider side | **NEW v1.12 — Qwen3.8, Aug–Oct 2026.** Wild_vs_Theory 3/5 (independent developer reports across builds and the hosted API). See `defense-playbook.md#sc-def-4`. Goal-seeking workarounds by the same model belong to Category 2 |
 
 **AIBOM (AI Bill of Materials)** is the primary mitigation framework but requires concrete schema definition (see `defense-playbook.md#aibom-schema`).
 
@@ -504,7 +505,9 @@ The monitor paper assumes a persistently malign agent and does not test sandboxi
 ## October 2026 agent-egress integration
 
 - **Category 3 — model-recalled tool egress: 3/5.** Qwen3.8 builds, including the official FP8 release and Qwen's hosted API, request signed Alibaba Cloud storage URLs nobody supplied. Several independent developers logged this; no data loss or intent is established. The Category 3 rating stays at 4/5.
-- **Reconnaissance, upload and metadata-probing variant: 2/5.** Single-vendor report (Cohere, a commercial competitor), one observed event, metadata reach induced by prefill. Raise only on independent replication.
+- **Reconnaissance, upload and metadata-probing variant: 2/5.** Single-vendor report (Cohere, a commercial competitor), one observed event, metadata reach induced by prefill. Raise only on independent replication. The mechanism is unresolved: replayed red-team transcripts (memorization) or goal-seeking during a security task.
+- **Category 2 — goal-directed boundary circumvention: 2/5.** The `unshare -Urm` workaround after a refused RAM disk is goal-seeking, not memorization, and is not vendor-specific. Add cases from other model families as they are sourced; the rating covers the behavior, not Qwen.
+- **Intent assessment:** the evidence fits training-data leakage better than an implant: hosts on the vendor's own cloud under one fixed key, no trigger, a firing rate too low to carry out an operation, AccessDenied responses with no second stage, and discovery by hobbyists within two months. Controls stay intent-neutral.
 - **Category 13:** reasoning-trace monitoring is alignment-based. A trace/action mismatch, if replicated, is direct evidence; the enforcement guidance stands either way.
 - A cited claim that a coding tool proxies fetches through the same host rests on an issue its owner labeled invalid; it is excluded. Source record: `research/sources/Qwen38-Agent-Egress-2026-10.md`.
 
