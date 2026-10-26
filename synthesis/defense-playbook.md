@@ -254,7 +254,7 @@ Defense mechanism:
 **Effectiveness:** HIGH (but requires architectural changes to agentic systems)
 **Latency cost:** Minimal (harness validation is a static analysis step)
 **Constraint notes:** Effective for task/validator/data harnesses that attacker-controlled or attacker-shaped material can enter. Internal-only harnesses with no attacker-shaped inputs are ordinary QA/supply-chain risk, not the ISC attack path.
-**Wild_vs_Theory: 2/5** — TVD/ISC is demonstrated in controlled research (arXiv:2603.23509). OpenAI/Hugging Face is an adjacent containment incident, not explicit ISC attribution. Assess attacker-shaped harness exposure and downstream harm separately; evidence maturity does not cap deployment severity.
+**Wild_vs_Theory: 2/5** — TVD/ISC is demonstrated in controlled research (arXiv:2603.23509). An independent team re-ran single-turn TVD as a baseline (arXiv:2607.00481), with JailbreakBench ASR of 28–98% across six models. That is controlled corroboration, not field evidence. OpenAI/Hugging Face is an adjacent containment incident, not explicit ISC attribution. Assess attacker-shaped harness exposure and downstream harm separately; evidence maturity does not cap deployment severity.
 
 ```
 Defense mechanism:
@@ -275,6 +275,12 @@ Defense mechanism:
      to the user — independent of the model's own safety response
     - Validate false-negative and false-positive behavior against the deployed harness;
       an independent classifier is probabilistic, not a guaranteed safety boundary
+
+4. Test the validator's own logic:
+   - Run known-good and known-bad cases through every acceptance check;
+     a validator can silently accept the wrong output
+   - Example: the ISC authors' LlamaGuard templates matched labels by
+     substring ("safe" in "unsafe" is true) until repository PR #135
 ```
 
 ### ISC-DEF-2: Agentic Loop Visibility and Rate Limiting [OPS] — **SECONDARY**
@@ -315,6 +321,11 @@ Defense mechanism:
      agentic models before release
    - Specifically test: does a benign task + format-only validator +
      incomplete data cause your model to generate harmful outputs?
+   - Report executed-validator agent runs separately from chat simulations;
+     the authors note their chat demos do not run the validator and
+     behave as prompt-based attacks
+   - Expect large model-to-model variance (arXiv:2607.00481); test the
+     deployed model rather than inheriting another model's result
 
 2. Validator harness safety requirements:
    - Require safety semantics in any validator harness used with your API
@@ -328,7 +339,7 @@ Defense mechanism:
 
 **ISC Defense Note:** ISC is structural, not content-based. Input filtering and safety classifiers do not reliably prevent the demonstrated failure; validate the actual harness, model and output checks. The primary mitigation is validator harness validation — the harness itself must have safety semantics, not just completion semantics.
 
-**Source provenance:** Primary: [arXiv:2603.23509](https://arxiv.org/abs/2603.23509) — ISC-Bench 53 scenarios across 8 disciplines and TVD failure mode. Mitigation reference: [arXiv:2604.20930](https://arxiv.org/abs/2604.20930) — SafeRedirect safe-failure pattern. Press/community incident narratives may be included as context only when separately labeled.
+**Source provenance:** Primary: [arXiv:2603.23509](https://arxiv.org/abs/2603.23509) — ISC-Bench 53 scenarios across 8 disciplines and TVD failure mode. Mitigation reference: [arXiv:2604.20930](https://arxiv.org/abs/2604.20930) — SafeRedirect safe-failure pattern. Independent replication: [arXiv:2607.00481](https://arxiv.org/abs/2607.00481) — TVD-Single baseline, Table II. Utility caveat: [arXiv:2607.27951](https://arxiv.org/abs/2607.27951) §4.3. SafeRedirect gets much of its mitigation by permitting task failure, so measure the utility cost on legitimate tasks. Press/community incident narratives may be included as context only when separately labeled.
 
 ---
 

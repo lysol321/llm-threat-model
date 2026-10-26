@@ -128,6 +128,43 @@ Verified from arXiv metadata and HTML:
   - condition specificity.
 - Reports SafeRedirect reduced average unsafe generation from **71.2% to 8.0%** across seven frontier LLMs in tested AI/ML-related single-turn ISC tasks, compared with 55.0% for the strongest baseline.
 
+### Evidence update — 2026-10-26 scan
+
+Scan window: after the 2026-09-19 review, plus one earlier independent paper the corpus had not cited. The rating stays at **2/5**. No field incident is attributed to ISC or to validator-harness abuse.
+
+**Independent controlled replication**
+
+- **Liu, Wang, Luo, Jia, arXiv:2607.00481 (2026-07-01).** No author overlap with Wu et al.
+  - The team ran TVD-Single as a one-shot baseline using the released templates. JailbreakBench ASR per model: GPT-4o 38%, GPT-5.4 70%, Qwen3-Max 98%, Gemini-3-Flash 28%, DeepSeek-V4-Flash 95%, Claude-Sonnet-4.5 87%. The average is 69.3%; SafeBench-Tiny averages 70.7%.
+  - The authors conclude the vulnerability is not uniformly exposed across frontier models.
+  - **Use:** independent reproduction of the controlled single-turn failure, with large model-to-model variance. It is still not field evidence.
+
+**Author-group work (not independent)**
+
+- **VEX-Bench, arXiv:2609.35028 (2026-09-28).** Shares co-authors with Wu et al. (Huang, Wu, Li, Zheng). It uses ISC as one of seven misinformation-generation methods. ISC output showed the smallest factual degradation of the seven methods, which makes it the hardest to detect without direct source comparison.
+- **HarmProfile, arXiv:2608.14577 (2026-06-11).** Same author group. It characterizes harmful-output distributions; the ISC README says it uses ISC-generated outputs.
+
+**Changes in the authors' repository** (`wuyoscar/Internal-Safety-Collapse`)
+
+- **NeurIPS 2026 acceptance:** claimed in PR #131 (merged 2026-09-27). Not confirmed against a NeurIPS listing; arXiv still shows only v1, with no venue.
+- **Validator bug fix:** PR #135 (2026-10-15) fixed a label-parsing bug in the LlamaGuard text templates, where `"safe" in "unsafe"` is true. The old parser failed 40 of 50 label cases. The authors state that historical results are not recomputed. Effect on the paper's numbers is not established, because the paper judges harm with a separate evaluator. The lesson for defenders is that a validator's own logic can be wrong; this is the authors' own harness, not an attack.
+- **Chat demos:** the README says these "simulate commands and results; the validator does not actually run" and can be treated as a prompt-based attack. Evidence from executed-validator agent runs should be kept separate from chat simulations.
+- **Headline figure:** the README's 92% figure is the single-turn mean. The paper's 95.3% is a worst case across tasks and settings. Do not interchange them.
+- **Model testing:** the authors stopped adding model tests in August 2026. Their 62-model evidence table mixes setups and is mostly author- or circle-contributed.
+- **Fable 5 entry:** the table lists a 2026-06-09 Claude Fable 5 trigger posted by the lead author (community folders for fake news and NSFW content). Treat it as author self-report, context only. It does not support the press claims listed under "Claims to Remove or Downgrade".
+
+**Critiques**
+
+- **Wu, Zhu, Zhang, Yu, arXiv:2607.27951 (2026-07-30).** Independent and theoretical. It states that SafeRedirect "obtains much of its mitigation by permitting task failure and unresolved placeholders". That is a capability and utility trade-off, and a theoretical assistance floor remains.
+- **ICML review (author-reported, second-hand).** On 2026-10-18 the authors briefly added a README note, removed the same day, saying ICML 2026 rejected the paper in April and that one reviewer called ISC an exaggerated phenomenon.
+- **Replication:** no failed replication was found.
+
+**Not found**
+
+- No garak, PyRIT or promptfoo ISC probe.
+- No press coverage in the window.
+- Agent incidents during evaluations, driven by task-completion pressure and listed in a community tracker, were not verified. They are endogenous behavior, not attacker-shaped harnesses, so they are not ISC.
+
 ---
 
 ## What the Threat Model Should Say
@@ -228,3 +265,9 @@ These may belong in a separate incident-history section only if backed by indepe
 | Promptfoo LM Security DB | https://www.promptfoo.dev/lm-security-db/vuln/frontier-llm-safety-collapse-908a4285 | Security-database summary and schema/validation framing |
 | Pan, Wu, Yao, 2026, arXiv:2604.20930 | https://arxiv.org/abs/2604.20930 | SafeRedirect mitigation, defense failure rates, safe-failure design principles |
 | SafeRedirect HTML v1 | https://arxiv.org/html/2604.20930v1 | Full mitigation paper text used for extracted claims |
+| Liu, Wang, Luo, Jia, 2026, arXiv:2607.00481 | https://arxiv.org/html/2607.00481v1 | Independent TVD-Single re-run, Table II and §V-B |
+| Huang, Wu et al., 2026, arXiv:2609.35028 | https://arxiv.org/abs/2609.35028 | Author-group use of ISC for misinformation generation |
+| Ma, Wu et al., 2026, arXiv:2608.14577 | https://arxiv.org/abs/2608.14577 | Author-group harmful-output profiling |
+| Wu, Zhu, Zhang, Yu, 2026, arXiv:2607.27951 | https://arxiv.org/html/2607.27951v1 | §4.3 SafeRedirect utility caveat |
+| Repository PR #131 | https://github.com/wuyoscar/Internal-Safety-Collapse/pull/131 | NeurIPS 2026 acceptance claim (author-reported) |
+| Repository PR #135 | https://github.com/wuyoscar/Internal-Safety-Collapse/pull/135 | LlamaGuard label-parsing fix; historical results not recomputed |
