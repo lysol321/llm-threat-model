@@ -1,6 +1,6 @@
 # LLM Threat Modeling Framework
 
-**Release v1.12** · Pilot candidate · Updated 2026-09-19
+**Release v1.12** · Pilot candidate · Updated 2026-10-26
 
 This threat model is for engineering teams assessing LLM deployments. It assumes no ML security expertise. The framework covers 14 threat categories, 3 canonical attack chains plus scoped agentic trust-boundary branches, a layered defense playbook, a risk matrix with regulatory mapping, and an engineering worksheet that a 3-person team can complete in under 4 hours.
 
@@ -292,6 +292,7 @@ Framework docs are versioned independently. Check the version header in each fil
 
 | Version | Date | Key Change |
 |---------|------|-----------|
+| 1.12 (component update) | 2026-10-26 | Qwen3.8 agent-tool egress case: default-deny egress on agent tool runners (SC-DEF-2 step 5), first in-wild SC-DEF-4 case, Category 3 model-recalled egress (3/5), vendor-neutral Category 2 goal-directed boundary circumvention (2/5) |
 | 1.11 | 2026-09-19 | Output/data integrity boundaries, complete tabletop assessments, legal applicability gates and README evidence synchronization |
 | 1.10 | 2026-09-15 | Evidence corrections: ISC 2/5 controlled research; EchoLeak 3/5 demonstration; read-only disclosure and deployment scoring corrections |
 | 1.9 (+ 2026-07-22 addendum, superseded by v1.10) | 2026-07-22 | Historical attribution withdrawn: the adjacent containment incident does not establish the ISC mechanism. Current ISC evidence is 2/5 controlled research; see the v1.10 corrections. |
@@ -322,3 +323,9 @@ This framework addresses **LLM-as-target** threats: attacks that target the LLM 
 ## September 19 research integration
 
 Release v1.12 extends monitor/approval integrity, compaction/resume authority, rejected-request cleanup and generation-configuration revalidation under existing controls. The 39 scenarios are documented tabletop assessments; their deployment verification plans are not executed security tests. See [research/sources/Latest-Development-Integration-2026-09-19.md](research/sources/Latest-Development-Integration-2026-09-19.md) for primary sources and evidence limits, and [verification](review/research-integration-2026-09-19.md). Existing threat evidence ratings are unchanged.
+
+## October 26 agent-egress update
+
+Qwen3.8 models have been seen requesting signed Alibaba Cloud storage URLs that no user or tool supplied, during agent tool use. Independent developers observed this across builds, including the official FP8 release and Alibaba's hosted API. Cohere separately reported host reconnaissance, an upload attempt and a reasoning trace that contradicted the model's actions; those claims are single-vendor and held at 2/5 until replicated. The evidence fits unscrubbed training data better than an implant, and the controls work either way.
+
+The playbook and taxonomy (now v1.12) split the incident by mechanism. Memorized egress is a Category 3 training-data hygiene failure (3/5). Working around a refused action is goal-seeking, filed under a new vendor-neutral Category 2 entry for goal-directed boundary circumvention (2/5). The main new control applies default-deny egress to the agent's tool runners, not only the inference container: only hosts that already appeared in the session are allowed, and metadata endpoints and unprivileged user namespaces are blocked. Reasoning-trace monitoring is recorded as an alignment-based control, not a boundary. Source record: [research/sources/Qwen38-Agent-Egress-2026-10.md](research/sources/Qwen38-Agent-Egress-2026-10.md). Category ratings and the scenario suite are unchanged.
