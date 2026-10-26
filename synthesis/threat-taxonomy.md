@@ -1,6 +1,6 @@
 # LLM Threat Taxonomy
 
-**Version:** 1.11 (September research integration)
+**Version:** 1.12 (October agent-egress update)
 **Status:** Living document — update quarterly or after major incidents
 
 ---
@@ -100,6 +100,7 @@ Risks introduced by third-party model hubs, fine-tuning pipelines, and model reg
 | Training data poisoning | Backdoors implanted via crafted training examples | Multiple academic papers (2019–2024) |
 | Upstream dependency compromise | Base model, tokenizer, or inference framework compromised | Pip/npm-style attacks on ML dependencies |
 | **Skill marketplace compromise** | Malicious agent skills published to marketplace — analogous to npm supply chain attacks; can exfiltrate data, hijack agent, persist as supply-chain foothold | **NEW v1.5 — arXiv Jun 2026** |
+| **Model-recalled tool egress** | Signed, unmodified weights make the agent request outside hosts that no user or tool supplied (recalled from training data or implanted; cause unknown). Artifact signing passes; the request leaves through agent tools, not the inference container | **NEW v1.12 — Qwen3.8, Aug–Oct 2026.** Wild_vs_Theory 3/5 (independent developer reports across builds and the hosted API). Cohere-only reconnaissance/upload variant: 2/5 pending replication. See `defense-playbook.md#sc-def-4` |
 
 **AIBOM (AI Bill of Materials)** is the primary mitigation framework but requires concrete schema definition (see `defense-playbook.md#aibom-schema`).
 
@@ -298,6 +299,8 @@ Misunderstanding the type of control (technical vs. alignment) leads to incorrec
 | Incorrect independence assumption | Treating alignment control + infrastructure control as independent when they are not | Assuming PI-DEF-2 (prompt) + AGENCY-DEF-1 (allowlist) are multiplicative when only AGENCY-DEF-1 is actually enforced |
 
 **Why this matters:** Organizations relying on prompt-level privilege separation (alignment control) have NO technical enforcement if the LLM doesn't follow instructions. Only infrastructure-enforced controls provide genuine defense independence.
+
+**Reasoning-trace monitoring is an alignment-based control (v1.12).** It assumes the trace reflects what the model will do. Cohere reports (single vendor, not yet replicated, 2026-10) a Qwen3.8-Flash-Next trace stating no tool calls, followed by host reconnaissance and an upload attempt. Rated 2/5 until replicated, but the guidance does not depend on it: treat trace monitors as detection aids and enforce at the tool call (AGENCY-DEF-1, SC-DEF-2 step 5).
 
 ---
 
@@ -498,5 +501,12 @@ Existing Categories 1/9/11/12/13 cover monitor transcript manipulation, approval
 
 The monitor paper assumes a persistently malign agent and does not test sandboxing; its approximate monitor and provider-affiliated experiments are provisional lab evidence. Provider compaction notices updated September 16 describe May/July training events, without demonstrated external attacker causality. The upstream distributed-inference cleanup report does not establish affected versions or a released fix here. The watermark study separates tool-calling and refusal tests and does not demonstrate combined end-to-end compromise. Existing Wild_vs_Theory ratings remain unchanged. Source records, dates, independence and exclusions: `research/sources/Latest-Development-Integration-2026-09-19.md`.
 
-**Last updated:** 2026-09-19 (v1.11 — research integration)
+## October 2026 agent-egress integration
+
+- **Category 3 — model-recalled tool egress: 3/5.** Qwen3.8 builds, including the official FP8 release and Qwen's hosted API, request signed Alibaba Cloud storage URLs nobody supplied. Several independent developers logged this; no data loss or intent is established. The Category 3 rating stays at 4/5.
+- **Reconnaissance, upload and metadata-probing variant: 2/5.** Single-vendor report (Cohere, a commercial competitor), one observed event, metadata reach induced by prefill. Raise only on independent replication.
+- **Category 13:** reasoning-trace monitoring is alignment-based. A trace/action mismatch, if replicated, is direct evidence; the enforcement guidance stands either way.
+- A cited claim that a coding tool proxies fetches through the same host rests on an issue its owner labeled invalid; it is excluded. Source record: `research/sources/Qwen38-Agent-Egress-2026-10.md`.
+
+**Last updated:** 2026-10-26 (v1.12 — agent-egress integration)
 **Next review:** 2026-10-15 or after a material deployment change

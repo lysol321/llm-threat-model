@@ -13,9 +13,9 @@ This manifest is the canonical pointer for the coherent v1.12 corpus. Component 
 | File | Version / state | Role |
 |---|---|---|
 | `synthesis/framework.md` | v1.12 | Umbrella framework, release history, and operational architecture |
-| `synthesis/threat-taxonomy.md` | v1.11 | Master taxonomy with canonical agentic subtype IDs and evidence calibration |
+| `synthesis/threat-taxonomy.md` | v1.12 | Master taxonomy with canonical agentic subtype IDs and evidence calibration |
 | `synthesis/risk-matrix.md` | v1.12 | Machine-checkable base/elevated scores, Wild_vs_Theory confidence, and regulatory mapping |
-| `synthesis/defense-playbook.md` | v1.11 | Defense controls, ownership, limitations, and assurance gaps |
+| `synthesis/defense-playbook.md` | v1.12 | Defense controls, ownership, limitations, and assurance gaps |
 | `synthesis/assessment-template.md` | v1.12 | Engineering worksheet, routing, control ratings, and residual-risk workflow |
 | `synthesis/quick-reference.md` | v1.11 | Operator triage and decision gates |
 | `synthesis/attack-surface-catalog.md` | v1.7 | Classical and agentic trust-boundary surface inventory |
@@ -32,6 +32,10 @@ This manifest is the canonical pointer for the coherent v1.12 corpus. Component 
 | `llm-threat-model.html` | Generated from structured source and current Markdown | `python scripts/build-html.py --check` |
 | `research/sources/Last-30-Days-Agentic-Threat-Updates-2026-07.md` | Evidence note; June 4 source labeled pre-window corroboration | Citation and corpus checks |
 | `review/red-team-2026-07-20-agentic-update.md` | Adversarial review that drove v1.9 | Findings preserved as review history |
+
+## October 26 component update
+
+`defense-playbook.md` and `threat-taxonomy.md` v1.12 add the Qwen3.8 agent-tool egress case (SC-DEF-2 step 5, SC-DEF-4 case, Category 3 sub-type, Category 13 note). Source record: `research/sources/Qwen38-Agent-Egress-2026-10.md`. Release version, scenario suite and other components are unchanged.
 
 ## September 19 research integration
 

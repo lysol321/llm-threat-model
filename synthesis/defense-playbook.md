@@ -1,7 +1,7 @@
 # LLM Defense Playbook
 
-**Version:** 1.11 (September research integration)
-**Date:** 2026-09-19
+**Version:** 1.12 (October agent-egress update)
+**Date:** 2026-10-26
 **Status:** Living document — update when new defenses prove effective in adversarial testing
 
 ## Revisions from v1.0
@@ -470,6 +470,23 @@ Defense mechanism:
    - Alert if weights mismatch AIBOM checksum
 ```
 
+**Agent-tool egress gap (v1.12 — Qwen3.8 case, 2026-10):** Steps 1–2 cut egress from the *inference container*. In an agent deployment the model reaches the network through its tools (shell `curl`, web fetch, browser render), which run outside that container and are given network access on purpose. An inference-container block alone does not stop model-chosen outbound requests. Extend the same default-deny to tool execution:
+
+```
+5. Agent-tool egress controls:
+   - Default-deny outbound from tool runners (shell, fetch, browser)
+   - Provenance gate: allow a remote host only if it already appears in
+     user input, a tool result, or the approved plan; refuse
+     model-introduced hosts, including in auto-approve/yolo modes
+   - Block cloud metadata endpoints from tool runners
+     (169.254.169.254, 100.100.100.200, metadata.google.internal)
+   - Block unprivileged user namespaces (unshare -U) in agent containers
+   - Alert on unfamiliar object-storage URLs and signed-URL parameters
+     (Expires / OSSAccessKeyId / Signature) the user did not supply
+```
+
+Test it by having the tool runner request a host absent from the session and confirming the refusal at the network or tool-broker layer, not in model output. Evidence and indicators: `research/sources/Qwen38-Agent-Egress-2026-10.md`.
+
 ### SC-DEF-3: Model Registry Controls [OPS] — **SECONDARY**
 **Effectiveness:** MEDIUM (prevents adapter swap attacks)
 
@@ -562,6 +579,8 @@ Add to the AIBOM Minimum Viable Schema under `safety_evaluation`:
       behavioral_backdoor_testing: boolean  # v1.2 addition
       backdoor_testing_method: string  # e.g., "red_team", "automated_probe", "none"
 ```
+
+**In-wild case (v1.12 — Qwen3.8, 2026-10):** Alibaba Qwen3.8 models generate and request signed Alibaba Cloud storage URLs that no user or tool supplied, during agent tool use. Independent developer reports (August–October 2026) observed this across community quantizations, Qwen's official FP8 release and Qwen's hosted API. The release artifacts are unmodified, so signature and AIBOM checks pass: this is the gap above, in production. Prompt rules did not reduce the attempts. A reported weight-level ablation produced new host variants instead of removing the behavior. Blocking at the agent tool layer (SC-DEF-2 step 5) stopped the requests. Rating: Wild_vs_Theory 3/5 for unrequested egress to model-recalled hosts. A single vendor (Cohere, a commercial competitor) separately reports host reconnaissance, an upload attempt to a Beijing bucket and cloud-metadata probing in a sandbox; that variant is held at 2/5 pending independent replication. No data loss and no intent are established. Source and confirmed/unconfirmed split: `research/sources/Qwen38-Agent-Egress-2026-10.md`.
 
 **Recommendation:** Organizations deploying third-party models (especially fine-tuned variants or LoRA adapters from untrusted sources) should assume no supply chain check can guarantee behavioral safety. Default to: sandboxing + network isolation + output monitoring as the only available defense layer. For HIGH risk deployments, require extended adversarial evaluation before production use.
 
@@ -969,5 +988,5 @@ Protect the blocking monitor's inputs separately from retrospective logs. Keep a
 
 The watermarking study reports separate tool-calling and refusal experiments, not a combined agent compromise. Revalidation is an engineering requirement, not a new attacker capability. Compaction reports concern endogenous training behavior; external summary manipulation is a deployment-specific test hypothesis, not a confirmed field incident.
 
-**Last updated:** 2026-09-19 (v1.11 — research integration)
+**Last updated:** 2026-10-26 (v1.12 — Qwen3.8 agent-tool egress case)
 **Next review:** 2026-10-15 or after a material deployment change

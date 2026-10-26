@@ -54,11 +54,11 @@ EXPECTED_COMPONENT_VERSIONS = {
     "assumptions.md": "1.4",
     "attack-surface-catalog.md": "1.7",
     "attack-trees.md": "1.8",
-    "defense-playbook.md": "1.11",
+    "defense-playbook.md": "1.12",
     "framework.md": "1.12",
     "quick-reference.md": "1.11",
     "risk-matrix.md": "1.12",
-    "threat-taxonomy.md": "1.11"
+    "threat-taxonomy.md": "1.12"
 }
 
 

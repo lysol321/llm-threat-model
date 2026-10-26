@@ -79,11 +79,14 @@ def find_quote_in_file(source: str, quote: str, original_start: int, original_en
             start = 0
             break
         line = all_lines[i]
-        if line.startswith("#") or line.strip() == "":
+        if line.startswith("#"):
+            start = i  # heading belongs to the section
+            break
+        if line.strip() == "":
             start = i + 1
             break
 
-    end = min(start + width, len(all_lines))
+    end = min(start + width + 1, len(all_lines))  # inclusive range keeps width + 1 lines
     return f"{start + 1}-{end}"  # convert to 1-indexed
 
 

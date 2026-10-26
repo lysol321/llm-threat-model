@@ -709,13 +709,13 @@
         {
           "id": "EV-CONTROL-MA-DEF-1",
           "source": "synthesis/defense-playbook.md",
-          "lines": "572-630",
+          "lines": "591-649",
           "quote": "### MA-DEF-1: Context Isolation [DEV] — **PRIMARY**\n**Effectiveness:** CRITICAL (breaks Chain C at the propagation point)\n**Latency cost:** None (architectural)\n**Expertise required:** High\n\n```\nDefense mechanism:\n1. Explicit context boundaries between agents:\n   - Each agent has a \"context window\" that does NOT automatically\n     include other agents' outputs\n   - Inter-agent communication requires explicit pass-through with\n     sanitization\n\n2. Context origin labeling:\n   - All inter-agent messages tagged with: origin agent, message type,\n     trust level, timestamp\n   - Agents can inspect origin metadata before processing\n\n3. No shared implicit context:\n   - Agents do NOT share conversation history by default\n   - Data required for agent's task must be explicitly passed\n\n4. Privilege ceiling:\n   - Agent N cannot have more agency than the user who initiated the chain\n   - Each agent's permissions scoped to its specific function\n\n5. Tool return value sanitization (Chain C extension):\n   - Tool outputs must be sanitized before being added to agent context\n   - Apply same PI detection to tool outputs as to user inputs\n   - This prevents tool return value injection (Chain C new path)\n\n6. MCP protocol defenses (MA-DEF extension — v1.2):\n   - MCP server allowlist: only pre-approved MCP servers can be called\n   - MCP server AIBOM: MCP server components must have supply chain documentation\n   - MCP response sanitization: treat MCP server responses as untrusted input;\n     apply same PI detection as user inputs before adding to context\n   - MCP response signing (emerging — not standard as of 2026): prefer servers\n     that support signed responses; audit MCP traffic for anomalies\n\n7. A2A protocol defenses (MA-DEF extension — v1.2):\n   - A2A peer authentication: require mutual TLS or signed messages between agents\n   - A2A message validation: treat A2A messages as external input; apply same\n     filtering as user inputs at the A2A gateway\n   - Privilege ceiling: Agent B's context received via A2A should not grant\n     more permissions than Agent A had at time of send\n   - Audit log all A2A messages (sender, receiver, message type, timestamp)\n\n8. LangGraph-specific implementation (MA-DEF extension — v1.2):\n   - MA-DEF-1 is architecturally enforced in LangGraph via ToolCallWrapper\n     (custom LangGraph middleware, not a default — must be explicitly implemented)\n   - For Send API: ToolCallWrapper can enforce dispatch-level sanitization of\n     ToolCallWithContext state before tool execution\n   - For Command primitive: Command inputs must be validated before being passed\n     to Command(resume=...) or Command(update=...); do not treat Command inputs\n     as trusted even if they come from internal agents\n   - LangGraph AgentState.messages (Annotated[list, operator.add]) shared state\n     is the primary N>2 propagation vector — context isolation must be enforced\n     at the state level, not just at message-passing boundaries\n```"
         },
         {
           "id": "EV-CONTROL-MA-DEF-3",
           "source": "synthesis/defense-playbook.md",
-          "lines": "890-901",
+          "lines": "909-920",
           "quote": "### MA-DEF-3: Cryptographic Inter-Agent Identity [DEV + OPS] — **PRIMARY**\n\nOrchestrators must not grant privilege based on natural-language role claims or workflow position.\n\n```text\nRequired controls:\n1. Authenticate each agent and bind messages to an issued identity.\n2. Attach explicit capability and privilege ceilings to the identity.\n3. Reject self-asserted role, authorization, or urgency claims.\n4. Re-authorize state-changing actions at the receiving boundary.\n5. Preserve sender identity and authorization scope in audit records.\n```"
         },
         {
@@ -939,7 +939,7 @@
         {
           "id": "EV-CONTROL-SC-DEF-3",
           "source": "synthesis/defense-playbook.md",
-          "lines": "473-493",
+          "lines": "490-510",
           "quote": "### SC-DEF-3: Model Registry Controls [OPS] — **SECONDARY**\n**Effectiveness:** MEDIUM (prevents adapter swap attacks)\n\n```\nDefense mechanism:\n1. Signed model artifacts:\n   - Require PGP or sigstore signatures on all model uploads\n   - Registry verifies signature before making model available\n\n2. Publisher identity verification:\n   - Verified publisher badges require identity document review\n   - Report mechanism for impersonation\n\n3. LoRA/PEFT adapter registry:\n   - Separate namespace for base models vs. adapters\n   - Adapter provenance must reference base model AIBOM\n\n4. Deployment-time verification:\n   - Verify AIBOM checksum against deployed model before first inference\n   - Block deployment if mismatch detected\n```"
         },
         {
@@ -999,7 +999,7 @@
         {
           "id": "EV-FACTUAL-POISONING",
           "source": "synthesis/threat-taxonomy.md",
-          "lines": "130-130",
+          "lines": "131-131",
           "quote": "RAG poisoning overlaps with indirect prompt injection only when the poisoned material supplies instructions. Factual or ranking manipulation can cause the model to faithfully reproduce a forged policy or record without any instruction override. Training/fine-tuning poisoning can also persist in learned behavior. Assess data integrity separately with DATA-DEF-1: write/promotion authority, independent source validation, dataset versions, derived-data cleanup and model rollback where needed. See `research/sources/Review-Corrections-2026-09-19.md` (OWASP LLM04)."
         }
       ],
@@ -3169,7 +3169,7 @@
         {
           "id": "EV-FACTUAL-POISONING",
           "source": "synthesis/threat-taxonomy.md",
-          "lines": "130-130",
+          "lines": "131-131",
           "quote": "RAG poisoning overlaps with indirect prompt injection only when the poisoned material supplies instructions. Factual or ranking manipulation can cause the model to faithfully reproduce a forged policy or record without any instruction override. Training/fine-tuning poisoning can also persist in learned behavior. Assess data integrity separately with DATA-DEF-1: write/promotion authority, independent source validation, dataset versions, derived-data cleanup and model rollback where needed. See `research/sources/Review-Corrections-2026-09-19.md` (OWASP LLM04)."
         }
       ],
@@ -3549,13 +3549,13 @@
         {
           "id": "EV-CONTROL-MEM-DEF-1",
           "source": "synthesis/defense-playbook.md",
-          "lines": "859-875",
+          "lines": "878-894",
           "quote": "### MEM-DEF-1: Memory and Compaction Authorization [DEV + OPS] — **PRIMARY**\n\nDurable memory and ephemeral context compaction are security-sensitive state transitions. MEM-DEF-1 applies to summaries used to resume a task even when no persistent memory store exists.\n\n```text\nRequired controls:\n1. Do not permit model-derived content to write durable memory without a separate policy check.\n2. Store source, author, trust level, timestamp, session, and originating tool for every memory item.\n3. Separate user-confirmed facts from retrieved content and model-generated summaries.\n4. Apply TTL, rollback, quarantine, and deletion workflows.\n5. Test poisoning across sessions, including retrieval into a higher-privilege workflow.\n6. Include ordinary conversation ingestion without direct memory-write permissions, topic-selective triggers and retrieval drift. Verify quarantine/rollback removes influence from derived summaries and indexes.\n7. Keep authoritative user instructions, denials, approvals and source/version evidence outside model-authored summaries. On resume, independently recover their current state; summary text cannot grant identity, permission or user approval. Test a false approval and omitted denial alongside a faithful compaction. Apply to both the resumed worker and its monitor.\n```\n\n**Effectiveness:** Validate ingestion and retrieval boundaries in the actual deployment; an external policy check can still authorize poisoned content. Prompt-only rules provide no enforced isolation.\n"
         },
         {
           "id": "EV-CONTROL-MA-DEF-1",
           "source": "synthesis/defense-playbook.md",
-          "lines": "572-630",
+          "lines": "591-649",
           "quote": "### MA-DEF-1: Context Isolation [DEV] — **PRIMARY**\n**Effectiveness:** CRITICAL (breaks Chain C at the propagation point)\n**Latency cost:** None (architectural)\n**Expertise required:** High\n\n```\nDefense mechanism:\n1. Explicit context boundaries between agents:\n   - Each agent has a \"context window\" that does NOT automatically\n     include other agents' outputs\n   - Inter-agent communication requires explicit pass-through with\n     sanitization\n\n2. Context origin labeling:\n   - All inter-agent messages tagged with: origin agent, message type,\n     trust level, timestamp\n   - Agents can inspect origin metadata before processing\n\n3. No shared implicit context:\n   - Agents do NOT share conversation history by default\n   - Data required for agent's task must be explicitly passed\n\n4. Privilege ceiling:\n   - Agent N cannot have more agency than the user who initiated the chain\n   - Each agent's permissions scoped to its specific function\n\n5. Tool return value sanitization (Chain C extension):\n   - Tool outputs must be sanitized before being added to agent context\n   - Apply same PI detection to tool outputs as to user inputs\n   - This prevents tool return value injection (Chain C new path)\n\n6. MCP protocol defenses (MA-DEF extension — v1.2):\n   - MCP server allowlist: only pre-approved MCP servers can be called\n   - MCP server AIBOM: MCP server components must have supply chain documentation\n   - MCP response sanitization: treat MCP server responses as untrusted input;\n     apply same PI detection as user inputs before adding to context\n   - MCP response signing (emerging — not standard as of 2026): prefer servers\n     that support signed responses; audit MCP traffic for anomalies\n\n7. A2A protocol defenses (MA-DEF extension — v1.2):\n   - A2A peer authentication: require mutual TLS or signed messages between agents\n   - A2A message validation: treat A2A messages as external input; apply same\n     filtering as user inputs at the A2A gateway\n   - Privilege ceiling: Agent B's context received via A2A should not grant\n     more permissions than Agent A had at time of send\n   - Audit log all A2A messages (sender, receiver, message type, timestamp)\n\n8. LangGraph-specific implementation (MA-DEF extension — v1.2):\n   - MA-DEF-1 is architecturally enforced in LangGraph via ToolCallWrapper\n     (custom LangGraph middleware, not a default — must be explicitly implemented)\n   - For Send API: ToolCallWrapper can enforce dispatch-level sanitization of\n     ToolCallWithContext state before tool execution\n   - For Command primitive: Command inputs must be validated before being passed\n     to Command(resume=...) or Command(update=...); do not treat Command inputs\n     as trusted even if they come from internal agents\n   - LangGraph AgentState.messages (Annotated[list, operator.add]) shared state\n     is the primary N>2 propagation vector — context isolation must be enforced\n     at the state level, not just at message-passing boundaries\n```"
         },
         {
@@ -3764,7 +3764,7 @@
         {
           "id": "EV-CONTROL-SKILL-DEF-1",
           "source": "synthesis/defense-playbook.md",
-          "lines": "876-888",
+          "lines": "895-907",
           "quote": "### SKILL-DEF-1: Lifecycle-Aware Skill Supply Chain [DEV + OPS] — **PRIMARY**\n\nTreat skill metadata, descriptions, examples, permissions, retrieval embeddings, and updates as supply-chain artifacts.\n\n```text\nRequired controls:\n1. Admission review for code, metadata, permissions, and hidden instructions.\n2. Retrieval and planner tests using semantically similar benign and malicious skills.\n3. Version pinning, signed provenance, dependency inventory, and change monitoring.\n4. Re-review when a skill, description, permission, or dependency changes.\n5. Runtime sandboxing and least privilege independent of skill claims.\n6. Pin or reject mutable remote payloads; inventory subprocesses, startup hooks and scheduled tasks. Removal includes persistence cleanup and exposed-credential rotation, not just uninstalling the skill.\n```"
         },
         {
@@ -3964,7 +3964,7 @@
         {
           "id": "EV-CONTROL-SKILL-DEF-1",
           "source": "synthesis/defense-playbook.md",
-          "lines": "876-888",
+          "lines": "895-907",
           "quote": "### SKILL-DEF-1: Lifecycle-Aware Skill Supply Chain [DEV + OPS] — **PRIMARY**\n\nTreat skill metadata, descriptions, examples, permissions, retrieval embeddings, and updates as supply-chain artifacts.\n\n```text\nRequired controls:\n1. Admission review for code, metadata, permissions, and hidden instructions.\n2. Retrieval and planner tests using semantically similar benign and malicious skills.\n3. Version pinning, signed provenance, dependency inventory, and change monitoring.\n4. Re-review when a skill, description, permission, or dependency changes.\n5. Runtime sandboxing and least privilege independent of skill claims.\n6. Pin or reject mutable remote payloads; inventory subprocesses, startup hooks and scheduled tasks. Removal includes persistence cleanup and exposed-credential rotation, not just uninstalling the skill.\n```"
         },
         {
@@ -4178,13 +4178,13 @@
         {
           "id": "EV-CONTROL-MA-DEF-3",
           "source": "synthesis/defense-playbook.md",
-          "lines": "890-901",
+          "lines": "909-920",
           "quote": "### MA-DEF-3: Cryptographic Inter-Agent Identity [DEV + OPS] — **PRIMARY**\n\nOrchestrators must not grant privilege based on natural-language role claims or workflow position.\n\n```text\nRequired controls:\n1. Authenticate each agent and bind messages to an issued identity.\n2. Attach explicit capability and privilege ceilings to the identity.\n3. Reject self-asserted role, authorization, or urgency claims.\n4. Re-authorize state-changing actions at the receiving boundary.\n5. Preserve sender identity and authorization scope in audit records.\n```"
         },
         {
           "id": "EV-CONTROL-MA-DEF-1",
           "source": "synthesis/defense-playbook.md",
-          "lines": "572-630",
+          "lines": "591-649",
           "quote": "### MA-DEF-1: Context Isolation [DEV] — **PRIMARY**\n**Effectiveness:** CRITICAL (breaks Chain C at the propagation point)\n**Latency cost:** None (architectural)\n**Expertise required:** High\n\n```\nDefense mechanism:\n1. Explicit context boundaries between agents:\n   - Each agent has a \"context window\" that does NOT automatically\n     include other agents' outputs\n   - Inter-agent communication requires explicit pass-through with\n     sanitization\n\n2. Context origin labeling:\n   - All inter-agent messages tagged with: origin agent, message type,\n     trust level, timestamp\n   - Agents can inspect origin metadata before processing\n\n3. No shared implicit context:\n   - Agents do NOT share conversation history by default\n   - Data required for agent's task must be explicitly passed\n\n4. Privilege ceiling:\n   - Agent N cannot have more agency than the user who initiated the chain\n   - Each agent's permissions scoped to its specific function\n\n5. Tool return value sanitization (Chain C extension):\n   - Tool outputs must be sanitized before being added to agent context\n   - Apply same PI detection to tool outputs as to user inputs\n   - This prevents tool return value injection (Chain C new path)\n\n6. MCP protocol defenses (MA-DEF extension — v1.2):\n   - MCP server allowlist: only pre-approved MCP servers can be called\n   - MCP server AIBOM: MCP server components must have supply chain documentation\n   - MCP response sanitization: treat MCP server responses as untrusted input;\n     apply same PI detection as user inputs before adding to context\n   - MCP response signing (emerging — not standard as of 2026): prefer servers\n     that support signed responses; audit MCP traffic for anomalies\n\n7. A2A protocol defenses (MA-DEF extension — v1.2):\n   - A2A peer authentication: require mutual TLS or signed messages between agents\n   - A2A message validation: treat A2A messages as external input; apply same\n     filtering as user inputs at the A2A gateway\n   - Privilege ceiling: Agent B's context received via A2A should not grant\n     more permissions than Agent A had at time of send\n   - Audit log all A2A messages (sender, receiver, message type, timestamp)\n\n8. LangGraph-specific implementation (MA-DEF extension — v1.2):\n   - MA-DEF-1 is architecturally enforced in LangGraph via ToolCallWrapper\n     (custom LangGraph middleware, not a default — must be explicitly implemented)\n   - For Send API: ToolCallWrapper can enforce dispatch-level sanitization of\n     ToolCallWithContext state before tool execution\n   - For Command primitive: Command inputs must be validated before being passed\n     to Command(resume=...) or Command(update=...); do not treat Command inputs\n     as trusted even if they come from internal agents\n   - LangGraph AgentState.messages (Annotated[list, operator.add]) shared state\n     is the primary N>2 propagation vector — context isolation must be enforced\n     at the state level, not just at message-passing boundaries\n```"
         },
         {
@@ -4393,7 +4393,7 @@
         {
           "id": "EV-CONTROL-CUA-DEF-1",
           "source": "synthesis/defense-playbook.md",
-          "lines": "903-911",
+          "lines": "922-930",
           "quote": "### CUA-DEF-1: Visual and Interface-State Validation [DEV] — **PRIMARY**\n\nComputer-use agents require validation across rendered pixels and machine-readable interface state.\n\n- Bound the viewport and reject actions based on off-screen content.\n- Compare screenshot, DOM, and accessibility-tree representations where available.\n- Treat page text, images, buttons, and labels as untrusted input.\n- Validate the final semantic action and destination, not only the agent's explanation.\n- Require default-deny approval for irreversible or external actions."
         },
         {
@@ -4808,7 +4808,7 @@
         {
           "id": "EV-CONTROL-RELAY-DEF-1",
           "source": "synthesis/defense-playbook.md",
-          "lines": "913-926",
+          "lines": "932-945",
           "quote": "### RELAY-DEF-1: Response-Path Integrity [DEV + OPS] — **PRIMARY where a relay exists**\n\nThe preferred assurance is a direct trusted provider-to-agent path or a provider-authenticated response that the agent can verify independently.\n\n- Prefer direct provider-to-agent connections for high-privilege workflows.\n- If a relay is required, authenticate it and bind the transcript to the request, model ID, response, tool name, arguments, and control fields for accountability.\n- Relay authentication alone does not prove upstream authorization: a malicious authenticated relay can generate internally consistent hashes, MACs, and logs.\n- Verify provider-authenticated response signatures or equivalent upstream field-level integrity where supported.\n- Validate tool schemas and authorization again at the agent boundary.\n- Log provider response hash, relay identity, transformation status, and executed response hash.\n\n**Unresolved assurance gap:** When the provider does not authenticate responses and the relay cannot be removed, the agent cannot cryptographically prove that relay output matches the provider-authorized response. Treat relay logs as detection/accountability evidence, not end-to-end authorization proof.\n\n**Evidence status:** This control addresses a provisional response-path threat identified in arXiv:2605.02187. Independent replication is still required before assigning a universal Wild_vs_Theory rating."
         },
         {
@@ -5022,7 +5022,7 @@
         {
           "id": "EV-CONTROL-REP-DEF-1",
           "source": "synthesis/defense-playbook.md",
-          "lines": "938-940",
+          "lines": "957-959",
           "quote": "### REP-DEF-1: Representation Boundary Validation [DEV] — **PRIMARY where conversion exists**\n\nBefore model or validator consumption, preserve origin and representation metadata. Do not treat converted code, binary-derived text, generated evidence, or tool-returned records as independent trusted instructions or evidence without validation."
         },
         {
@@ -6054,13 +6054,13 @@
         {
           "id": "EV-CONTROL-MA-DEF-1",
           "source": "synthesis/defense-playbook.md",
-          "lines": "572-630",
+          "lines": "591-649",
           "quote": "### MA-DEF-1: Context Isolation [DEV] — **PRIMARY**\n**Effectiveness:** CRITICAL (breaks Chain C at the propagation point)\n**Latency cost:** None (architectural)\n**Expertise required:** High\n\n```\nDefense mechanism:\n1. Explicit context boundaries between agents:\n   - Each agent has a \"context window\" that does NOT automatically\n     include other agents' outputs\n   - Inter-agent communication requires explicit pass-through with\n     sanitization\n\n2. Context origin labeling:\n   - All inter-agent messages tagged with: origin agent, message type,\n     trust level, timestamp\n   - Agents can inspect origin metadata before processing\n\n3. No shared implicit context:\n   - Agents do NOT share conversation history by default\n   - Data required for agent's task must be explicitly passed\n\n4. Privilege ceiling:\n   - Agent N cannot have more agency than the user who initiated the chain\n   - Each agent's permissions scoped to its specific function\n\n5. Tool return value sanitization (Chain C extension):\n   - Tool outputs must be sanitized before being added to agent context\n   - Apply same PI detection to tool outputs as to user inputs\n   - This prevents tool return value injection (Chain C new path)\n\n6. MCP protocol defenses (MA-DEF extension — v1.2):\n   - MCP server allowlist: only pre-approved MCP servers can be called\n   - MCP server AIBOM: MCP server components must have supply chain documentation\n   - MCP response sanitization: treat MCP server responses as untrusted input;\n     apply same PI detection as user inputs before adding to context\n   - MCP response signing (emerging — not standard as of 2026): prefer servers\n     that support signed responses; audit MCP traffic for anomalies\n\n7. A2A protocol defenses (MA-DEF extension — v1.2):\n   - A2A peer authentication: require mutual TLS or signed messages between agents\n   - A2A message validation: treat A2A messages as external input; apply same\n     filtering as user inputs at the A2A gateway\n   - Privilege ceiling: Agent B's context received via A2A should not grant\n     more permissions than Agent A had at time of send\n   - Audit log all A2A messages (sender, receiver, message type, timestamp)\n\n8. LangGraph-specific implementation (MA-DEF extension — v1.2):\n   - MA-DEF-1 is architecturally enforced in LangGraph via ToolCallWrapper\n     (custom LangGraph middleware, not a default — must be explicitly implemented)\n   - For Send API: ToolCallWrapper can enforce dispatch-level sanitization of\n     ToolCallWithContext state before tool execution\n   - For Command primitive: Command inputs must be validated before being passed\n     to Command(resume=...) or Command(update=...); do not treat Command inputs\n     as trusted even if they come from internal agents\n   - LangGraph AgentState.messages (Annotated[list, operator.add]) shared state\n     is the primary N>2 propagation vector — context isolation must be enforced\n     at the state level, not just at message-passing boundaries\n```"
         },
         {
           "id": "EV-CONTROL-MA-DEF-3",
           "source": "synthesis/defense-playbook.md",
-          "lines": "890-901",
+          "lines": "909-920",
           "quote": "### MA-DEF-3: Cryptographic Inter-Agent Identity [DEV + OPS] — **PRIMARY**\n\nOrchestrators must not grant privilege based on natural-language role claims or workflow position.\n\n```text\nRequired controls:\n1. Authenticate each agent and bind messages to an issued identity.\n2. Attach explicit capability and privilege ceilings to the identity.\n3. Reject self-asserted role, authorization, or urgency claims.\n4. Re-authorize state-changing actions at the receiving boundary.\n5. Preserve sender identity and authorization scope in audit records.\n```"
         },
         {
@@ -6268,13 +6268,13 @@
         {
           "id": "EV-CONTROL-MA-DEF-1",
           "source": "synthesis/defense-playbook.md",
-          "lines": "572-630",
+          "lines": "591-649",
           "quote": "### MA-DEF-1: Context Isolation [DEV] — **PRIMARY**\n**Effectiveness:** CRITICAL (breaks Chain C at the propagation point)\n**Latency cost:** None (architectural)\n**Expertise required:** High\n\n```\nDefense mechanism:\n1. Explicit context boundaries between agents:\n   - Each agent has a \"context window\" that does NOT automatically\n     include other agents' outputs\n   - Inter-agent communication requires explicit pass-through with\n     sanitization\n\n2. Context origin labeling:\n   - All inter-agent messages tagged with: origin agent, message type,\n     trust level, timestamp\n   - Agents can inspect origin metadata before processing\n\n3. No shared implicit context:\n   - Agents do NOT share conversation history by default\n   - Data required for agent's task must be explicitly passed\n\n4. Privilege ceiling:\n   - Agent N cannot have more agency than the user who initiated the chain\n   - Each agent's permissions scoped to its specific function\n\n5. Tool return value sanitization (Chain C extension):\n   - Tool outputs must be sanitized before being added to agent context\n   - Apply same PI detection to tool outputs as to user inputs\n   - This prevents tool return value injection (Chain C new path)\n\n6. MCP protocol defenses (MA-DEF extension — v1.2):\n   - MCP server allowlist: only pre-approved MCP servers can be called\n   - MCP server AIBOM: MCP server components must have supply chain documentation\n   - MCP response sanitization: treat MCP server responses as untrusted input;\n     apply same PI detection as user inputs before adding to context\n   - MCP response signing (emerging — not standard as of 2026): prefer servers\n     that support signed responses; audit MCP traffic for anomalies\n\n7. A2A protocol defenses (MA-DEF extension — v1.2):\n   - A2A peer authentication: require mutual TLS or signed messages between agents\n   - A2A message validation: treat A2A messages as external input; apply same\n     filtering as user inputs at the A2A gateway\n   - Privilege ceiling: Agent B's context received via A2A should not grant\n     more permissions than Agent A had at time of send\n   - Audit log all A2A messages (sender, receiver, message type, timestamp)\n\n8. LangGraph-specific implementation (MA-DEF extension — v1.2):\n   - MA-DEF-1 is architecturally enforced in LangGraph via ToolCallWrapper\n     (custom LangGraph middleware, not a default — must be explicitly implemented)\n   - For Send API: ToolCallWrapper can enforce dispatch-level sanitization of\n     ToolCallWithContext state before tool execution\n   - For Command primitive: Command inputs must be validated before being passed\n     to Command(resume=...) or Command(update=...); do not treat Command inputs\n     as trusted even if they come from internal agents\n   - LangGraph AgentState.messages (Annotated[list, operator.add]) shared state\n     is the primary N>2 propagation vector — context isolation must be enforced\n     at the state level, not just at message-passing boundaries\n```"
         },
         {
           "id": "EV-CONTROL-MA-DEF-3",
           "source": "synthesis/defense-playbook.md",
-          "lines": "890-901",
+          "lines": "909-920",
           "quote": "### MA-DEF-3: Cryptographic Inter-Agent Identity [DEV + OPS] — **PRIMARY**\n\nOrchestrators must not grant privilege based on natural-language role claims or workflow position.\n\n```text\nRequired controls:\n1. Authenticate each agent and bind messages to an issued identity.\n2. Attach explicit capability and privilege ceilings to the identity.\n3. Reject self-asserted role, authorization, or urgency claims.\n4. Re-authorize state-changing actions at the receiving boundary.\n5. Preserve sender identity and authorization scope in audit records.\n```"
         },
         {
@@ -6482,13 +6482,13 @@
         {
           "id": "EV-CONTROL-MEM-DEF-1",
           "source": "synthesis/defense-playbook.md",
-          "lines": "859-875",
+          "lines": "878-894",
           "quote": "### MEM-DEF-1: Memory and Compaction Authorization [DEV + OPS] — **PRIMARY**\n\nDurable memory and ephemeral context compaction are security-sensitive state transitions. MEM-DEF-1 applies to summaries used to resume a task even when no persistent memory store exists.\n\n```text\nRequired controls:\n1. Do not permit model-derived content to write durable memory without a separate policy check.\n2. Store source, author, trust level, timestamp, session, and originating tool for every memory item.\n3. Separate user-confirmed facts from retrieved content and model-generated summaries.\n4. Apply TTL, rollback, quarantine, and deletion workflows.\n5. Test poisoning across sessions, including retrieval into a higher-privilege workflow.\n6. Include ordinary conversation ingestion without direct memory-write permissions, topic-selective triggers and retrieval drift. Verify quarantine/rollback removes influence from derived summaries and indexes.\n7. Keep authoritative user instructions, denials, approvals and source/version evidence outside model-authored summaries. On resume, independently recover their current state; summary text cannot grant identity, permission or user approval. Test a false approval and omitted denial alongside a faithful compaction. Apply to both the resumed worker and its monitor.\n```\n\n**Effectiveness:** Validate ingestion and retrieval boundaries in the actual deployment; an external policy check can still authorize poisoned content. Prompt-only rules provide no enforced isolation.\n"
         },
         {
           "id": "EV-CONTROL-MA-DEF-1",
           "source": "synthesis/defense-playbook.md",
-          "lines": "572-630",
+          "lines": "591-649",
           "quote": "### MA-DEF-1: Context Isolation [DEV] — **PRIMARY**\n**Effectiveness:** CRITICAL (breaks Chain C at the propagation point)\n**Latency cost:** None (architectural)\n**Expertise required:** High\n\n```\nDefense mechanism:\n1. Explicit context boundaries between agents:\n   - Each agent has a \"context window\" that does NOT automatically\n     include other agents' outputs\n   - Inter-agent communication requires explicit pass-through with\n     sanitization\n\n2. Context origin labeling:\n   - All inter-agent messages tagged with: origin agent, message type,\n     trust level, timestamp\n   - Agents can inspect origin metadata before processing\n\n3. No shared implicit context:\n   - Agents do NOT share conversation history by default\n   - Data required for agent's task must be explicitly passed\n\n4. Privilege ceiling:\n   - Agent N cannot have more agency than the user who initiated the chain\n   - Each agent's permissions scoped to its specific function\n\n5. Tool return value sanitization (Chain C extension):\n   - Tool outputs must be sanitized before being added to agent context\n   - Apply same PI detection to tool outputs as to user inputs\n   - This prevents tool return value injection (Chain C new path)\n\n6. MCP protocol defenses (MA-DEF extension — v1.2):\n   - MCP server allowlist: only pre-approved MCP servers can be called\n   - MCP server AIBOM: MCP server components must have supply chain documentation\n   - MCP response sanitization: treat MCP server responses as untrusted input;\n     apply same PI detection as user inputs before adding to context\n   - MCP response signing (emerging — not standard as of 2026): prefer servers\n     that support signed responses; audit MCP traffic for anomalies\n\n7. A2A protocol defenses (MA-DEF extension — v1.2):\n   - A2A peer authentication: require mutual TLS or signed messages between agents\n   - A2A message validation: treat A2A messages as external input; apply same\n     filtering as user inputs at the A2A gateway\n   - Privilege ceiling: Agent B's context received via A2A should not grant\n     more permissions than Agent A had at time of send\n   - Audit log all A2A messages (sender, receiver, message type, timestamp)\n\n8. LangGraph-specific implementation (MA-DEF extension — v1.2):\n   - MA-DEF-1 is architecturally enforced in LangGraph via ToolCallWrapper\n     (custom LangGraph middleware, not a default — must be explicitly implemented)\n   - For Send API: ToolCallWrapper can enforce dispatch-level sanitization of\n     ToolCallWithContext state before tool execution\n   - For Command primitive: Command inputs must be validated before being passed\n     to Command(resume=...) or Command(update=...); do not treat Command inputs\n     as trusted even if they come from internal agents\n   - LangGraph AgentState.messages (Annotated[list, operator.add]) shared state\n     is the primary N>2 propagation vector — context isolation must be enforced\n     at the state level, not just at message-passing boundaries\n```"
         },
         {
@@ -6895,7 +6895,7 @@
         {
           "id": "EV-CONTROL-MA-DEF-1",
           "source": "synthesis/defense-playbook.md",
-          "lines": "572-630",
+          "lines": "591-649",
           "quote": "### MA-DEF-1: Context Isolation [DEV] — **PRIMARY**\n**Effectiveness:** CRITICAL (breaks Chain C at the propagation point)\n**Latency cost:** None (architectural)\n**Expertise required:** High\n\n```\nDefense mechanism:\n1. Explicit context boundaries between agents:\n   - Each agent has a \"context window\" that does NOT automatically\n     include other agents' outputs\n   - Inter-agent communication requires explicit pass-through with\n     sanitization\n\n2. Context origin labeling:\n   - All inter-agent messages tagged with: origin agent, message type,\n     trust level, timestamp\n   - Agents can inspect origin metadata before processing\n\n3. No shared implicit context:\n   - Agents do NOT share conversation history by default\n   - Data required for agent's task must be explicitly passed\n\n4. Privilege ceiling:\n   - Agent N cannot have more agency than the user who initiated the chain\n   - Each agent's permissions scoped to its specific function\n\n5. Tool return value sanitization (Chain C extension):\n   - Tool outputs must be sanitized before being added to agent context\n   - Apply same PI detection to tool outputs as to user inputs\n   - This prevents tool return value injection (Chain C new path)\n\n6. MCP protocol defenses (MA-DEF extension — v1.2):\n   - MCP server allowlist: only pre-approved MCP servers can be called\n   - MCP server AIBOM: MCP server components must have supply chain documentation\n   - MCP response sanitization: treat MCP server responses as untrusted input;\n     apply same PI detection as user inputs before adding to context\n   - MCP response signing (emerging — not standard as of 2026): prefer servers\n     that support signed responses; audit MCP traffic for anomalies\n\n7. A2A protocol defenses (MA-DEF extension — v1.2):\n   - A2A peer authentication: require mutual TLS or signed messages between agents\n   - A2A message validation: treat A2A messages as external input; apply same\n     filtering as user inputs at the A2A gateway\n   - Privilege ceiling: Agent B's context received via A2A should not grant\n     more permissions than Agent A had at time of send\n   - Audit log all A2A messages (sender, receiver, message type, timestamp)\n\n8. LangGraph-specific implementation (MA-DEF extension — v1.2):\n   - MA-DEF-1 is architecturally enforced in LangGraph via ToolCallWrapper\n     (custom LangGraph middleware, not a default — must be explicitly implemented)\n   - For Send API: ToolCallWrapper can enforce dispatch-level sanitization of\n     ToolCallWithContext state before tool execution\n   - For Command primitive: Command inputs must be validated before being passed\n     to Command(resume=...) or Command(update=...); do not treat Command inputs\n     as trusted even if they come from internal agents\n   - LangGraph AgentState.messages (Annotated[list, operator.add]) shared state\n     is the primary N>2 propagation vector — context isolation must be enforced\n     at the state level, not just at message-passing boundaries\n```"
         },
         {
@@ -7138,7 +7138,7 @@
         {
           "id": "EV-OUTPUT-BOUNDARY",
           "source": "synthesis/threat-taxonomy.md",
-          "lines": "265-265",
+          "lines": "266-266",
           "quote": "PI-DEF-4 must enforce safety at the actual browser, database, command runner, file writer and network client. Shape validation, semantic review and logging cannot replace context-specific encoding, parameterization, operation authorization and isolation. See `research/sources/Review-Corrections-2026-09-19.md` (OWASP LLM05)."
         }
       ],
@@ -7351,7 +7351,7 @@
         {
           "id": "EV-FACTUAL-POISONING",
           "source": "synthesis/threat-taxonomy.md",
-          "lines": "130-130",
+          "lines": "131-131",
           "quote": "RAG poisoning overlaps with indirect prompt injection only when the poisoned material supplies instructions. Factual or ranking manipulation can cause the model to faithfully reproduce a forged policy or record without any instruction override. Training/fine-tuning poisoning can also persist in learned behavior. Assess data integrity separately with DATA-DEF-1: write/promotion authority, independent source validation, dataset versions, derived-data cleanup and model rollback where needed. See `research/sources/Review-Corrections-2026-09-19.md` (OWASP LLM04)."
         }
       ],
@@ -7569,7 +7569,7 @@
         {
           "id": "EV-CONTROL-REP-DEF-1",
           "source": "synthesis/defense-playbook.md",
-          "lines": "938-940",
+          "lines": "957-959",
           "quote": "### REP-DEF-1: Representation Boundary Validation [DEV] — **PRIMARY where conversion exists**\n\nBefore model or validator consumption, preserve origin and representation metadata. Do not treat converted code, binary-derived text, generated evidence, or tool-returned records as independent trusted instructions or evidence without validation. Include live allow/deny monitors: preserve role, turn, tool and author boundaries in a trusted structure; agent-authored text must not forge a new trusted record or omit relevant history. Test synthetic forged-role text and an ordinary transcript through the actual monitor adapter. Valid framing does not make a probabilistic monitor an infrastructure-enforced authorization boundary."
         },
         {
@@ -7593,7 +7593,7 @@
         {
           "id": "EV-CONTROL-DET-DEF-3",
           "source": "synthesis/defense-playbook.md",
-          "lines": "928-936",
+          "lines": "947-955",
           "quote": "### DET-DEF-3: Trajectory and Influence Monitoring [OPS] — **SECONDARY**\n\nPer-message prompt-injection detection is insufficient for session contamination, incremental escalation, and persistent memory poisoning.\n\n- Track influence across turns, retrieved documents, tool outputs, memory writes, and agent handoffs.\n- Alert on cumulative risk, not only individual classifier scores.\n- Preserve provenance graphs showing why a tool call or memory write occurred.\n- Replay complete sessions during red-team evaluation.\n- Preserve authoritative broker/host execution logs outside agent write scope; model-authored transcripts are untrusted evidence. Reconcile worker, channel and time-window coverage before treating an empty search as evidence of no compromise."
         },
         {
@@ -7854,19 +7854,19 @@
         {
           "id": "EV-CONTROL-MEM-DEF-1",
           "source": "synthesis/defense-playbook.md",
-          "lines": "859-874",
+          "lines": "878-893",
           "quote": "### MEM-DEF-1: Memory and Compaction Authorization [DEV + OPS] — **PRIMARY**\n\nDurable memory and ephemeral context compaction are security-sensitive state transitions. MEM-DEF-1 applies to summaries used to resume a task even when no persistent memory store exists.\n\n```text\nRequired controls:\n1. Do not permit model-derived content to write durable memory without a separate policy check.\n2. Store source, author, trust level, timestamp, session, and originating tool for every memory item.\n3. Separate user-confirmed facts from retrieved content and model-generated summaries.\n4. Apply TTL, rollback, quarantine, and deletion workflows.\n5. Test poisoning across sessions, including retrieval into a higher-privilege workflow.\n6. Include ordinary conversation ingestion without direct memory-write permissions, topic-selective triggers and retrieval drift. Verify quarantine/rollback removes influence from derived summaries and indexes.\n7. Keep authoritative user instructions, denials, approvals and source/version evidence outside model-authored summaries. On resume, independently recover their current state; summary text cannot grant identity, permission or user approval. Test a false approval and omitted denial alongside a faithful compaction. Apply to both the resumed worker and its monitor.\n```\n\n**Effectiveness:** Validate ingestion and retrieval boundaries in the actual deployment; an external policy check can still authorize poisoned content. Prompt-only rules provide no enforced isolation."
         },
         {
           "id": "EV-CONTROL-MA-DEF-3",
           "source": "synthesis/defense-playbook.md",
-          "lines": "890-901",
+          "lines": "909-920",
           "quote": "### MA-DEF-3: Cryptographic Inter-Agent Identity [DEV + OPS] — **PRIMARY**\n\nOrchestrators must not grant privilege based on natural-language role claims or workflow position.\n\n```text\nRequired controls:\n1. Authenticate each agent and bind messages to an issued identity.\n2. Attach explicit capability and privilege ceilings to the identity.\n3. Reject self-asserted role, authorization, or urgency claims.\n4. Re-authorize state-changing actions at the receiving boundary.\n5. Preserve sender identity and authorization scope in audit records.\n```"
         },
         {
           "id": "EV-CONTROL-DET-DEF-3",
           "source": "synthesis/defense-playbook.md",
-          "lines": "928-936",
+          "lines": "947-955",
           "quote": "### DET-DEF-3: Trajectory and Influence Monitoring [OPS] — **SECONDARY**\n\nPer-message prompt-injection detection is insufficient for session contamination, incremental escalation, and persistent memory poisoning.\n\n- Track influence across turns, retrieved documents, tool outputs, memory writes, and agent handoffs.\n- Alert on cumulative risk, not only individual classifier scores.\n- Preserve provenance graphs showing why a tool call or memory write occurred.\n- Replay complete sessions during red-team evaluation.\n- Preserve authoritative broker/host execution logs outside agent write scope; model-authored transcripts are untrusted evidence. Reconcile worker, channel and time-window coverage before treating an empty search as evidence of no compromise."
         },
         {

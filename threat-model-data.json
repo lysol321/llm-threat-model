@@ -570,7 +570,7 @@
     },
     {
       "title": "Threat Taxonomy",
-      "version": "1.11",
+      "version": "1.12",
       "file": "synthesis/threat-taxonomy.md",
       "desc": "Master taxonomy of 14 threat categories with evidence, OWASP mapping, and update history."
     },
@@ -582,7 +582,7 @@
     },
     {
       "title": "Defense Playbook",
-      "version": "1.11",
+      "version": "1.12",
       "file": "synthesis/defense-playbook.md",
       "desc": "Full defense catalog: control IDs, types, effectiveness, cost annotations, and tier ordering."
     },

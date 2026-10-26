@@ -6,6 +6,15 @@
 **Framework target:** Pilot-ready: 3-person engineering team, no ML security expertise, completes assessment in under 4 hours
 
 
+## Component Update Notes (Agent-Tool Egress — 2026-10-26)
+
+Component update inside the v1.12 release; `defense-playbook.md` and `threat-taxonomy.md` move to v1.12.
+
+- SC-DEF-2 step 5: default-deny egress from agent tool runners, a host-provenance gate, metadata-endpoint and unprivileged-namespace blocks. Inference-container isolation alone does not cover model-chosen tool requests.
+- SC-DEF-4 gains its first in-wild case (Qwen3.8 model-recalled tool egress) and Category 3 a matching sub-type, rated 3/5. The Cohere-only reconnaissance/upload variant is held at 2/5. Category ratings are unchanged.
+- Category 13 records reasoning-trace monitoring as an alignment-based control.
+- Source record and confirmed/unconfirmed split: `research/sources/Qwen38-Agent-Egress-2026-10.md`. Scenario suite unchanged.
+
 ## v1.12 Revision Notes (Latest Research Integration — 2026-09-19)
 
 - Extended existing controls to blocking-monitor record framing and approval binding to mutable executable dependencies.
